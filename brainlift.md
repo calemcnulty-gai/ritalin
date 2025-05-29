@@ -52,23 +52,25 @@
       - Extension activation events
       - Editor state changes
   - Game Integration Approaches
-    - Direct iframe embedding
-      - Pros: Simple implementation
-      - Cons: CORS restrictions
-    - Proxy server approach
-      - Pros: Bypasses CORS
-      - Cons: Requires infrastructure
-    - Local game hosting
-      - Pros: Full control, offline support
-      - Cons: Licensing, maintenance
+    - Iframe: For embedding external content (itch.io games)
+      - CORS Challenge: Many sites block embedding, need Cross-Origin-Resource-Policy
+      - Workaround: Bundle games locally or use permissive hosts
+    - Direct HTML: For custom mini-games
+    - Canvas/WebGL: For performance-critical games
   - State Management
-    - VS Code GlobalState API
-    - LocalStorage in WebView
-    - File-based persistence
+    - WebView State: Use vscode.setState() for game progress persistence
+    - Extension State: context.workspaceState for statistics and settings
+    - Auto-pause: Implement when WebView is hidden to save resources
   - Performance Optimization
-    - Lazy loading WebViews
-    - Resource cleanup on hide
-    - Memory usage monitoring
+    - Lazy load game resources
+    - Dispose WebViews when not needed
+    - Limit concurrent WebView instances
+    - Use local resources whenever possible
+  - Security
+    - Always validate message data between WebView and extension
+    - Use strict CSP policies
+    - Limit localResourceRoots to specific directories
+    - Sanitize any user input
 - Insights
   - The problem isn't the wait time itself, it's what developers do during the wait time
   - Micro-gaming sessions can maintain cognitive engagement without deep context switching
@@ -84,4 +86,23 @@
   - This could evolve into a platform for indie game developers to reach programmer audiences
   - The data on "productive waiting time" could reveal insights about AI coding patterns and optimal work sessions
 - Other Brainlifts
-  - [To be added as project evolves] 
+  - [To be added as project evolves]
+
+## Technical Discoveries
+
+### WebView Architecture
+- Nested iframe structure provides best control
+- Service workers can implement virtual endpoints for resource loading
+- CSP inheritance can be problematic for inline content
+
+### Performance Optimizations
+- Lazy load game resources
+- Dispose WebViews when not needed
+- Limit concurrent WebView instances
+- Use local resources whenever possible
+
+### Security Considerations
+- Always validate message data between WebView and extension
+- Use strict CSP policies
+- Limit localResourceRoots to specific directories
+- Sanitize any user input 
