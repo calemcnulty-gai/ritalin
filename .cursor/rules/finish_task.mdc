@@ -34,6 +34,7 @@ When triggered, the agent MUST follow these steps in order:
    - Push changes to the feature branch
    - Create a pull request using the gh cli tool
    - Include a summary of changes and verification steps taken
+      - No newlines or fancy formatting. Plain text, a few sentences.
 
 ## Implementation Guidelines
 - Only fix actual deficiencies found during review, not nice-to-haves
