@@ -29,11 +29,30 @@
   - Cursor AI Integration
     - [Cursor Forums](https://forum.cursor.sh/)
     - Cursor Discord community
+    - [CodeCursor Extension](https://github.com/Helixform/CodeCursor) - Reference implementation
+    - [Cursor Documentation](https://docs.cursor.com/)
 - Knowledge Tree
   - Detection Methods
-    - DOM Monitoring: Watch for Cursor AI UI elements appearing/disappearing
-    - API Hooks: Investigate if Cursor exposes any events or APIs (unlikely)
-    - Editor State: Monitor workspace changes as proxy for AI activity
+    - DOM Mutation Observers
+      - Monitor chat panel for loading states
+      - Watch for specific CSS class changes
+      - Look for `.inline-chat-widget`, `.inline-chat-progress`
+      - Check for `.monaco-progress-container`
+    - Command Interception
+      - `cursor.action.generateCode`
+      - `cursor.action.chat`
+      - `cursor.inline.completion.trigger`
+      - `workbench.action.chat.open`
+    - Document Change Monitoring
+      - Detect rapid, large text changes
+      - Track selection patterns
+      - Differentiate from paste operations
+    - Network Request Interception
+      - Monitor API calls to AI endpoints
+      - Track request/response patterns
+    - VS Code Activity Monitoring
+      - Extension activation events
+      - Editor state changes
   - Game Integration Approaches
     - Iframe: For embedding external content (itch.io games)
       - CORS Challenge: Many sites block embedding, need Cross-Origin-Resource-Policy
