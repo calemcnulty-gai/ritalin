@@ -1,5 +1,48 @@
 # Ritalin for Cursor - Changelog
 
+## 2024-12-12 - Task 3: VS Code WebView Research Started
+
+### Summary
+- Started research on VS Code Extension API WebView capabilities
+- Created feature branch: `feature/task-3-vscode-webview-research`
+- Focus on understanding WebView limitations, security constraints, and game embedding possibilities
+
+### Research Goals
+- Understand WebView panel creation and lifecycle
+- Investigate iframe embedding capabilities and CORS handling
+- Document security policies and content restrictions
+- Explore state persistence options for game saves
+
+### Status
+- Branch created and checked out
+- Beginning technical research phase
+
+## 2024-12-12 - Task 3: VS Code WebView Research Completed
+
+### Summary
+- Completed comprehensive research on VS Code Extension API WebView capabilities
+- Created detailed technical research document at `docs/webview-research.md`
+- Updated brainlift.md with key technical discoveries and insights
+
+### Key Findings
+- **WebView Capabilities**: Full HTML5 support, message passing, state persistence
+- **Security Model**: Isolated contexts, CSP requirements, sandboxing
+- **CORS Limitations**: External sites (like itch.io) may block iframe embedding
+- **Implementation Strategy**: Local-first approach recommended due to CORS
+- **State Management**: Use vscode.setState() and context.workspaceState
+
+### Technical Insights
+- Service workers can create virtual endpoints for resource loading
+- retainContextWhenHidden preserves state but increases memory usage
+- Nested iframe architecture provides best control over content
+- CSP policies are restrictive by default and must be carefully configured
+
+### Next Steps
+- Test iframe embedding with various game hosting services
+- Identify suitable games for local bundling
+- Implement Cursor AI detection mechanism
+- Create working prototype
+
 ## 2024-12-12 - Cursor Rule for Brainlift Updates
 
 ### Summary
