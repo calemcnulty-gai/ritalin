@@ -1,0 +1,114 @@
+CivTok
+
+- Owners
+  - Cale McNulty
+- Purpose
+  - Americans' civics knowledge, and especially that of American teens, is dreadful. Civics is usually taught as a series of facts to be memorized. But American civics is actually the output of fundamentally interesting and fun stories and people. 
+  - We'll get kids interested in civics by portraying some of the more fascinating episodes in civics history in fun, shareable, bite-sized pieces. This Brainlift will organize information, experts, and spiky POVs for this project
+  - In scope
+    - How to use AI to generate the videos
+      - May include getting good at image generation as image-to-video is often better than text-to-video
+    - What the content of the videos should be
+    - How to make videos that go viral
+  - Out of scope
+    - Other social media platforms, including video platforms like Youtube or Instagram
+      - Not what the Youth are on, by and large
+    - Longer content (1min MAX; most will be punchy and <30s)
+    - Other education-by-tiktok, except as examples
+      - Civics only
+- Experts
+  - Video Generation
+    - PJ Ace [https://x.com/PJaccetturo/status/1912050794607554574](https://x.com/PJaccetturo/status/1912050794607554574)
+      - Prompting tips:
+        - Start with an image generated with MidJourney.
+        - Use simple prompts that indicate what sort of motion the subject is performing and what the camera is doing. eg "The camera pushes in on the man's hand as he opens his fist to reveal a butterfly"
+        - [https://pjace.beehiiv.com/p/pj-s-secret-midjourney-prompt](https://pjace.beehiiv.com/p/pj-s-secret-midjourney-prompt)
+      - Virality:
+        - [https://pjace.beehiiv.com/p/don-t-miss-the-veo-3-gold-rush?utm_campaign=don-t-miss-the-veo-3-gold-rush&utm_medium=newsletter&utm_source=pjace.beehiiv.com](https://pjace.beehiiv.com/p/don-t-miss-the-veo-3-gold-rush?utm_campaign=don-t-miss-the-veo-3-gold-rush&utm_medium=newsletter&utm_source=pjace.beehiiv.com)
+    - Robin Delta
+      - [https://x.com/heyrobinai](https://x.com/heyrobinai)
+    - MayorKingAI
+      - [https://x.com/MayorKingAI/status/1921694477691040190](https://x.com/MayorKingAI/status/1921694477691040190)
+        - Provides exact prompts and techniques used
+        - [https://x.com/MayorKingAI/status/1912605396998787188](https://x.com/MayorKingAI/status/1912605396998787188)
+    - TechHalla [https://x.com/techhalla/status/1921898914526957728](https://x.com/techhalla/status/1921898914526957728)
+      - Some prompts and good comparison threads but tends to be too boosty.
+      - [https://x.com/techhalla/status/1926993993054802258](https://x.com/techhalla/status/1926993993054802258)
+  - Theoretically Media
+    - [https://www.youtube.com/@TheoreticallyMedia](https://www.youtube.com/@TheoreticallyMedia)
+    - Videos on how to make good AI generated videos
+  - Hasheem Al-Gaili
+    - [https://www.youtube.com/@hashemalghailiofficialchannel](https://www.youtube.com/@hashemalghailiofficialchannel)
+    - Made the We are made of prompts video
+  - Civics Education
+    - Constitutionally Speaking podcast
+      - Not bite-sized or optimized for virality, but a wealth of information about the people and events 
+  - Tiktok Virality
+    - Lots of paid coaching, etc but communities like /r/tiktokhelp have suggestions.
+      - [https://old.reddit.com/r/Tiktokhelp/comments/10tplz6/who_has_the_best_tiktok_growth_course_or_coaching/](https://old.reddit.com/r/Tiktokhelp/comments/10tplz6/who_has_the_best_tiktok_growth_course_or_coaching/)
+      - [https://old.reddit.com/r/Tiktokhelp/comments/1er2ycv/im_a_tiktok_strategist_ama/](https://old.reddit.com/r/Tiktokhelp/comments/1er2ycv/im_a_tiktok_strategist_ama/)
+- Knowledge Tree
+  - Models
+    - Kling
+      - Available via API from replicate
+      - SOTA, produces photorealistic videos with proper image & prompting
+    - Wan2.1
+      - Available on Replicate
+      - Also SOTA
+    - LTX-Video
+      - "Works on a 4090" my ass
+    - Higgsfield AI for effects
+      - Probably less useful for CivTok, but opportunities for humor
+    - Midjourney for image generation makes video generation much more reliable and high quality than doing straight text to video
+      - But they refuse to release an actual supported API so could be difficult. Might need to use eg Dall-e
+      - That said, there are API-aaS companies that offer access through hitting the discord bot
+        - [https://goapi.ai/midjourney-api?utm_source=chatgpt.com](https://goapi.ai/midjourney-api?utm_source=chatgpt.com)
+        - [https://www.imagineapi.dev/](https://www.imagineapi.dev/)
+          - Also does Runway
+        - [https://www.justimagineapi.org/?utm_source=chatgpt.com](https://www.justimagineapi.org/?utm_source=chatgpt.com)
+        - All of these run the risk of getting banned as it's against the EULA
+    - CivTok app currently supports image generation through these models
+      - fluxPro
+      - imagen4
+      - fluxUltra
+      - minimaxImage01
+      - recraftV3
+      - fluxSchnell
+      - sdxlLightning4Step
+      - ideogramV2
+      - ideogramV3Balanced
+      - ideogramV3Turbo
+      - ideogramV3Quality
+      - recraftV3Svg
+      - fluxDevLora
+      - imagen3Fast
+      - imagen3
+      - dalle
+    - Veo3 is an inflection point that has changed SOTA but is currently only available on Flow. No API yet
+  - TikTok Virality
+    - Ugh. Videos that start with your face are 11x more likely to gain traction. I hate this but I guess I'll need to put myself out there. Start every video with a snappy intro then go AI gen to illustrate the voice over.
+      - "6 / You should also try to have a face in the first frames of content - content with faces is 11 x more likely to convert/gain traction (I know many people are trying to grow with faceless accounts - it's VERY hard 🤣)" [https://old.reddit.com/r/Tiktokhelp/comments/1er2ycv/im_a_tiktok_strategist_ama/](https://old.reddit.com/r/Tiktokhelp/comments/1er2ycv/im_a_tiktok_strategist_ama/)
+      - Although it does say "a face" so maybe worth testing with ai gen characters
+  - Great AI gen content
+    - Video
+      - [https://www.youtube.com/shorts/buKJQBExUy8](https://www.youtube.com/shorts/buKJQBExUy8)
+    - Image
+      - 
+        - This is OLD and still hilarious. Don't need SOTA to make LLMs be funny!
+- Insights
+  - Just as you can write good code with AI, you can make good content with AI.
+    - Slop in, slop out
+  - Tips for make good ai gen video
+    - image-to-video is superior to text-to-video for Kling and Wan2.1
+      - 
+- Spiky POVs
+  - Most people are still using generative AI tools in the UI with a lot of manual tinkering. Room for automated use of APIs to push video gen forward.
+    - Will require validation - are people generating videos manually because they're creatives who aren't used to using an API, or because even SOTA models require a lot of hand holding?
+  - AI gen content isn't "slop", *bad* AI gen content is slop. Blaming AI for slop is like blaming IDEs for spaghetti code. Git gud.
+    - Gauntlet was about learning how to use AI to write good code, fast. CivTok will generate good content, fast.
+    - This is entirely done by Veo3. It's fantastic! [https://www.youtube.com/watch?v=buKJQBExUy8](https://www.youtube.com/watch?v=buKJQBExUy8)
+  - Modern civics education--and especially the other players on social media--tends to be "woke", highlighting women, people of color, and other minorities. But, to be frank, they're by and large not the ones who were actually responsible for the Constitution, Bill of Rights, etc--those were a bunch of straight white men.
+    - Stop trying to highlight the role played by ancillary characters, and focus on the main characters. They were all interesting in their own right!
+- Other Brainlifts
+  - Terry [https://workflowy.com/s/ai-image-and-video-g/ZKpDFNDeI8mMnleT#/753e1e764233](https://workflowy.com/s/ai-image-and-video-g/ZKpDFNDeI8mMnleT#/753e1e764233)
+  - Josh [https://workflowy.com/s/brainmaxxing/SiXS6tItfinDYADc#/e763c51fb34c](https://workflowy.com/s/brainmaxxing/SiXS6tItfinDYADc#/e763c51fb34c)

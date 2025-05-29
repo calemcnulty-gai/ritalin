@@ -1,0 +1,71 @@
+# Ritalin for Cursor
+
+- Owners
+  - Cale McNulty
+- Purpose
+  - Developers waste 5-10 minutes per context switch when waiting for AI code generation, destroying flow state and productivity. Current wait times of 15-60 seconds trigger habitual tab switching to social media.
+  - We'll keep developers focused by automatically displaying engaging mini-games during AI generation periods, transforming dead time into productive micro-gaming sessions without leaving the IDE.
+  - In scope
+    - Detecting Cursor AI generation states
+    - Embedding web-based games in VS Code WebViews
+    - State persistence between gaming sessions
+    - Focus metrics and productivity tracking
+  - Out of scope
+    - Other AI coding assistants (GitHub Copilot, etc.)
+    - Desktop/mobile apps outside VS Code
+    - Building custom games (using existing web games)
+    - Multiplayer or social features (MVP)
+- Experts
+  - VS Code Extension Development
+    - [VS Code Extension API Docs](https://code.visualstudio.com/api)
+    - [WebView API Guide](https://code.visualstudio.com/api/extension-guides/webview)
+  - Game Embedding & Web Technologies
+    - [itch.io Embedding Guide](https://itch.io/docs/creators/widget)
+  - Productivity & Flow State
+    - Cal Newport - Deep Work concepts
+    - Mihaly Csikszentmihalyi - Flow state research
+  - Cursor AI Integration
+    - [Cursor Forums](https://forum.cursor.sh/)
+    - Cursor Discord community
+- Knowledge Tree
+  - Detection Methods
+    - DOM Mutation Observers
+      - Monitor chat panel for loading states
+      - Watch for specific CSS class changes
+    - Network Request Interception
+      - Monitor API calls to AI endpoints
+      - Track request/response patterns
+    - VS Code Activity Monitoring
+      - Extension activation events
+      - Editor state changes
+  - Game Integration Approaches
+    - Direct iframe embedding
+      - Pros: Simple implementation
+      - Cons: CORS restrictions
+    - Proxy server approach
+      - Pros: Bypasses CORS
+      - Cons: Requires infrastructure
+    - Local game hosting
+      - Pros: Full control, offline support
+      - Cons: Licensing, maintenance
+  - State Management
+    - VS Code GlobalState API
+    - LocalStorage in WebView
+    - File-based persistence
+  - Performance Optimization
+    - Lazy loading WebViews
+    - Resource cleanup on hide
+    - Memory usage monitoring
+- Insights
+  - The problem isn't the wait time itself, it's what developers do during the wait time
+  - Micro-gaming sessions can maintain cognitive engagement without deep context switching
+  - VS Code WebViews are powerful but have security restrictions that need creative solutions
+  - Game state persistence is crucial - nobody wants to restart from level 1 every time
+- Spiky POVs
+  - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
+  - The future of AI coding isn't faster generation, it's better utilization of generation time
+  - Gamification of waiting could become a standard IDE feature, not just an extension
+  - This could evolve into a platform for indie game developers to reach programmer audiences
+  - The data on "productive waiting time" could reveal insights about AI coding patterns and optimal work sessions
+- Other Brainlifts
+  - [To be added as project evolves] 

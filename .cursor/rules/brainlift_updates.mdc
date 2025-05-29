@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Brainlift Update Rule
+
+When discovering new information about the Ritalin project, update `/brainlift.md`:
+
+- **Experts**: Add new resources, communities, or documentation links
+- **Knowledge Tree**: Document technical findings, API discoveries, or implementation approaches
+- **Insights**: Capture "aha moments" or important realizations
+- **Spiky POVs**: Note controversial ideas or unconventional approaches
+
+Keep entries concise. Focus on information that would help future development. 

@@ -1,0 +1,61 @@
+---
+description: when the user asks the agent to start a new task, regardless of phrasing
+globs: 
+alwaysApply: false
+---
+# Start Task Rule
+
+## Description
+This rule defines the workflow that must be followed when starting work on a new task from the project plan.
+
+## Trigger Conditions
+This rule MUST be triggered when ANY of these conditions are met:
+- User explicitly states they want to start a new task
+- User asks to proceed with the next task
+- User mentions "new task" or "start task"
+- User asks about what to do next
+- User requests to begin work on a task
+- User asks to continue with the project
+- User wants to know what's next in the project plan
+- User asks to move forward with development
+
+## Rule Application
+When triggered, the agent MUST follow these steps in order:
+
+1. Verify Prerequisites
+   - Check current branch status
+   - Ensure all previous tasks are fully completed
+   - Checkout main branch and pull latest changes:
+     ```bash
+     git checkout main
+     git pull origin main
+     ```
+
+2. Create Feature Branch
+   - Create and checkout new feature branch:
+     ```bash
+     git checkout -b feature/task-{number}-{brief-description}
+     ```
+   - Confirm branch creation and current branch
+
+3. Update Project Documentation
+   - Update project_plan.md to mark task as "In Progress"
+   - Add entry to changelog.md noting task start
+   - Include current date and branch name
+
+4. Begin Implementation
+   - Start implementing the task requirements
+   - Follow existing code patterns and conventions
+   - Commit changes regularly with descriptive messages
+
+## Implementation Guidelines
+- Follow the existing project structure and patterns
+- Implement features incrementally with regular commits
+- Update documentation as you progress
+- Keep the changelog current with significant changes
+
+## Expected Outcomes
+- New feature branch created and checked out
+- Project plan updated with task status
+- Changelog updated with task start entry
+- Clear understanding of task requirements and approach

@@ -1,0 +1,41 @@
+---
+description: when the user asks the agent to finish a task, regardless of phrasing
+globs: 
+alwaysApply: false
+---
+# Finish Task Rule
+
+## Description
+This rule defines the workflow that must be followed when finishing work on a task from the project plan.
+
+## Trigger Conditions
+This rule MUST be triggered when ANY of these conditions are met:
+- User explicitly states a task is complete or finished
+- User asks to mark a task as done
+- User requests to create a pull request for a task
+- User says they want to close or wrap up a task
+- User asks to finalize or complete a task
+
+## Rule Application
+When triggered, the agent MUST follow these steps in order:
+
+1. Review Changes
+   - Run `git diff main` to review all changes
+   - Verify that changes match task requirements in project plan
+   - Fix any deficiencies (not nice-to-haves) found during review
+
+2. Update Documentation
+   - Update task status in [project_plan.md](mdc:.cursor/project_plan.md) to "Done"
+   - Update [changelog.md](mdc:.cursor/changelog.md) with completion details
+   - Ensure documentation accurately reflects the actual implementation
+
+3. Create Pull Request
+   - Commit any fixes from the review
+   - Push changes to the feature branch
+   - Create a pull request using the gh cli tool
+   - Include a summary of changes and verification steps taken
+
+## Implementation Guidelines
+- Only fix actual deficiencies found during review, not nice-to-haves
+- Document any known limitations or future improvements in the PR description
+- Follow the project's existing code style and patterns
