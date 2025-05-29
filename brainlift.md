@@ -7,12 +7,12 @@
   - We'll keep developers focused by automatically displaying engaging mini-games during AI generation periods, transforming dead time into productive micro-gaming sessions without leaving the IDE.
   - In scope
     - Detecting Cursor AI generation states
-    - Embedding web-based games in VS Code WebViews
+    - Embedding web-based games in WebView panels (using VS Code extension API)
     - State persistence between gaming sessions
     - Focus metrics and productivity tracking
   - Out of scope
-    - Other AI coding assistants (GitHub Copilot, etc.)
-    - Desktop/mobile apps outside VS Code
+    - Other IDEs or AI coding assistants (GitHub Copilot in VS Code, etc.)
+    - Desktop/mobile apps outside Cursor
     - Building custom games (using existing web games)
     - Multiplayer or social features (MVP)
 - Experts
@@ -88,21 +88,19 @@
   - Context switching during AI generation breaks flow state more than the generation delay
   - Mini-games provide structured distraction that maintains engagement without deep context switching
   - VS Code extensions have surprisingly robust capabilities for embedding interactive content
-  - TypeScript compilation and packaging workflow is straightforward once properly configured
   - WebView panels provide complete HTML5 environment suitable for game embedding
-  - Extension size matters - proper .vscodeignore can reduce package from 66MB to 8KB
   - Micro-gaming sessions can maintain cognitive engagement without deep context switching
-  - VS Code WebViews are powerful but have security restrictions that need creative solutions
   - Game state persistence is crucial - nobody wants to restart from level 1 every time
   - Attention != Productivity: Sometimes a strategic distraction improves overall output
   - Flow State Preservation: Games can maintain engagement during necessary waits
-  - WebView Limitations: CORS and security policies make external game embedding challenging
-  - Local First Strategy: Bundle games with extension to avoid CORS issues
   - State Management Critical: Must handle show/hide cycles gracefully
   - **CORS is Absolute**: itch.io and most game hosts have strict CSP policies that cannot be bypassed through browser tricks
   - **Local Hosting is Perfect**: Self-hosting Unity WebGL games eliminates all CORS issues and provides full control
   - **Game Size Acceptable**: Unity WebGL games (~50-100MB) are reasonable for local storage in modern development environments
   - **Automation Possible**: Can reliably extract and download games from itch.io using iframe URL detection and asset parsing
+  - **Cursor Uses VS Code Engine**: Cursor is a VS Code fork and uses the same extension API and engine specifications in package.json
+  - **Cursor-Specific Detection Required**: While the extension API is the same, we need to detect Cursor's specific AI generation states, not generic VS Code behavior
+  - **Version Compatibility**: Current Cursor builds are based on VS Code 1.93.1, so engine specification should target compatible versions
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time
@@ -114,7 +112,7 @@
 
 ## Technical Discoveries
 
-### itch.io Game Extraction (NEW)
+### itch.io Game Extraction
 - **iframe Detection**: itch.io embeds games in iframe elements with specific URL patterns
 - **Asset Parsing**: Unity WebGL games have predictable asset structure (.loader.js, .framework.js.gz, .data.gz, .wasm.gz)
 - **URL Encoding**: Build directory often contains URL-encoded filenames that need decoding
@@ -137,9 +135,3 @@
 - Dispose WebViews when not needed
 - Limit concurrent WebView instances
 - Use local resources whenever possible
-
-### Security Considerations
-- Always validate message data between WebView and extension
-- Use strict CSP policies
-- Limit localResourceRoots to specific directories
-- Sanitize any user input 

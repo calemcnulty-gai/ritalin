@@ -4,7 +4,9 @@
 
 ## Overview
 
-Ritalin for Cursor is a VS Code extension designed to solve a common problem: the 15-60 second wait times during AI code generation that lead developers to check social media, breaking their flow state. Instead of losing focus, play a quick round of "Die in the Dungeon" right in your editor!
+Ritalin for Cursor is a Cursor extension designed to solve a common problem: the 15-60 second wait times during AI code generation that lead developers to check social media, breaking their flow state. Instead of losing focus, play a quick round of "Die in the Dungeon" right in your editor!
+
+**Note**: This extension is specifically designed for Cursor and targets Cursor's AI generation features. While it uses the VS Code extension API (since Cursor is a VS Code fork), it will only work properly in Cursor.
 
 ## Features
 
@@ -16,7 +18,7 @@ Ritalin for Cursor is a VS Code extension designed to solve a common problem: th
 
 ## Installation
 
-> ⚠️ **Note**: This extension is currently in development and not yet available on the VS Code marketplace.
+> ⚠️ **Note**: This extension is currently in development and not yet available on any marketplace.
 
 ### Development Setup
 
@@ -31,13 +33,13 @@ cd ritalin-for-cursor
 npm install
 ```
 
-3. Open in VS Code:
+3. Open in Cursor:
 ```bash
-code .
+cursor .
 ```
 
 4. Run the extension:
-- Press `F5` to open a new VS Code window with the extension loaded
+- Press `F5` to open a new Cursor window with the extension loaded
 - Or run `npm run watch` for development mode
 
 ## Usage
@@ -56,7 +58,7 @@ code .
 
 ### Configuration
 
-Access settings through VS Code settings or the command palette:
+Access settings through Cursor settings or the command palette:
 
 ```json
 {
