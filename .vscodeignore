@@ -1,0 +1,27 @@
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+.yarnrc
+vsc-extension-quickstart.md
+**/tsconfig.json
+**/.eslintrc.json
+**/*.map
+**/*.ts
+.nyc_output
+coverage/
+node_modules/
+.DS_Store
+*.vsix
+
+# Project specific excludes
+games/**
+tests/**
+docs/**
+scripts/**
+.cursor/**
+PRD.md
+brainlift.md
+example_brainlift.md
+global_cursor_rules.md
+EXTENSION_README.md 

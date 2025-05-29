@@ -190,3 +190,11 @@
 
 ### Next Recommended Task
 - Test itch.io game embedding to ensure game display works before building detection system 
+
+## 2024-12-19
+
+### Started Task 6: VS Code Extension Boilerplate
+- **Branch**: feature/task-6-vscode-extension-boilerplate
+- **Status**: In Progress
+- **Goal**: Create basic VS Code extension structure with package.json, extension.ts, and necessary configuration files
+- Updated finish_task rule to specify PRs must merge to main branch
