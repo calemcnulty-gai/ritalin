@@ -1,0 +1,22 @@
+# Ritalin - VS Code Extension for Embedded Games
+
+# Downloaded games (can be large files)
+games/
+
+# Test files and directories
+tests/
+
+# VS Code extension artifacts
+*.vsix
+out/
+node_modules/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/ 
