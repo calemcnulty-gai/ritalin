@@ -10,7 +10,7 @@ Building a VS Code extension that displays mini-games during Cursor AI generatio
 - [x] **done** - Set up cursor rules for continuous documentation
 - [x] **done** - Research VS Code Extension API for WebView capabilities
 - [x] **done** - Investigate Cursor AI detection methods (DOM monitoring, API hooks)
-- [ ] **not started** - Test itch.io game embedding and CORS limitations
+- [x] **done** - Test itch.io game embedding and CORS limitations
 - [ ] **not started** - Create basic VS Code extension boilerplate
 - [ ] **not started** - Set up TypeScript development environment
 
