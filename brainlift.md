@@ -73,8 +73,24 @@
     - Use strict CSP policies
     - Limit localResourceRoots to specific directories
     - Sanitize any user input
+  - VS Code Extension Development
+    - **WebView API**: `vscode.window.createWebviewPanel()` creates isolated HTML contexts
+    - **Extension Lifecycle**: `activate()` called on extension load, `deactivate()` on unload
+    - **Command Registration**: `vscode.commands.registerCommand()` for user-invokable actions
+    - **Configuration**: `vscode.workspace.getConfiguration()` for user settings
+    - **TypeScript Setup**: Requires @types/vscode, proper tsconfig.json, and compilation to out/ directory
+    - **Packaging**: vsce (VS Code Extension CLI) creates .vsix files for distribution
+    - **File Exclusion**: .vscodeignore controls what gets included in package (critical for size)
+    - **Activation Events**: onStartupFinished, onCommand, etc. control when extension loads
+  - Cursor AI Detection Methods
 - Insights
   - The problem isn't the wait time itself, it's what developers do during the wait time
+  - Context switching during AI generation breaks flow state more than the generation delay
+  - Mini-games provide structured distraction that maintains engagement without deep context switching
+  - VS Code extensions have surprisingly robust capabilities for embedding interactive content
+  - TypeScript compilation and packaging workflow is straightforward once properly configured
+  - WebView panels provide complete HTML5 environment suitable for game embedding
+  - Extension size matters - proper .vscodeignore can reduce package from 66MB to 8KB
   - Micro-gaming sessions can maintain cognitive engagement without deep context switching
   - VS Code WebViews are powerful but have security restrictions that need creative solutions
   - Game state persistence is crucial - nobody wants to restart from level 1 every time
