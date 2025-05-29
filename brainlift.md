@@ -27,11 +27,24 @@
   - Cursor AI Integration
     - [Cursor Forums](https://forum.cursor.sh/)
     - Cursor Discord community
+    - [CodeCursor Extension](https://github.com/Helixform/CodeCursor) - Reference implementation
+    - [Cursor Documentation](https://docs.cursor.com/)
 - Knowledge Tree
   - Detection Methods
     - DOM Mutation Observers
       - Monitor chat panel for loading states
       - Watch for specific CSS class changes
+      - Look for `.inline-chat-widget`, `.inline-chat-progress`
+      - Check for `.monaco-progress-container`
+    - Command Interception
+      - `cursor.action.generateCode`
+      - `cursor.action.chat`
+      - `cursor.inline.completion.trigger`
+      - `workbench.action.chat.open`
+    - Document Change Monitoring
+      - Detect rapid, large text changes
+      - Track selection patterns
+      - Differentiate from paste operations
     - Network Request Interception
       - Monitor API calls to AI endpoints
       - Track request/response patterns
@@ -61,6 +74,9 @@
   - Micro-gaming sessions can maintain cognitive engagement without deep context switching
   - VS Code WebViews are powerful but have security restrictions that need creative solutions
   - Game state persistence is crucial - nobody wants to restart from level 1 every time
+  - Cursor being a VS Code fork means we can leverage VS Code extension APIs for detection
+  - DOM monitoring is the most reliable detection method since Cursor inherits VS Code's UI patterns
+  - A hybrid detection approach combining multiple methods provides the best reliability
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time

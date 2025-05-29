@@ -54,4 +54,13 @@
 ### Outstanding Questions
 - CORS limitations with itch.io embedding
 - Cursor's internal API accessibility
-- Performance impact of WebView on coding experience 
+- Performance impact of WebView on coding experience
+
+## [2024-01-10] - Task 4: Investigate Cursor AI Detection Methods
+- Started investigation into Cursor AI detection methods (DOM monitoring, API hooks)
+- Created feature branch: feature/task-4-cursor-ai-detection
+- Focus areas:
+  - DOM mutation observer approaches
+  - Cursor-specific API hooks
+  - Event listener strategies
+  - Performance considerations 
