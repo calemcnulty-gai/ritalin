@@ -101,6 +101,9 @@
   - **Cursor Uses VS Code Engine**: Cursor is a VS Code fork and uses the same extension API and engine specifications in package.json
   - **Cursor-Specific Detection Required**: While the extension API is the same, we need to detect Cursor's specific AI generation states, not generic VS Code behavior
   - **Version Compatibility**: Current Cursor builds are based on VS Code 1.93.1, so engine specification should target compatible versions
+  - **Preloading is the Answer**: Games should load on extension startup and stay running in background, not on-demand. Show/hide is just CSS visibility control. No loading delays, no offline complexity, simple and fast.
+  - **Internet Dependency is Fine**: Cursor requires internet for AI models anyway, so offline support is unnecessary complexity
+  - **WebView Persistence**: retainContextWhenHidden keeps games running even when panels are hidden, perfect for instant show/hide
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time

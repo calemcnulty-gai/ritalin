@@ -245,3 +245,32 @@
 - **Status**: In Progress
 - **Goal**: Create basic VS Code extension structure with package.json, extension.ts, and necessary configuration files
 - Updated finish_task rule to specify PRs must merge to main branch
+
+## Latest Updates
+
+### Unity WebGL Loading Implementation (d5243e4)
+- **MAJOR**: Replaced iframe-based game loading with direct Unity WebGL integration
+- **Enhancement**: Added comprehensive debug logging throughout extension lifecycle  
+- **Fix**: Proper WebView resource configuration for Unity build files (loader.js, data.gz, framework.js.gz, wasm.gz)
+- **Feature**: Progress tracking and error handling for Unity loading with visual progress bar
+- **Security**: Updated CSP policies and WebView security restrictions for Unity WebGL
+- **UX**: 30-second timeout with proper error reporting and retry functionality
+- **Debug**: Extensive console logging with `[Ritalin]` prefixes for all operations
+
+### Current Status
+- ✅ Extension activation and command registration working
+- ✅ WebView panel creation successful  
+- ✅ Debug interface and error handling implemented
+- ⚠️ Unity WebGL still failing to load due to WebView security restrictions
+- ⚠️ Service worker and CORS issues persist in Cursor's WebView environment
+
+### Next Steps
+- Consider lighter-weight HTML5 games instead of Unity WebGL
+- Explore bundling simple Canvas/JavaScript games 
+- Alternative: Create custom mini-games optimized for WebView environment
+- Investigate Cursor-specific WebView capabilities vs standard VS Code
+
+### Outstanding Issues
+- Unity WebGL incompatibility with Cursor WebView security model
+- Service worker registration failing in WebView context
+- Large file loading (34MB+ game assets) may be problematic for extension distribution

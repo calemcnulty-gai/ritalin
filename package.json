@@ -37,6 +37,21 @@
         "command": "ritalin.toggleGame",
         "title": "Toggle Game",
         "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.searchGames",
+        "title": "Search itch.io Games",
+        "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.manageGames",
+        "title": "Manage Downloaded Games",
+        "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.openSettings",
+        "title": "Open Settings",
+        "category": "Ritalin"
       }
     ],
     "keybindings": [
@@ -49,10 +64,10 @@
     "configuration": {
       "title": "Ritalin",
       "properties": {
-        "ritalin.gameUrl": {
+        "ritalin.selectedGame": {
           "type": "string",
-          "default": "https://disorium.itch.io/die-in-the-dungeon",
-          "description": "URL of the game to display"
+          "default": "",
+          "description": "ID of the currently selected game"
         },
         "ritalin.showDelay": {
           "type": "number",
@@ -73,6 +88,11 @@
           "type": "number",
           "default": 600,
           "description": "Default game window height"
+        },
+        "ritalin.autoDownload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically download games after search selection"
         }
       }
     }
