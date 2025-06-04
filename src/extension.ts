@@ -10,34 +10,101 @@ let gameManager: GameManager | undefined;
 export function activate(context: vscode.ExtensionContext) {
     console.log('[Ritalin] Extension is now activating!');
     console.log('[Ritalin] Extension URI:', context.extensionUri.toString());
+    console.log('[Ritalin] Global Storage Path:', context.globalStorageUri?.fsPath);
 
-    // Initialize the game manager
+    // Initialize the game panel FIRST
+    console.log('[Ritalin] Initializing GamePanel...');
+    gamePanel = new GamePanel(context.extensionUri, context);
+    
+    // Initialize the cursor detector
+    console.log('[Ritalin] Initializing CursorDetector...');
+    cursorDetector = new CursorDetector();
+
+    // Initialize the game manager AFTER panel is ready
     console.log('[Ritalin] Initializing GameManager...');
     gameManager = new GameManager(context);
 
     // Initialize GameManager (download default game if needed)
     gameManager.initialize().then(() => {
         console.log('[Ritalin] GameManager initialization complete');
+        
+        // Log all downloaded games
+        const downloadedGames = gameManager?.getDownloadedGames();
+        console.log('[Ritalin] Downloaded games found:', downloadedGames?.length || 0);
+        downloadedGames?.forEach(game => {
+            console.log(`[Ritalin]   - ${game.title} (${game.id}) [Downloaded: ${game.isDownloaded}] [Entry: ${game.entryPoint}]`);
+        });
+        
         // Load selected game into the panel if available
         const selectedGame = gameManager?.getSelectedGame();
         if (selectedGame && gamePanel) {
             console.log('[Ritalin] Loading selected game:', selectedGame.title);
+            console.log('[Ritalin] Game entry point:', selectedGame.entryPoint);
             gamePanel.loadGame(selectedGame);
+        } else {
+            console.log('[Ritalin] No selected game found');
         }
     }).catch(error => {
         console.error('[Ritalin] GameManager initialization failed:', error);
     });
 
-    // Initialize the game panel
-    console.log('[Ritalin] Initializing GamePanel...');
-    gamePanel = new GamePanel(context.extensionUri);
-    
-    // Initialize the cursor detector
-    console.log('[Ritalin] Initializing CursorDetector...');
-    cursorDetector = new CursorDetector();
-
     // Register commands
     console.log('[Ritalin] Registering commands...');
+    
+    // Add explicit preload command for debugging
+    const preloadGameCommand = vscode.commands.registerCommand('ritalin.preloadGame', async () => {
+        console.log('[Ritalin] Preload game command triggered');
+        
+        if (!gamePanel) {
+            console.error('[Ritalin] GamePanel is undefined! Creating new panel...');
+            gamePanel = new GamePanel(context.extensionUri, context);
+        }
+        
+        if (!gameManager) {
+            console.error('[Ritalin] GameManager is undefined!');
+            vscode.window.showErrorMessage('GameManager not initialized. Please wait for extension activation to complete.');
+            return;
+        }
+        
+        // Show debug information
+        const downloadedGames = gameManager.getDownloadedGames();
+        const selectedGame = gameManager.getSelectedGame();
+        
+        console.log('[Ritalin] === PRELOAD DEBUG INFO ===');
+        console.log('[Ritalin] Downloaded games:', downloadedGames.length);
+        console.log('[Ritalin] Selected game:', selectedGame?.title || 'None');
+        console.log('[Ritalin] GamePanel exists:', !!gamePanel);
+        console.log('[Ritalin] GameManager exists:', !!gameManager);
+        
+        // Show status in notification
+        const statusMessage = `
+Debug Status:
+- Downloaded games: ${downloadedGames.length}
+- Selected game: ${selectedGame?.title || 'None'}
+- Panel ready: ${!!gamePanel}
+- Manager ready: ${!!gameManager}
+        `.trim();
+        
+        vscode.window.showInformationMessage(statusMessage, { modal: false });
+        
+        // If we have a selected game, preload it
+        if (selectedGame && gamePanel) {
+            console.log('[Ritalin] Preloading selected game:', selectedGame.title);
+            console.log('[Ritalin] Game entry point:', selectedGame.entryPoint);
+            console.log('[Ritalin] Game is downloaded:', selectedGame.isDownloaded);
+            
+            gamePanel.preload(selectedGame);
+            vscode.window.showInformationMessage(`Preloaded: ${selectedGame.title}`);
+        } else if (!selectedGame) {
+            console.log('[Ritalin] No game selected for preload');
+            gamePanel.preload(); // Show debug info even without a game
+            vscode.window.showWarningMessage('No game selected. Use "Search itch.io Games" to download a game first.');
+        } else {
+            console.log('[Ritalin] Cannot preload - GamePanel not available');
+            vscode.window.showErrorMessage('GamePanel not available. Extension may not be fully initialized.');
+        }
+    });
+    
     const showGameCommand = vscode.commands.registerCommand('ritalin.showGame', () => {
         console.log('[Ritalin] Show game command triggered');
         if (gamePanel) {
@@ -78,6 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Add to subscriptions for cleanup
     context.subscriptions.push(
+        preloadGameCommand,
         showGameCommand,
         hideGameCommand,
         toggleGameCommand,

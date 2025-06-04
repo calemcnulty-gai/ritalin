@@ -189,8 +189,34 @@ export class GameManager {
             console.log(`[Ritalin] Downloading game: ${gameInfo.title} from ${gameInfo.url}`);
             
             // Use the Python script to download and extract the game
-            const scriptPath = path.join(this._context.extensionPath, 'scripts', 'download_game.py');
-            await execAsync(`python3 "${scriptPath}" "${gameInfo.url}" "${gamePath}"`);
+            const scriptPath = path.join(this._context.extensionPath, 'scripts', 'grab_itch_game.py');
+            
+            // Change to the extension directory so the script creates games/ directory in the right place
+            const originalCwd = process.cwd();
+            process.chdir(this._context.extensionPath);
+            
+            try {
+                await execAsync(`python3 "${scriptPath}" "${gameInfo.url}" "${gameId}"`);
+            } finally {
+                process.chdir(originalCwd);
+            }
+            
+            // The script creates games in the extension's games/ directory, move to storage path
+            const extensionGamePath = path.join(this._context.extensionPath, 'games', gameId);
+            if (fs.existsSync(extensionGamePath)) {
+                // Ensure storage directory exists
+                const storageDir = path.dirname(gamePath);
+                if (!fs.existsSync(storageDir)) {
+                    fs.mkdirSync(storageDir, { recursive: true });
+                }
+                
+                // Move from extension/games/ to global storage
+                if (fs.existsSync(gamePath)) {
+                    fs.rmSync(gamePath, { recursive: true, force: true });
+                }
+                fs.renameSync(extensionGamePath, gamePath);
+                console.log(`[Ritalin] Moved game from ${extensionGamePath} to ${gamePath}`);
+            }
             
             // Find the entry point (standalone.html or index.html)
             const entryPoint = this._findGameEntryPoint(gamePath);

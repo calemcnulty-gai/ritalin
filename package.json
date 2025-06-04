@@ -24,6 +24,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "ritalin.preloadGame",
+        "title": "Preload Game (Debug)",
+        "category": "Ritalin"
+      },
+      {
         "command": "ritalin.showGame",
         "title": "Show Game",
         "category": "Ritalin"
