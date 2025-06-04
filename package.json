@@ -22,6 +22,17 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "views": {
+      "panel": [
+        {
+          "type": "webview",
+          "id": "ritalin.gameView",
+          "name": "Ritalin Game",
+          "icon": "$(game)",
+          "visibility": "visible"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "ritalin.preloadGame",
@@ -98,6 +109,12 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically download games after search selection"
+        },
+        "ritalin.panelPosition": {
+          "type": "string",
+          "enum": ["editor", "bottom"],
+          "default": "bottom",
+          "description": "Where to display the game panel (editor: as a tab, bottom: in the bottom panel area)"
         }
       }
     }

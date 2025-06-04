@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import { GamePanel } from './gamePanel';
+import { GamePanelViewProvider } from './gamePanelView';
 import { CursorDetector } from './cursorDetector';
 import { GameManager, GameInfo } from './gameManager';
 
 let gamePanel: GamePanel | undefined;
+let gamePanelViewProvider: GamePanelViewProvider | undefined;
 let cursorDetector: CursorDetector | undefined;
 let gameManager: GameManager | undefined;
 
@@ -12,15 +14,38 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('[Ritalin] Extension URI:', context.extensionUri.toString());
     console.log('[Ritalin] Global Storage Path:', context.globalStorageUri?.fsPath);
 
-    // Initialize the game panel FIRST
-    console.log('[Ritalin] Initializing GamePanel...');
-    gamePanel = new GamePanel(context.extensionUri, context);
+    // Read configuration to determine panel type
+    const config = vscode.workspace.getConfiguration('ritalin');
+    const panelPosition = config.get<string>('panelPosition', 'bottom');
+    const usePanelView = panelPosition === 'bottom';
+    
+    console.log('[Ritalin] Panel position configuration:', panelPosition);
+    console.log('[Ritalin] Using panel view:', usePanelView);
+
+    // Initialize based on configuration
+    if (usePanelView) {
+        // Initialize the new WebviewView provider for panel
+        console.log('[Ritalin] Initializing GamePanelViewProvider...');
+        gamePanelViewProvider = new GamePanelViewProvider(context.extensionUri, context);
+        
+        // Register the webview view provider
+        context.subscriptions.push(
+            vscode.window.registerWebviewViewProvider(
+                GamePanelViewProvider.viewType,
+                gamePanelViewProvider
+            )
+        );
+    } else {
+        // Initialize the traditional WebviewPanel
+        console.log('[Ritalin] Initializing GamePanel...');
+        gamePanel = new GamePanel(context.extensionUri, context);
+    }
     
     // Initialize the cursor detector
     console.log('[Ritalin] Initializing CursorDetector...');
     cursorDetector = new CursorDetector();
 
-    // Initialize the game manager AFTER panel is ready
+    // Initialize the game manager
     console.log('[Ritalin] Initializing GameManager...');
     gameManager = new GameManager(context);
 
@@ -37,16 +62,56 @@ export function activate(context: vscode.ExtensionContext) {
         
         // Load selected game into the panel if available
         const selectedGame = gameManager?.getSelectedGame();
-        if (selectedGame && gamePanel) {
+        if (selectedGame) {
             console.log('[Ritalin] Loading selected game:', selectedGame.title);
             console.log('[Ritalin] Game entry point:', selectedGame.entryPoint);
-            gamePanel.loadGame(selectedGame);
+            
+            if (usePanelView && gamePanelViewProvider) {
+                gamePanelViewProvider.loadGame(selectedGame);
+            } else if (!usePanelView && gamePanel) {
+                gamePanel.loadGame(selectedGame);
+            }
         } else {
             console.log('[Ritalin] No selected game found');
         }
     }).catch(error => {
         console.error('[Ritalin] GameManager initialization failed:', error);
     });
+
+    // Helper functions that need access to usePanelView
+    const showGame = () => {
+        if (usePanelView && gamePanelViewProvider) {
+            gamePanelViewProvider.show();
+            // Also reveal the panel area if it's hidden
+            vscode.commands.executeCommand('workbench.action.togglePanel');
+        } else if (!usePanelView && gamePanel) {
+            gamePanel?.show();
+        }
+    };
+
+    const hideGame = () => {
+        if (usePanelView && gamePanelViewProvider) {
+            gamePanelViewProvider.hide();
+        } else if (!usePanelView && gamePanel) {
+            gamePanel.hide();
+        }
+    };
+
+    const toggleGame = () => {
+        if (usePanelView && gamePanelViewProvider) {
+            gamePanelViewProvider.toggle();
+        } else if (!usePanelView && gamePanel) {
+            gamePanel.toggle();
+        }
+    };
+
+    const loadGameIntoPanel = (game: GameInfo) => {
+        if (usePanelView && gamePanelViewProvider) {
+            gamePanelViewProvider.loadGame(game);
+        } else if (!usePanelView && gamePanel) {
+            gamePanel.loadGame(game);
+        }
+    };
 
     // Register commands
     console.log('[Ritalin] Registering commands...');
@@ -55,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
     const preloadGameCommand = vscode.commands.registerCommand('ritalin.preloadGame', async () => {
         console.log('[Ritalin] Preload game command triggered');
         
-        if (!gamePanel) {
+        if (!usePanelView && !gamePanel) {
             console.error('[Ritalin] GamePanel is undefined! Creating new panel...');
             gamePanel = new GamePanel(context.extensionUri, context);
         }
@@ -73,69 +138,70 @@ export function activate(context: vscode.ExtensionContext) {
         console.log('[Ritalin] === PRELOAD DEBUG INFO ===');
         console.log('[Ritalin] Downloaded games:', downloadedGames.length);
         console.log('[Ritalin] Selected game:', selectedGame?.title || 'None');
-        console.log('[Ritalin] GamePanel exists:', !!gamePanel);
+        console.log('[Ritalin] Panel type:', usePanelView ? 'WebviewView' : 'WebviewPanel');
+        console.log('[Ritalin] Panel ready:', usePanelView ? !!gamePanelViewProvider : !!gamePanel);
         console.log('[Ritalin] GameManager exists:', !!gameManager);
         
         // Show status in notification
         const statusMessage = `
 Debug Status:
+- Panel type: ${usePanelView ? 'WebviewView (Panel)' : 'WebviewPanel (Editor)'}
 - Downloaded games: ${downloadedGames.length}
 - Selected game: ${selectedGame?.title || 'None'}
-- Panel ready: ${!!gamePanel}
+- Panel ready: ${usePanelView ? !!gamePanelViewProvider : !!gamePanel}
 - Manager ready: ${!!gameManager}
         `.trim();
         
         vscode.window.showInformationMessage(statusMessage, { modal: false });
         
         // If we have a selected game, preload it
-        if (selectedGame && gamePanel) {
+        if (selectedGame) {
             console.log('[Ritalin] Preloading selected game:', selectedGame.title);
             console.log('[Ritalin] Game entry point:', selectedGame.entryPoint);
             console.log('[Ritalin] Game is downloaded:', selectedGame.isDownloaded);
             
-            gamePanel.preload(selectedGame);
-            vscode.window.showInformationMessage(`Preloaded: ${selectedGame.title}`);
+            if (usePanelView && gamePanelViewProvider) {
+                gamePanelViewProvider.loadGame(selectedGame);
+                vscode.window.showInformationMessage(`Preloaded in panel: ${selectedGame.title}`);
+            } else if (!usePanelView && gamePanel) {
+                gamePanel.preload(selectedGame);
+                vscode.window.showInformationMessage(`Preloaded: ${selectedGame.title}`);
+            }
         } else if (!selectedGame) {
             console.log('[Ritalin] No game selected for preload');
-            gamePanel.preload(); // Show debug info even without a game
+            if (!usePanelView && gamePanel) {
+                gamePanel.preload(); // Show debug info even without a game
+            }
             vscode.window.showWarningMessage('No game selected. Use "Search itch.io Games" to download a game first.');
         } else {
-            console.log('[Ritalin] Cannot preload - GamePanel not available');
-            vscode.window.showErrorMessage('GamePanel not available. Extension may not be fully initialized.');
+            console.log('[Ritalin] Cannot preload - Panel not available');
+            vscode.window.showErrorMessage('Panel not available. Extension may not be fully initialized.');
         }
     });
     
     const showGameCommand = vscode.commands.registerCommand('ritalin.showGame', () => {
         console.log('[Ritalin] Show game command triggered');
-        if (gamePanel) {
-            gamePanel.show();
-        } else {
-            console.error('[Ritalin] GamePanel is undefined!');
-        }
+        showGame();
     });
 
     const hideGameCommand = vscode.commands.registerCommand('ritalin.hideGame', () => {
         console.log('[Ritalin] Hide game command triggered');
-        if (gamePanel) {
-            gamePanel.hide();
-        }
+        hideGame();
     });
 
     const toggleGameCommand = vscode.commands.registerCommand('ritalin.toggleGame', () => {
         console.log('[Ritalin] Toggle game command triggered');
-        if (gamePanel) {
-            gamePanel.toggle();
-        }
+        toggleGame();
     });
 
     const searchGamesCommand = vscode.commands.registerCommand('ritalin.searchGames', async () => {
         console.log('[Ritalin] Search games command triggered');
-        await showGameSearchDialog();
+        await showGameSearchDialog(loadGameIntoPanel);
     });
 
     const manageGamesCommand = vscode.commands.registerCommand('ritalin.manageGames', async () => {
         console.log('[Ritalin] Manage games command triggered');
-        await showGameManagementDialog();
+        await showGameManagementDialog(loadGameIntoPanel);
     });
 
     const openSettingsCommand = vscode.commands.registerCommand('ritalin.openSettings', () => {
@@ -167,26 +233,24 @@ Debug Status:
 
             console.log('[Ritalin] Config - enabled:', enabled, 'delay:', delay);
 
-            if (enabled && gamePanel) {
+            if (enabled) {
                 console.log('[Ritalin] Showing game after delay...');
                 setTimeout(() => {
-                    gamePanel?.show();
+                    showGame();
                 }, delay);
             }
         });
 
         cursorDetector.onAiGenerationEnd(() => {
             console.log('[Ritalin] AI generation ended - hiding game');
-            if (gamePanel) {
-                gamePanel.hide();
-            }
+            hideGame();
         });
     }
 
     console.log('[Ritalin] Extension activation complete!');
 }
 
-async function showGameSearchDialog(): Promise<void> {
+async function showGameSearchDialog(loadGameIntoPanel: (game: GameInfo) => void): Promise<void> {
     if (!gameManager) {
         vscode.window.showErrorMessage('Game manager not initialized');
         return;
@@ -232,10 +296,13 @@ async function showGameSearchDialog(): Promise<void> {
             });
 
             if (selected && !selected.game.isDownloaded) {
-                await downloadAndSelectGame(selected.game);
+                await downloadAndSelectGame(selected.game, loadGameIntoPanel);
             } else if (selected && selected.game.isDownloaded) {
                 await gameManager!.setSelectedGame(selected.game.id);
                 vscode.window.showInformationMessage(`Selected ${selected.game.title} as default game`);
+                
+                // Load the game into the panel
+                loadGameIntoPanel(selected.game);
             }
 
         } catch (error) {
@@ -244,7 +311,7 @@ async function showGameSearchDialog(): Promise<void> {
     });
 }
 
-async function showGameManagementDialog(): Promise<void> {
+async function showGameManagementDialog(loadGameIntoPanel: (game: GameInfo) => void): Promise<void> {
     if (!gameManager) {
         vscode.window.showErrorMessage('Game manager not initialized');
         return;
@@ -259,7 +326,7 @@ async function showGameManagementDialog(): Promise<void> {
             'Search Games'
         );
         if (result === 'Search Games') {
-            await showGameSearchDialog();
+            await showGameSearchDialog(loadGameIntoPanel);
         }
         return;
     }
@@ -289,7 +356,7 @@ async function showGameManagementDialog(): Promise<void> {
 
     if (!selected.game) {
         // Search for more games
-        await showGameSearchDialog();
+        await showGameSearchDialog(loadGameIntoPanel);
         return;
     }
 
@@ -313,6 +380,9 @@ async function showGameManagementDialog(): Promise<void> {
             case 'select':
                 await gameManager.setSelectedGame(selected.game.id);
                 vscode.window.showInformationMessage(`Selected ${selected.game.title} as default game`);
+                
+                // Load the game into the panel
+                loadGameIntoPanel(selected.game);
                 break;
 
             case 'delete':
@@ -332,7 +402,7 @@ async function showGameManagementDialog(): Promise<void> {
     }
 }
 
-async function downloadAndSelectGame(game: GameInfo): Promise<void> {
+async function downloadAndSelectGame(game: GameInfo, loadGameIntoPanel: (game: GameInfo) => void): Promise<void> {
     if (!gameManager) {
         return;
     }
@@ -352,6 +422,9 @@ async function downloadAndSelectGame(game: GameInfo): Promise<void> {
             vscode.window.showInformationMessage(
                 `Successfully downloaded and selected ${downloadedGame.title}!`
             );
+            
+            // Load the game into the panel
+            loadGameIntoPanel(downloadedGame);
             
         } catch (error) {
             vscode.window.showErrorMessage(`Download failed: ${error}`);
