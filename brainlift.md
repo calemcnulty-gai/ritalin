@@ -7,12 +7,12 @@
   - We'll keep developers focused by automatically displaying engaging mini-games during AI generation periods, transforming dead time into productive micro-gaming sessions without leaving the IDE.
   - In scope
     - Detecting Cursor AI generation states
-    - Embedding web-based games in VS Code WebViews
+    - Embedding web-based games in WebView panels (using VS Code extension API)
     - State persistence between gaming sessions
     - Focus metrics and productivity tracking
   - Out of scope
-    - Other AI coding assistants (GitHub Copilot, etc.)
-    - Desktop/mobile apps outside VS Code
+    - Other IDEs or AI coding assistants (GitHub Copilot in VS Code, etc.)
+    - Desktop/mobile apps outside Cursor
     - Building custom games (using existing web games)
     - Multiplayer or social features (MVP)
 - Experts
@@ -73,20 +73,40 @@
     - Use strict CSP policies
     - Limit localResourceRoots to specific directories
     - Sanitize any user input
+  - VS Code Extension Development
+    - **WebView API**: `vscode.window.createWebviewPanel()` creates isolated HTML contexts
+    - **Extension Lifecycle**: `activate()` called on extension load, `deactivate()` on unload
+    - **Command Registration**: `vscode.commands.registerCommand()` for user-invokable actions
+    - **Configuration**: `vscode.workspace.getConfiguration()` for user settings
+    - **TypeScript Setup**: Requires @types/vscode, proper tsconfig.json, and compilation to out/ directory
+    - **Packaging**: vsce (VS Code Extension CLI) creates .vsix files for distribution
+    - **File Exclusion**: .vscodeignore controls what gets included in package (critical for size)
+    - **Activation Events**: onStartupFinished, onCommand, etc. control when extension loads
+  - Cursor AI Detection Methods
 - Insights
   - The problem isn't the wait time itself, it's what developers do during the wait time
+  - Context switching during AI generation breaks flow state more than the generation delay
+  - Mini-games provide structured distraction that maintains engagement without deep context switching
+  - VS Code extensions have surprisingly robust capabilities for embedding interactive content
+  - WebView panels provide complete HTML5 environment suitable for game embedding
   - Micro-gaming sessions can maintain cognitive engagement without deep context switching
-  - VS Code WebViews are powerful but have security restrictions that need creative solutions
   - Game state persistence is crucial - nobody wants to restart from level 1 every time
   - Attention != Productivity: Sometimes a strategic distraction improves overall output
   - Flow State Preservation: Games can maintain engagement during necessary waits
-  - WebView Limitations: CORS and security policies make external game embedding challenging
-  - Local First Strategy: Bundle games with extension to avoid CORS issues
   - State Management Critical: Must handle show/hide cycles gracefully
   - **CORS is Absolute**: itch.io and most game hosts have strict CSP policies that cannot be bypassed through browser tricks
   - **Local Hosting is Perfect**: Self-hosting Unity WebGL games eliminates all CORS issues and provides full control
   - **Game Size Acceptable**: Unity WebGL games (~50-100MB) are reasonable for local storage in modern development environments
   - **Automation Possible**: Can reliably extract and download games from itch.io using iframe URL detection and asset parsing
+  - **Cursor Uses VS Code Engine**: Cursor is a VS Code fork and uses the same extension API and engine specifications in package.json
+  - **Cursor-Specific Detection Required**: While the extension API is the same, we need to detect Cursor's specific AI generation states, not generic VS Code behavior
+  - **Version Compatibility**: Current Cursor builds are based on VS Code 1.93.1, so engine specification should target compatible versions
+  - **Preloading is the Answer**: Games should load on extension startup and stay running in background, not on-demand. Show/hide is just CSS visibility control. No loading delays, no offline complexity, simple and fast.
+  - **Internet Dependency is Fine**: Cursor requires internet for AI models anyway, so offline support is unnecessary complexity
+  - **WebView Persistence**: retainContextWhenHidden keeps games running even when panels are hidden, perfect for instant show/hide
+  - **Unity WebGL Incompatible with WebView**: Unity games require service workers and complex asset loading that fail in VS Code's WebView security model. The CSP restrictions and sandboxing make Unity WebGL games unviable.
+  - **Panel Visibility != Content Visibility**: VS Code API doesn't provide direct panel hide/show methods. Current implementation controls content visibility via CSS, not the actual panel frame.
+  - **Bottom Panel Requires Different API**: True bottom panel (like Terminal) needs WebView View API, not WebView Panel API. This would be a significant refactoring.
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time
@@ -98,7 +118,7 @@
 
 ## Technical Discoveries
 
-### itch.io Game Extraction (NEW)
+### itch.io Game Extraction
 - **iframe Detection**: itch.io embeds games in iframe elements with specific URL patterns
 - **Asset Parsing**: Unity WebGL games have predictable asset structure (.loader.js, .framework.js.gz, .data.gz, .wasm.gz)
 - **URL Encoding**: Build directory often contains URL-encoded filenames that need decoding
@@ -110,20 +130,30 @@
 - **CORS Headers**: Local test server needs specific headers for proper WebAssembly loading
 - **File Structure**: Predictable build output makes automation possible
 - **Resource Loading**: All assets load via relative paths, making local hosting straightforward
+- **WebView Incompatibility**: Unity's requirement for service workers and complex asset loading patterns conflict with VS Code WebView's security model
+- **File Size Issues**: 34MB+ Unity builds may be too large for extension distribution
+- **Alternative Needed**: Must pivot to lightweight HTML5/Canvas games that work within WebView constraints
 
 ### WebView Architecture
 - Nested iframe structure provides best control
 - Service workers can implement virtual endpoints for resource loading
 - CSP inheritance can be problematic for inline content
+- **Panel Types**: WebView Panel API creates editor tabs, WebView View API creates sidebar/bottom panels
+- **Visibility Control**: No direct API to hide panel frame - only content visibility or focus switching
+- **State Persistence**: `retainContextWhenHidden: true` maintains WebView state when panel is backgrounded
+
+### Panel Management Discoveries
+- **No Direct Hide Method**: VS Code API lacks panel.hide() - must use workarounds
+- **Editor Panels**: Created with `createWebviewPanel`, appear as tabs in editor area
+- **Bottom Panels**: Require `registerWebviewViewProvider` and manifest changes
+- **Visibility Options**: 
+  - Dispose/recreate (loses state)
+  - Focus switching (panel remains in tab bar)
+  - Minimize panel area (for bottom panels only)
+- **Best Practice**: Use `retainContextWhenHidden` and control content visibility, not panel visibility
 
 ### Performance Optimizations
 - Lazy load game resources
 - Dispose WebViews when not needed
 - Limit concurrent WebView instances
 - Use local resources whenever possible
-
-### Security Considerations
-- Always validate message data between WebView and extension
-- Use strict CSP policies
-- Limit localResourceRoots to specific directories
-- Sanitize any user input 

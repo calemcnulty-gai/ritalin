@@ -5,68 +5,103 @@ Building a VS Code extension that displays mini-games during Cursor AI generatio
 
 ## Task List
 
-### Phase 1: Foundation & Research
-- [x] **done** - Create project documentation structure (PRD, README, brainlift)
-- [x] **done** - Set up cursor rules for continuous documentation
-- [x] **done** - Research VS Code Extension API for WebView capabilities
-- [x] **done** - Investigate Cursor AI detection methods (DOM monitoring, API hooks)
-- [x] **done** - Test itch.io game embedding and CORS limitations
-- [ ] **not started** - Create basic VS Code extension boilerplate
-- [ ] **not started** - Set up TypeScript development environment
+### Phase 1: Core Extension Infrastructure
 
-### Phase 2: Core Detection System
-- [ ] **not started** - Implement AI generation start detection
-- [ ] **not started** - Implement AI generation completion detection
-- [ ] **not started** - Create event system for state changes
-- [ ] **not started** - Add detection for user input requests
-- [ ] **not started** - Test detection accuracy and timing
+#### Task 1: Project Setup
+- [x] Initialize npm project with proper dependencies
+- [x] Set up TypeScript configuration for VS Code extension development
+- [x] Create basic directory structure
 
-### Phase 3: Game Display Implementation
-- [ ] **not started** - Create WebView panel for game display
-- [ ] **not started** - Implement iframe loader for itch.io game
-- [ ] **not started** - Add draggable/resizable window functionality
-- [ ] **not started** - Implement show/hide animations
-- [ ] **not started** - Handle CORS and security policies
+#### Task 2: VS Code Extension Boilerplate
+- [x] Create package.json with proper VS Code extension metadata
+- [x] Implement basic extension.ts with activation/deactivation
+- [x] Set up command registration for show/hide/toggle game panel
+- [x] Configure extension manifest and activation events
 
-### Phase 4: State Management
-- [ ] **not started** - Design game state persistence schema
-- [ ] **not started** - Implement local storage for game saves
-- [ ] **not started** - Create state restoration on window show
-- [ ] **not started** - Add session tracking for statistics
+#### Task 3: Game Panel WebView Implementation
+- [x] Create GamePanel class with WebView integration
+- [x] Implement show/hide/toggle functionality
+- [x] Set up proper resource loading configuration
+- [x] Add debugging and error handling
 
-### Phase 5: User Experience
-- [ ] **not started** - Add configuration settings UI
-- [ ] **not started** - Implement delay timer before game shows
-- [ ] **not started** - Create smooth transitions and animations
-- [ ] **not started** - Add minimize/restore functionality
-- [ ] **not started** - Implement focus management
+#### Task 4: Cursor AI Detection Framework
+- [x] Create CursorDetector class with event system
+- [x] Implement placeholder detection methods
+- [x] Set up event handlers for AI generation start/end
+- [x] Configure auto-show/hide based on AI detection
 
-### Phase 6: Polish & Edge Cases
-- [ ] **not started** - Handle network failures gracefully
-- [ ] **not started** - Add offline game fallback
-- [ ] **not started** - Optimize performance and memory usage
-- [ ] **not started** - Test with multiple Cursor windows
-- [ ] **not started** - Add comprehensive error handling
+#### Task 5: Game Integration
+- [x] Download and extract Unity WebGL game from itch.io
+- [x] Implement Unity WebGL loading in WebView
+- [x] Add comprehensive debugging and error handling
+- [x] **DONE**: Unity WebGL incompatible with Cursor WebView security model
 
-### Phase 7: Statistics & Analytics
-- [ ] **not started** - Implement usage tracking system
-- [ ] **not started** - Create statistics dashboard view
-- [ ] **not started** - Add "productive time" calculations
-- [ ] **not started** - Design achievement system
+#### Task 6: Testing and Debugging
+- [x] Set up extension packaging with vsce
+- [x] Create comprehensive debug logging system
+- [x] Test extension installation and basic functionality
+- [x] Implement error reporting and retry mechanisms
 
-### Phase 8: Testing & Documentation
-- [ ] **not started** - Write unit tests for core functionality
-- [ ] **not started** - Create integration tests
-- [ ] **not started** - Write user documentation
-- [ ] **not started** - Create developer documentation
-- [ ] **not started** - Prepare marketplace submission
+### Phase 2: Game Loading Solutions
 
-### Phase 9: Launch Preparation
-- [ ] **not started** - Create extension icon and branding
-- [ ] **not started** - Write marketplace description
-- [ ] **not started** - Set up GitHub repository
-- [ ] **not started** - Configure CI/CD pipeline
-- [ ] **not started** - Plan launch announcement
+#### Task 7: Alternative Game Integration
+**Priority: HIGH** - Current Unity approach blocked by WebView security
+Options to explore:
+- [ ] Simple HTML5/Canvas games (Snake, Tetris, etc.)
+- [ ] Lightweight JavaScript puzzle games
+- [ ] Custom mini-games built specifically for WebView environment
+- [ ] Pre-compiled WebAssembly games with minimal dependencies
+
+#### Task 8: Panel Positioning and Visibility Refactoring
+**Priority: MEDIUM** - Improve panel management and positioning
+- [ ] Research WebView View API for true bottom panel implementation
+- [ ] Implement panel visibility controls (hide/show frame, not just content)
+- [ ] Add configuration for panel position preferences (editor vs bottom)
+- [ ] Test panel state persistence across show/hide cycles
+
+#### Task 9: Game State Management
+- [ ] Implement game state persistence between sessions
+- [ ] Add game selection/rotation system
+- [ ] Create user preferences for game types
+- [ ] Track gaming time and productivity metrics
+
+#### Task 10: Cursor AI Detection Implementation
+- [ ] Research Cursor-specific DOM patterns and API calls
+- [ ] Implement reliable AI generation detection
+- [ ] Test auto-show/hide functionality with real AI requests
+- [ ] Fine-tune timing and thresholds
+
+#### Task 11: Performance Optimization
+- [ ] Optimize WebView resource loading
+- [ ] Implement lazy loading for game assets  
+- [ ] Add memory management for game instances
+- [ ] Test extension impact on Cursor performance
+
+### Phase 3: Polish and Distribution
+
+#### Task 12: User Experience Enhancements
+- [ ] Add configuration options and settings UI
+- [ ] Implement game selection interface
+- [ ] Create onboarding and help documentation
+- [ ] Add keyboard shortcuts and accessibility features
+
+#### Task 13: Extension Distribution
+- [ ] Prepare extension for Cursor marketplace (if available)
+- [ ] Create installation and setup documentation
+- [ ] Set up automated builds and releases
+- [ ] Plan user feedback and iteration cycle
+
+## Current Blockers
+
+1. **Unity WebGL Compatibility**: Current approach fails due to Cursor WebView security restrictions
+2. **Large Asset Loading**: 34MB+ game files may be too large for extension distribution
+3. **Service Worker Issues**: Unity games require service workers which fail in WebView context
+
+## Immediate Next Actions
+
+1. **Pivot to Lightweight Games**: Abandon Unity WebGL, implement simple HTML5/Canvas games
+2. **Create Game Library**: Build collection of small, WebView-compatible games
+3. **Test Alternative Approaches**: Verify lighter games work in Cursor WebView environment
 
 ## Current Sprint Focus
 **Sprint 1**: Foundation & Research (Tasks 1-5 from Phase 1)

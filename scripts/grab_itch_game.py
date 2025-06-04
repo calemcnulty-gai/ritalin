@@ -186,12 +186,13 @@ def find_html_file(directory):
     return str(html_files[0])
 
 def fix_url_encoded_filenames(build_dir):
-    """Fix URL-encoded filenames in the Build directory"""
+    """Fix URL-encoded filenames in the Build directory and create simplified copies"""
     if not os.path.exists(build_dir):
         return
     
-    print_status("Fixing URL-encoded filenames...")
+    print_status("Fixing URL-encoded filenames and creating simplified copies...")
     
+    # First pass: fix URL encoding
     for filename in os.listdir(build_dir):
         if '%' in filename:
             decoded_name = urllib.parse.unquote(filename)
@@ -199,15 +200,51 @@ def fix_url_encoded_filenames(build_dir):
             new_path = os.path.join(build_dir, decoded_name)
             os.rename(old_path, new_path)
             print_status(f"Renamed: {filename} -> {decoded_name}")
+    
+    # Second pass: create simplified filename copies
+    for filename in os.listdir(build_dir):
+        old_path = os.path.join(build_dir, filename)
+        
+        # Create simplified filenames
+        simple_filename = None
+        if '.loader.js' in filename.lower():
+            simple_filename = 'loader.js'
+        elif '.framework.js' in filename.lower():
+            simple_filename = 'framework.js.gz' if filename.endswith('.gz') else 'framework.js'
+        elif '.data' in filename.lower():
+            simple_filename = 'data.gz' if filename.endswith('.gz') else 'data'
+        elif '.wasm' in filename.lower():
+            simple_filename = 'wasm.gz' if filename.endswith('.gz') else 'wasm'
+        
+        if simple_filename:
+            simple_path = os.path.join(build_dir, simple_filename)
+            if not os.path.exists(simple_path):  # Don't overwrite if already exists
+                shutil.copy2(old_path, simple_path)
+                print_status(f"Created simplified copy: {filename} -> {simple_filename}")
 
 def create_standalone_html(original_html_path, standalone_html_path):
-    """Create standalone HTML without itch.io dependencies"""
+    """Create standalone HTML without itch.io dependencies and with simplified file references"""
     with open(original_html_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
     # Remove itch.io script references
     content = re.sub(r'<script[^>]*itch\.io[^>]*>.*?</script>', '', content, flags=re.DOTALL)
     content = re.sub(r'<script[^>]*htmlgame\.js[^>]*>.*?</script>', '', content, flags=re.DOTALL)
+    
+    # Replace complex Unity filenames with simplified ones
+    # Match Unity file patterns and replace with simplified names
+    replacements = [
+        (r'Build/[^"\']*\.loader\.js[^"\']*', 'Build/loader.js'),
+        (r'Build/[^"\']*\.framework\.js\.gz[^"\']*', 'Build/framework.js.gz'),
+        (r'Build/[^"\']*\.framework\.js[^"\']*(?!\.gz)', 'Build/framework.js'),
+        (r'Build/[^"\']*\.data\.gz[^"\']*', 'Build/data.gz'),
+        (r'Build/[^"\']*\.data[^"\']*(?!\.gz)', 'Build/data'),
+        (r'Build/[^"\']*\.wasm\.gz[^"\']*', 'Build/wasm.gz'),
+        (r'Build/[^"\']*\.wasm[^"\']*(?!\.gz)', 'Build/wasm')
+    ]
+    
+    for pattern, replacement in replacements:
+        content = re.sub(pattern, replacement, content)
     
     with open(standalone_html_path, 'w', encoding='utf-8') as f:
         f.write(content)

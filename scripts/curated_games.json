@@ -1,0 +1,86 @@
+{
+  "default_game": "die-in-the-dungeon",
+  "games": [
+    {
+      "id": "die-in-the-dungeon",
+      "title": "Die in the Dungeon",
+      "author": "Alarts",
+      "url": "https://alarts.itch.io/die-in-the-dungeon",
+      "description": "A turn-based dungeon crawler with card mechanics",
+      "tags": ["turn-based", "dungeon-crawler", "cards", "strategy"],
+      "thumbnail": "https://img.itch.zone/aW1nLzEwNTk5MTA3LnBuZw==/315x250%23c/MBqhsQ.png",
+      "rating": "excellent",
+      "default": true
+    },
+    {
+      "id": "cards-and-castles",
+      "title": "Cards and Castles",
+      "author": "Bit Mass",
+      "url": "https://bitmass.itch.io/cards-and-castles",
+      "description": "Strategic card-based combat with castle building",
+      "tags": ["strategy", "cards", "turn-based"],
+      "thumbnail": "",
+      "rating": "great"
+    },
+    {
+      "id": "slay-the-spire-tribute",
+      "title": "Nowhere Prophet",
+      "author": "Sharkbomb Studios", 
+      "url": "https://sharkbomb.itch.io/nowhere-prophet",
+      "description": "Post-apocalyptic survival with convoy management",
+      "tags": ["strategy", "survival", "cards"],
+      "thumbnail": "",
+      "rating": "great"
+    },
+    {
+      "id": "dicey-dungeons-demo",
+      "title": "Dicey Dungeons",
+      "author": "Terry Cavanagh",
+      "url": "https://terrycavanagh.itch.io/dicey-dungeons",
+      "description": "Fast-paced deckbuilding roguelike with dice",
+      "tags": ["roguelike", "dice", "turn-based"],
+      "thumbnail": "",
+      "rating": "excellent"
+    },
+    {
+      "id": "cultist-simulator",
+      "title": "Cultist Simulator",
+      "author": "Weather Factory",
+      "url": "https://weatherfactory.itch.io/cultist-simulator",
+      "description": "Narrative card game about forbidden knowledge",
+      "tags": ["narrative", "cards", "horror"],
+      "thumbnail": "",
+      "rating": "great"
+    },
+    {
+      "id": "card-crawl",
+      "title": "Card Crawl Adventure",
+      "author": "Arnold Rauers",
+      "url": "https://tinytouchtales.itch.io/card-crawl-adventure",
+      "description": "Solitaire-style dungeon crawler",
+      "tags": ["solitaire", "dungeon-crawler", "cards"],
+      "thumbnail": "",
+      "rating": "good"
+    },
+    {
+      "id": "monster-train",
+      "title": "Monster Train",
+      "author": "Shiny Shoe",
+      "url": "https://shinyshoe.itch.io/monster-train",
+      "description": "Multi-layered deckbuilding strategy",
+      "tags": ["deckbuilding", "strategy", "tower-defense"],
+      "thumbnail": "",
+      "rating": "excellent"
+    },
+    {
+      "id": "fights-in-tight-spaces",
+      "title": "Fights in Tight Spaces",
+      "author": "Ground Shatter",
+      "url": "https://groundshatter.itch.io/fights-in-tight-spaces",
+      "description": "Action movie deckbuilding with choreographed combat",
+      "tags": ["action", "deckbuilding", "martial-arts"],
+      "thumbnail": "",
+      "rating": "great"
+    }
+  ]
+} 

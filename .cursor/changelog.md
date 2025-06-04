@@ -1,5 +1,52 @@
 # Ritalin for Cursor - Changelog
 
+## 2024-12-19 - Task 6: VS Code Extension Boilerplate - COMPLETED
+
+### Summary
+- Successfully created complete VS Code extension boilerplate with TypeScript
+- Implemented core extension structure with proper configuration and build system
+- Created functional extension that compiles, lints, and packages successfully
+- Set up proper development environment with all necessary tooling
+
+### Key Achievements
+- **Extension Structure**: Created complete VS Code extension with proper package.json, manifest, and TypeScript setup
+- **Core Files**: Implemented extension.ts (main entry), gamePanel.ts (WebView management), cursorDetector.ts (AI detection)
+- **Build System**: Set up TypeScript compilation, ESLint linting, and VSIX packaging
+- **Configuration**: Added proper tsconfig.json, .eslintrc.json, and .vscodeignore files
+- **Commands**: Registered show/hide/toggle game commands with keyboard shortcuts (Cmd+Shift+G)
+- **Settings**: Added configuration options for game URL, delays, window size, and enable/disable
+- **Package Quality**: Clean 8.18 KB package with only necessary files included
+
+### Technical Implementation
+- **TypeScript**: Full TypeScript setup with proper types and compilation
+- **WebView**: Implemented WebView panel for game display with proper lifecycle management
+- **Event System**: Basic event handling for extension activation and command registration
+- **Configuration**: VS Code settings integration for user customization
+- **Detection Hooks**: Placeholder structure for Cursor AI detection integration
+- **Error Handling**: Basic error handling and logging throughout
+
+### Files Created
+- `src/extension.ts` - Main extension entry point with command registration
+- `src/gamePanel.ts` - WebView panel management for game display
+- `src/cursorDetector.ts` - Cursor AI detection system (placeholder)
+- `package.json` - Complete extension manifest with commands, settings, and metadata
+- `tsconfig.json` - TypeScript configuration for VS Code extension development
+- `.eslintrc.json` - ESLint rules for code quality
+- `.vscodeignore` - Package exclusion rules for clean distribution
+- `LICENSE` - MIT license for extension distribution
+
+### Build Verification
+- ✅ TypeScript compilation successful
+- ✅ ESLint linting passes with no errors
+- ✅ VSIX packaging creates clean 8.18 KB package
+- ✅ All VS Code extension requirements met
+- ✅ Ready for testing and development
+
+### Next Steps
+- Phase 1 Foundation & Research now complete
+- Ready to begin Phase 2: Core Detection System
+- Next task: Implement AI generation start detection
+
 ## 2024-12-12 - Task 5: itch.io Game Embedding and CORS Testing - COMPLETED
 
 ### Summary
@@ -190,3 +237,60 @@
 
 ### Next Recommended Task
 - Test itch.io game embedding to ensure game display works before building detection system 
+
+## 2024-12-19
+
+### Started Task 6: VS Code Extension Boilerplate
+- **Branch**: feature/task-6-vscode-extension-boilerplate
+- **Status**: In Progress
+- **Goal**: Create basic VS Code extension structure with package.json, extension.ts, and necessary configuration files
+- Updated finish_task rule to specify PRs must merge to main branch
+
+## Latest Updates
+
+### Unity WebGL Loading Implementation (d5243e4)
+- **MAJOR**: Replaced iframe-based game loading with direct Unity WebGL integration
+- **Enhancement**: Added comprehensive debug logging throughout extension lifecycle  
+- **Fix**: Proper WebView resource configuration for Unity build files (loader.js, data.gz, framework.js.gz, wasm.gz)
+- **Feature**: Progress tracking and error handling for Unity loading with visual progress bar
+- **Security**: Updated CSP policies and WebView security restrictions for Unity WebGL
+- **UX**: 30-second timeout with proper error reporting and retry functionality
+- **Debug**: Extensive console logging with `[Ritalin]` prefixes for all operations
+
+### Current Status
+- ✅ Extension activation and command registration working
+- ✅ WebView panel creation successful  
+- ✅ Debug interface and error handling implemented
+- ⚠️ Unity WebGL still failing to load due to WebView security restrictions
+- ⚠️ Service worker and CORS issues persist in Cursor's WebView environment
+
+### Next Steps
+- Consider lighter-weight HTML5 games instead of Unity WebGL
+- Explore bundling simple Canvas/JavaScript games 
+- Alternative: Create custom mini-games optimized for WebView environment
+- Investigate Cursor-specific WebView capabilities vs standard VS Code
+
+### Outstanding Issues
+- Unity WebGL incompatibility with Cursor WebView security model
+- Service worker registration failing in WebView context
+- Large file loading (34MB+ game assets) may be problematic for extension distribution
+
+## 2024-01-09
+
+### Completed
+- **Task 5: Game Integration** - Investigated Unity WebGL loading issues
+  - Discovered Unity WebGL games are incompatible with Cursor WebView security model
+  - Service workers and large asset loading fail in WebView context
+  - Need to pivot to lightweight HTML5/Canvas games instead
+
+### Added
+- **Task 8: Panel Positioning and Visibility Refactoring** - New task to improve panel management
+  - Will research WebView View API for true bottom panel implementation
+  - Need to implement proper panel visibility controls (hide/show frame)
+  - Add user preferences for panel positioning
+
+### Technical Notes
+- Current implementation controls webview content visibility, not the panel frame itself
+- VS Code API doesn't provide direct "hide panel" method
+- Options include: dispose/recreate (loses state), minimize panel area, or focus switching
+- `retainContextWhenHidden: true` preserves game state when panel is in background

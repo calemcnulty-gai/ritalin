@@ -1,0 +1,32 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Build Requirements for Ritalin Cursor Extension
+
+## Development Environment Status: ✅ READY
+
+This rule documents the build requirements for developing the Ritalin extension for **Cursor** (not VS Code).
+
+### Required Tools - Status: ✅ ALL INSTALLED
+
+1. **Cursor CLI**: ✅ Available at `/usr/local/bin/cursor`
+   - Used for installing/reinstalling the extension during development
+   - Command: `cursor --install-extension path/to/extension.vsix`
+
+2. **VS Code Extension Manager (vsce)**: ✅ Available at `/Users/calemcnulty/.nvm/versions/node/v22.12.0/bin/vsce`
+   - Used for packaging the extension into .vsix format
+   - Command: `vsce package`
+
+### Build Process for Cursor Extension
+
+1. Compile TypeScript: `npm run compile`
+2. Package extension: `npm run package` (uses vsce)
+3. Install in Cursor: `cursor --install-extension ritalin-0.1.0.vsix`
+
+### Notes
+
+- This extension is being developed specifically for **Cursor**, not VS Code
+- The extension uses VS Code's extension API (which Cursor supports)
+- All build tooling is in place and functional 
