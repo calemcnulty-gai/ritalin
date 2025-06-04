@@ -104,6 +104,9 @@
   - **Preloading is the Answer**: Games should load on extension startup and stay running in background, not on-demand. Show/hide is just CSS visibility control. No loading delays, no offline complexity, simple and fast.
   - **Internet Dependency is Fine**: Cursor requires internet for AI models anyway, so offline support is unnecessary complexity
   - **WebView Persistence**: retainContextWhenHidden keeps games running even when panels are hidden, perfect for instant show/hide
+  - **Unity WebGL Incompatible with WebView**: Unity games require service workers and complex asset loading that fail in VS Code's WebView security model. The CSP restrictions and sandboxing make Unity WebGL games unviable.
+  - **Panel Visibility != Content Visibility**: VS Code API doesn't provide direct panel hide/show methods. Current implementation controls content visibility via CSS, not the actual panel frame.
+  - **Bottom Panel Requires Different API**: True bottom panel (like Terminal) needs WebView View API, not WebView Panel API. This would be a significant refactoring.
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time
@@ -127,11 +130,27 @@
 - **CORS Headers**: Local test server needs specific headers for proper WebAssembly loading
 - **File Structure**: Predictable build output makes automation possible
 - **Resource Loading**: All assets load via relative paths, making local hosting straightforward
+- **WebView Incompatibility**: Unity's requirement for service workers and complex asset loading patterns conflict with VS Code WebView's security model
+- **File Size Issues**: 34MB+ Unity builds may be too large for extension distribution
+- **Alternative Needed**: Must pivot to lightweight HTML5/Canvas games that work within WebView constraints
 
 ### WebView Architecture
 - Nested iframe structure provides best control
 - Service workers can implement virtual endpoints for resource loading
 - CSP inheritance can be problematic for inline content
+- **Panel Types**: WebView Panel API creates editor tabs, WebView View API creates sidebar/bottom panels
+- **Visibility Control**: No direct API to hide panel frame - only content visibility or focus switching
+- **State Persistence**: `retainContextWhenHidden: true` maintains WebView state when panel is backgrounded
+
+### Panel Management Discoveries
+- **No Direct Hide Method**: VS Code API lacks panel.hide() - must use workarounds
+- **Editor Panels**: Created with `createWebviewPanel`, appear as tabs in editor area
+- **Bottom Panels**: Require `registerWebviewViewProvider` and manifest changes
+- **Visibility Options**: 
+  - Dispose/recreate (loses state)
+  - Focus switching (panel remains in tab bar)
+  - Minimize panel area (for bottom panels only)
+- **Best Practice**: Use `retainContextWhenHidden` and control content visibility, not panel visibility
 
 ### Performance Optimizations
 - Lazy load game resources

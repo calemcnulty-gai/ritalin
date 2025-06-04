@@ -34,7 +34,7 @@ Building a VS Code extension that displays mini-games during Cursor AI generatio
 - [x] Download and extract Unity WebGL game from itch.io
 - [x] Implement Unity WebGL loading in WebView
 - [x] Add comprehensive debugging and error handling
-- ❌ **BLOCKED**: Unity WebGL incompatible with Cursor WebView security model
+- [x] **DONE**: Unity WebGL incompatible with Cursor WebView security model
 
 #### Task 6: Testing and Debugging
 - [x] Set up extension packaging with vsce
@@ -52,19 +52,26 @@ Options to explore:
 - [ ] Custom mini-games built specifically for WebView environment
 - [ ] Pre-compiled WebAssembly games with minimal dependencies
 
-#### Task 8: Game State Management
+#### Task 8: Panel Positioning and Visibility Refactoring
+**Priority: MEDIUM** - Improve panel management and positioning
+- [ ] Research WebView View API for true bottom panel implementation
+- [ ] Implement panel visibility controls (hide/show frame, not just content)
+- [ ] Add configuration for panel position preferences (editor vs bottom)
+- [ ] Test panel state persistence across show/hide cycles
+
+#### Task 9: Game State Management
 - [ ] Implement game state persistence between sessions
 - [ ] Add game selection/rotation system
 - [ ] Create user preferences for game types
 - [ ] Track gaming time and productivity metrics
 
-#### Task 9: Cursor AI Detection Implementation
+#### Task 10: Cursor AI Detection Implementation
 - [ ] Research Cursor-specific DOM patterns and API calls
 - [ ] Implement reliable AI generation detection
 - [ ] Test auto-show/hide functionality with real AI requests
 - [ ] Fine-tune timing and thresholds
 
-#### Task 10: Performance Optimization
+#### Task 11: Performance Optimization
 - [ ] Optimize WebView resource loading
 - [ ] Implement lazy loading for game assets  
 - [ ] Add memory management for game instances
@@ -72,13 +79,13 @@ Options to explore:
 
 ### Phase 3: Polish and Distribution
 
-#### Task 11: User Experience Enhancements
+#### Task 12: User Experience Enhancements
 - [ ] Add configuration options and settings UI
 - [ ] Implement game selection interface
 - [ ] Create onboarding and help documentation
 - [ ] Add keyboard shortcuts and accessibility features
 
-#### Task 12: Extension Distribution
+#### Task 13: Extension Distribution
 - [ ] Prepare extension for Cursor marketplace (if available)
 - [ ] Create installation and setup documentation
 - [ ] Set up automated builds and releases

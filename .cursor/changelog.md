@@ -274,3 +274,23 @@
 - Unity WebGL incompatibility with Cursor WebView security model
 - Service worker registration failing in WebView context
 - Large file loading (34MB+ game assets) may be problematic for extension distribution
+
+## 2024-01-09
+
+### Completed
+- **Task 5: Game Integration** - Investigated Unity WebGL loading issues
+  - Discovered Unity WebGL games are incompatible with Cursor WebView security model
+  - Service workers and large asset loading fail in WebView context
+  - Need to pivot to lightweight HTML5/Canvas games instead
+
+### Added
+- **Task 8: Panel Positioning and Visibility Refactoring** - New task to improve panel management
+  - Will research WebView View API for true bottom panel implementation
+  - Need to implement proper panel visibility controls (hide/show frame)
+  - Add user preferences for panel positioning
+
+### Technical Notes
+- Current implementation controls webview content visibility, not the panel frame itself
+- VS Code API doesn't provide direct "hide panel" method
+- Options include: dispose/recreate (loses state), minimize panel area, or focus switching
+- `retainContextWhenHidden: true` preserves game state when panel is in background
