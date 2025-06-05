@@ -94,21 +94,6 @@ export class GamePanelViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    public hide(): void {
-        console.log('[Ritalin] Hiding game panel view');
-        // Note: WebviewView doesn't have a direct hide method
-        // The user would need to collapse the panel manually
-        this._isVisible = false;
-    }
-
-    public toggle(): void {
-        if (this._isVisible) {
-            this.hide();
-        } else {
-            this.show();
-        }
-    }
-
     private _getHtmlForWebview(webview: vscode.Webview): string {
         if (!this._currentGame || !this._currentGame.isDownloaded || !this._currentGame.entryPoint) {
             return this._getNoGameSelectedHtml();
@@ -153,6 +138,39 @@ export class GamePanelViewProvider implements vscode.WebviewViewProvider {
                 } catch (error) {
                     console.error(`[Ritalin] Failed to create webview URI for ${fullPath}:`, error);
                     return match;
+                }
+            }
+        );
+        
+        // Replace dataUrl, frameworkUrl, codeUrl in Unity config objects
+        gameHtmlContent = gameHtmlContent.replace(
+            /(dataUrl|frameworkUrl|codeUrl):\s*["']([^"']+)["']/g,
+            (match, configKey, path) => {
+                if (path.startsWith('http')) {
+                    return match; // Keep absolute URLs
+                }
+                
+                const decodedPath = decodeURIComponent(path);
+                const fullPath = require('path').resolve(gameDir, decodedPath);
+                
+                console.log(`[Ritalin] Processing Unity config ${configKey}: "${path}" -> decoded: "${decodedPath}" -> full: "${fullPath}"`);
+                
+                // Check if file exists before creating URI
+                if (!require('fs').existsSync(fullPath)) {
+                    console.warn(`[Ritalin] Unity file not found: ${fullPath}`);
+                    this._outputChannel.appendLine(`[WARNING] Unity file not found: ${fullPath}`);
+                    return match; // Keep original if file doesn't exist
+                }
+                
+                try {
+                    const webviewUri = webview.asWebviewUri(vscode.Uri.file(fullPath));
+                    console.log(`[Ritalin] Mapped Unity ${configKey} "${path}" -> "${webviewUri.toString()}"`);
+                    this._outputChannel.appendLine(`[UNITY] Mapped ${configKey} "${path}" -> "${webviewUri.toString()}"`);
+                    return `${configKey}: "${webviewUri}"`;
+                } catch (error) {
+                    console.error(`[Ritalin] Failed to create webview URI for Unity file ${fullPath}:`, error);
+                    this._outputChannel.appendLine(`[ERROR] Failed to create webview URI for Unity file ${fullPath}: ${error}`);
+                    return match; // Keep original on error
                 }
             }
         );

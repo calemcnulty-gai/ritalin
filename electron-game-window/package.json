@@ -1,0 +1,12 @@
+{
+  "name": "ritalin-game-window",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "echo 'No build step required for development'"
+  },
+  "dependencies": {
+    "electron": "^27.0.0"
+  }
+} 

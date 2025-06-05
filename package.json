@@ -22,12 +22,21 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "views": {
+    "viewsContainers": {
       "panel": [
+        {
+          "id": "ritalin",
+          "title": "Ritalin",
+          "icon": "$(game)"
+        }
+      ]
+    },
+    "views": {
+      "ritalin": [
         {
           "type": "webview",
           "id": "ritalin.gameView",
-          "name": "Ritalin Game",
+          "name": "Game",
           "icon": "$(game)",
           "visibility": "visible"
         }
@@ -68,6 +77,11 @@
         "command": "ritalin.openSettings",
         "title": "Open Settings",
         "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.testExternalWindow",
+        "title": "Test External Game Window",
+        "category": "Ritalin"
       }
     ],
     "keybindings": [
@@ -95,26 +109,15 @@
           "default": true,
           "description": "Enable/disable the extension"
         },
-        "ritalin.windowWidth": {
-          "type": "number",
-          "default": 800,
-          "description": "Default game window width"
-        },
-        "ritalin.windowHeight": {
-          "type": "number",
-          "default": 600,
-          "description": "Default game window height"
-        },
         "ritalin.autoDownload": {
           "type": "boolean",
           "default": true,
           "description": "Automatically download games after search selection"
         },
-        "ritalin.panelPosition": {
-          "type": "string",
-          "enum": ["editor", "bottom"],
-          "default": "bottom",
-          "description": "Where to display the game panel (editor: as a tab, bottom: in the bottom panel area)"
+        "ritalin.showResizeTip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show tip about resizing the panel when opening games"
         }
       }
     }

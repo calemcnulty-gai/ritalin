@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ritalin Game Window</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: rgba(20, 20, 30, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* Title bar */
+        .title-bar {
+            height: 32px;
+            background: rgba(30, 30, 40, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            -webkit-app-region: drag;
+            user-select: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .title {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+        
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .window-control:hover {
+            opacity: 0.8;
+        }
+        
+        .minimize {
+            background: #febc2e;
+        }
+        
+        .close {
+            background: #ff5f57;
+        }
+        
+        /* Game container */
+        #game-container {
+            position: absolute;
+            top: 32px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-app-region: no-drag;
+        }
+        
+        #game-container.empty {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .empty-state h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+        }
+        
+        /* Loading spinner */
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <div class="title">Ritalin</div>
+        <div class="window-controls">
+            <button class="window-control minimize" onclick="minimizeWindow()"></button>
+            <button class="window-control close" onclick="closeWindow()"></button>
+        </div>
+    </div>
+    
+    <div id="game-container" class="empty">
+        <div class="empty-state">
+            <h2>Ready to Play</h2>
+            <p>Waiting for AI generation...</p>
+        </div>
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const loading = document.querySelector('.loading');
+        let currentGame = null;
+        
+        // Window control functions
+        function minimizeWindow() {
+            window.electronAPI.sendWindowControl('minimize');
+        }
+        
+        function closeWindow() {
+            window.electronAPI.sendWindowControl('close');
+        }
+        
+        // Game loading
+        window.electronAPI.onLoadGame((gamePath) => {
+            console.log('Loading game:', gamePath);
+            
+            // Show loading spinner
+            loading.classList.add('active');
+            gameContainer.classList.remove('empty');
+            
+            // Clear previous game
+            if (currentGame) {
+                gameContainer.removeChild(currentGame);
+                currentGame = null;
+            }
+            
+            // Create iframe for game
+            const iframe = document.createElement('iframe');
+            iframe.src = gamePath;
+            iframe.sandbox = 'allow-scripts allow-same-origin';
+            
+            iframe.onload = () => {
+                loading.classList.remove('active');
+                console.log('Game loaded successfully');
+            };
+            
+            iframe.onerror = () => {
+                loading.classList.remove('active');
+                gameContainer.classList.add('empty');
+                gameContainer.innerHTML = `
+                    <div class="empty-state">
+                        <h2>Error Loading Game</h2>
+                        <p>Failed to load: ${gamePath}</p>
+                    </div>
+                `;
+            };
+            
+            currentGame = iframe;
+            gameContainer.appendChild(iframe);
+        });
+        
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => {
+            window.electronAPI.removeAllListeners('load-game');
+        });
+    </script>
+</body>
+</html> 
