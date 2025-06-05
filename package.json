@@ -22,6 +22,26 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "ritalin",
+          "title": "Ritalin",
+          "icon": "$(game)"
+        }
+      ]
+    },
+    "views": {
+      "ritalin": [
+        {
+          "type": "webview",
+          "id": "ritalin.gameView",
+          "name": "Game",
+          "icon": "$(game)",
+          "visibility": "visible"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "ritalin.preloadGame",
@@ -57,6 +77,11 @@
         "command": "ritalin.openSettings",
         "title": "Open Settings",
         "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.testExternalWindow",
+        "title": "Test External Game Window",
+        "category": "Ritalin"
       }
     ],
     "keybindings": [
@@ -84,20 +109,15 @@
           "default": true,
           "description": "Enable/disable the extension"
         },
-        "ritalin.windowWidth": {
-          "type": "number",
-          "default": 800,
-          "description": "Default game window width"
-        },
-        "ritalin.windowHeight": {
-          "type": "number",
-          "default": 600,
-          "description": "Default game window height"
-        },
         "ritalin.autoDownload": {
           "type": "boolean",
           "default": true,
           "description": "Automatically download games after search selection"
+        },
+        "ritalin.showResizeTip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show tip about resizing the panel when opening games"
         }
       }
     }
@@ -110,6 +130,9 @@
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
     "package": "vsce package"
+  },
+  "dependencies": {
+    "electron": "^27.0.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.74.0",

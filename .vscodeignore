@@ -23,4 +23,5 @@ PRD.md
 brainlift.md
 example_brainlift.md
 global_cursor_rules.md
-EXTENSION_README.md 
+EXTENSION_README.md
+electron-game-window/node_modules/** 

@@ -83,6 +83,21 @@
     - **File Exclusion**: .vscodeignore controls what gets included in package (critical for size)
     - **Activation Events**: onStartupFinished, onCommand, etc. control when extension loads
   - Cursor AI Detection Methods
+  - **VS Code WebView Security Model**
+    - Strict Content Security Policy (CSP) by default
+    - No service workers allowed
+    - Limited access to local resources via `asWebviewUri`
+    - Sandboxed iframe environment
+  - **Unity WebGL Requirements**
+    - Requires service workers for asset loading
+    - Uses complex WASM loading mechanisms
+    - Needs specific server headers for compression
+    - Large asset files (often 30MB+)
+  - **Alternative Game Engines for WebView**
+    - Phaser.js - lightweight, WebView-friendly
+    - Construct 3 exports - work well in sandboxed environments
+    - Pure HTML5/Canvas games - no special requirements
+    - PICO-8 exports - small, self-contained
 - Insights
   - The problem isn't the wait time itself, it's what developers do during the wait time
   - Context switching during AI generation breaks flow state more than the generation delay
@@ -104,15 +119,39 @@
   - **Preloading is the Answer**: Games should load on extension startup and stay running in background, not on-demand. Show/hide is just CSS visibility control. No loading delays, no offline complexity, simple and fast.
   - **Internet Dependency is Fine**: Cursor requires internet for AI models anyway, so offline support is unnecessary complexity
   - **WebView Persistence**: retainContextWhenHidden keeps games running even when panels are hidden, perfect for instant show/hide
-  - **Unity WebGL Incompatible with WebView**: Unity games require service workers and complex asset loading that fail in VS Code's WebView security model. The CSP restrictions and sandboxing make Unity WebGL games unviable.
+  - **Unity WebGL Incompatibility**: Unity WebGL games fundamentally cannot work in VS Code WebViews due to service worker requirements and security restrictions. This is a hard blocker, not a configuration issue.
+  - **Panel Refactoring Success**: Successfully moved from editor panel to bottom panel using custom view container, providing better UX and proper integration with VS Code's panel system.
   - **Panel Visibility != Content Visibility**: VS Code API doesn't provide direct panel hide/show methods. Current implementation controls content visibility via CSS, not the actual panel frame.
   - **Bottom Panel Requires Different API**: True bottom panel (like Terminal) needs WebView View API, not WebView Panel API. This would be a significant refactoring.
+  - **VS Code Extension Architecture**
+    - Extensions run in separate Node.js process
+    - WebViews are sandboxed iframes with limited capabilities
+    - Can use VS Code's View API for panel integration
+    - Extensions can spawn child processes without restrictions
+  - **Unity WebGL Limitations**
+    - Requires service workers (blocked in WebViews)
+    - Large file sizes (30MB+) problematic for extensions
+    - Security restrictions prevent proper loading
+  - **Game Integration Approaches**
+    - Simple HTML5/Canvas games work best in WebViews
+    - External windows via Electron provide full flexibility
+    - IPC communication enables extension-window coordination
+  - **WebView Security Model**: VS Code WebViews have strict CSP and security restrictions that make Unity WebGL games incompatible. The sandboxed environment blocks service workers and certain WebAssembly features Unity requires.
+  - **Panel Positioning**: VS Code's View API allows true bottom panel integration without the hacky editor approach. Views can be properly docked and managed by VS Code's layout system.
+  - **External Window Approach**: Spawning an independent Electron window from the extension provides complete UI freedom - floating windows, transparency, custom positioning, and full game compatibility without WebView restrictions.
+  - **Electron Process Management**: VS Code extensions can spawn child processes without restrictions. Using Electron as a child process provides a full browser environment for games while maintaining IPC communication with the extension.
+  - **IPC Design**: JSON-RPC over stdin/stdout provides simple, reliable communication between extension and Electron window. No need for complex protocols - just line-delimited JSON messages.
+  - **Window Positioning**: Electron's screen API allows precise window positioning. Bottom-left corner placement keeps games visible but unobtrusive during AI generation.
+  - **Electron Module Loading Issue**: When spawning Electron as a child process from Node.js, `require('electron')` returns the executable path instead of API modules. This is because the electron npm package only exports the path, and Electron modules are only available within the Electron runtime. Solution: Use `stdio: 'inherit'` like the official wrapper, and implement file-based IPC when standard streams aren't available.
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time
   - Gamification of waiting could become a standard IDE feature, not just an extension
   - This could evolve into a platform for indie game developers to reach programmer audiences
   - The data on "productive waiting time" could reveal insights about AI coding patterns and optimal work sessions
+  - **Abandon Unity WebGL**: For VS Code extensions, Unity WebGL is overkill. Simple HTML5/Canvas games provide better user experience with instant loading and no compatibility issues.
+  - **Floating Windows > Panels**: The constrained panel approach limits the playful nature of distraction games. Floating windows that can be positioned anywhere create a more engaging, less intrusive experience.
+  - **Distribution Strategy**: Instead of bundling games with the extension, consider a game marketplace/loader approach where users can download games on-demand to reduce extension size.
 - Other Brainlifts
   - [To be added as project evolves]
 

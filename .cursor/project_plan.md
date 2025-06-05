@@ -52,12 +52,17 @@ Options to explore:
 - [ ] Custom mini-games built specifically for WebView environment
 - [ ] Pre-compiled WebAssembly games with minimal dependencies
 
-#### Task 8: Panel Positioning and Visibility Refactoring
-**Priority: MEDIUM** - Improve panel management and positioning
-- [ ] Research WebView View API for true bottom panel implementation
-- [ ] Implement panel visibility controls (hide/show frame, not just content)
-- [ ] Add configuration for panel position preferences (editor vs bottom)
-- [ ] Test panel state persistence across show/hide cycles
+#### Task 8: External Game Window Implementation
+**Priority: HIGH** - Implement floating external window for games
+- [x] **DONE** - Research external window approach using Electron
+- [x] **DONE** - Create Electron app structure for game window
+- [x] **DONE** - Implement IPC communication between extension and window
+- [x] **DONE** - Create GameWindowManager class for process management
+- [x] **DONE** - Add test command for external window
+- [x] **DONE** - Test external window with Cursor AI detection
+- [x] **DONE** - Implement game loading from downloaded itch.io games
+- [ ] Add window positioning and size preferences
+- [ ] Handle multi-monitor support
 
 #### Task 9: Game State Management
 - [ ] Implement game state persistence between sessions

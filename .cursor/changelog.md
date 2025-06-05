@@ -240,57 +240,117 @@
 
 ## 2024-12-19
 
-### Started Task 6: VS Code Extension Boilerplate
-- **Branch**: feature/task-6-vscode-extension-boilerplate
-- **Status**: In Progress
-- **Goal**: Create basic VS Code extension structure with package.json, extension.ts, and necessary configuration files
-- Updated finish_task rule to specify PRs must merge to main branch
+### External Game Window Implementation
+- Created complete Electron app structure for external game window
+- Implemented main.js with window creation, positioning, and IPC handling
+- Created preload.js for secure renderer-main process communication
+- Designed modern UI with draggable title bar and window controls
+- Implemented GameWindowManager class for spawning and controlling Electron process
+- Added robust IPC communication using JSON over stdin/stdout
+- Created simple Snake game for testing
+- Added test command `ritalin.testExternalWindow` to package.json
+- Successfully compiled and integrated with extension
 
-## Latest Updates
-
-### Unity WebGL Loading Implementation (d5243e4)
-- **MAJOR**: Replaced iframe-based game loading with direct Unity WebGL integration
-- **Enhancement**: Added comprehensive debug logging throughout extension lifecycle  
-- **Fix**: Proper WebView resource configuration for Unity build files (loader.js, data.gz, framework.js.gz, wasm.gz)
-- **Feature**: Progress tracking and error handling for Unity loading with visual progress bar
-- **Security**: Updated CSP policies and WebView security restrictions for Unity WebGL
-- **UX**: 30-second timeout with proper error reporting and retry functionality
-- **Debug**: Extensive console logging with `[Ritalin]` prefixes for all operations
-
-### Current Status
-- ✅ Extension activation and command registration working
-- ✅ WebView panel creation successful  
-- ✅ Debug interface and error handling implemented
-- ⚠️ Unity WebGL still failing to load due to WebView security restrictions
-- ⚠️ Service worker and CORS issues persist in Cursor's WebView environment
+### Key Architecture Decisions
+- Using Electron child process spawned from VS Code extension
+- Communication via JSON-RPC over stdin/stdout for simplicity
+- Window positioned at bottom-left corner with transparency
+- Games loaded in iframe for security isolation
+- Process lifecycle managed by GameWindowManager class
 
 ### Next Steps
-- Consider lighter-weight HTML5 games instead of Unity WebGL
-- Explore bundling simple Canvas/JavaScript games 
-- Alternative: Create custom mini-games optimized for WebView environment
-- Investigate Cursor-specific WebView capabilities vs standard VS Code
+- Test the external window with actual Cursor usage
+- Integrate with CursorDetector for automatic show/hide
+- Load games from downloaded itch.io collection
+- Add user preferences for window position and size
 
-### Outstanding Issues
-- Unity WebGL incompatibility with Cursor WebView security model
-- Service worker registration failing in WebView context
-- Large file loading (34MB+ game assets) may be problematic for extension distribution
+## 2024-12-18
 
-## 2024-01-09
+### Panel Implementation Refactoring
+- Successfully migrated from editor panel to WebView View in bottom panel
+- Removed all editor panel code and position configuration
+- Fixed panel visibility issues - now properly shows/hides entire panel
+- Improved game loading with better error handling
+- Added resize tip for better user experience
 
-### Completed
-- **Task 5: Game Integration** - Investigated Unity WebGL loading issues
-  - Discovered Unity WebGL games are incompatible with Cursor WebView security model
-  - Service workers and large asset loading fail in WebView context
-  - Need to pivot to lightweight HTML5/Canvas games instead
+### Game Management System
+- Implemented full itch.io game search and download functionality
+- Created GameManager class for handling game storage and selection
+- Added commands for searching and managing downloaded games
+- Successfully tested with multiple Unity WebGL games from itch.io
+- Games now persist between sessions with proper state management
+
+### Current Status
+- Extension works with WebView View in bottom panel
+- Multiple games can be downloaded and switched between
+- Unity WebGL games load successfully (though with some limitations)
+- Ready for testing with actual Cursor AI detection
+
+## Previous Updates
+
+### Initial Development
+- Created basic extension structure with TypeScript
+- Implemented WebView panel system
+- Added placeholder Cursor AI detection
+- Attempted Unity WebGL integration (faced security restrictions)
+- Set up comprehensive debugging and logging system
+
+## [2024-06-05] - External Game Window Implementation Complete
 
 ### Added
-- **Task 8: Panel Positioning and Visibility Refactoring** - New task to improve panel management
-  - Will research WebView View API for true bottom panel implementation
-  - Need to implement proper panel visibility controls (hide/show frame)
-  - Add user preferences for panel positioning
+- Electron-based external game window that floats independently of Cursor
+- Auto-installation feature for Electron dependency on first use
+- File-based IPC mechanism for communication between extension and Electron process
+- Security improvements to prevent microphone/camera permission prompts
+- Multiple strategies for finding Electron executable in different environments
+- Comprehensive debug logging via "Ritalin Window" output channel
 
-### Technical Notes
-- Current implementation controls webview content visibility, not the panel frame itself
-- VS Code API doesn't provide direct "hide panel" method
-- Options include: dispose/recreate (loses state), minimize panel area, or focus switching
-- `retainContextWhenHidden: true` preserves game state when panel is in background
+### Fixed
+- Resolved Electron module loading issues when spawned as child process
+- Fixed stdio configuration to ensure proper Electron initialization
+- Prevented macOS permission prompts by disabling hardware acceleration and adding permission handlers
+
+### Technical Details
+- Implemented workaround for Electron's require() behavior in spawned processes
+- Used `stdio: 'inherit'` configuration to match official Electron wrapper behavior
+- Added Content Security Policy headers to block unnecessary permissions
+- Created flexible Electron resolution strategy for both development and production
+
+### Known Issues
+- Window positioning and size preferences not yet implemented
+- Multi-monitor support pending implementation
+
+## [2024-06-04] - Game Management System Implementation
+
+### Added
+- itch.io game search and download functionality
+- Local game storage in VS Code global storage directory
+- Game selection and management interface
+- Python scripts for web scraping Unity WebGL games from itch.io
+
+### Fixed
+- Resolved CORS and CSP issues with Unity WebGL games in WebView
+- Improved error handling for game downloads and extraction
+
+### Technical Details
+- Games are stored in `globalStorage/ritalin-dev.ritalin/games/`
+- Implemented ZIP extraction with proper file path handling
+- Added comprehensive logging for debugging game loading issues
+
+## [2024-06-03] - Initial Extension Setup
+
+### Added
+- Basic VS Code extension structure with TypeScript
+- WebView panel implementation for game display
+- Command palette integration (show/hide/toggle game)
+- Placeholder Cursor AI detection framework
+- Extension packaging and installation workflow
+
+### Technical Details
+- Set up proper VS Code extension manifest
+- Implemented WebView with local resource loading
+- Created modular architecture with separate classes for game management and AI detection
+
+### Known Issues
+- Unity WebGL games incompatible with VS Code WebView security model
+- Large game assets (30MB+) may impact extension size
