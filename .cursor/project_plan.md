@@ -59,8 +59,8 @@ Options to explore:
 - [x] **DONE** - Implement IPC communication between extension and window
 - [x] **DONE** - Create GameWindowManager class for process management
 - [x] **DONE** - Add test command for external window
-- [ ] **IN PROGRESS** - Test external window with Cursor AI detection
-- [ ] Implement game loading from downloaded itch.io games
+- [x] **DONE** - Test external window with Cursor AI detection
+- [x] **DONE** - Implement game loading from downloaded itch.io games
 - [ ] Add window positioning and size preferences
 - [ ] Handle multi-monitor support
 

@@ -294,3 +294,63 @@
 - Added placeholder Cursor AI detection
 - Attempted Unity WebGL integration (faced security restrictions)
 - Set up comprehensive debugging and logging system
+
+## [2024-06-05] - External Game Window Implementation Complete
+
+### Added
+- Electron-based external game window that floats independently of Cursor
+- Auto-installation feature for Electron dependency on first use
+- File-based IPC mechanism for communication between extension and Electron process
+- Security improvements to prevent microphone/camera permission prompts
+- Multiple strategies for finding Electron executable in different environments
+- Comprehensive debug logging via "Ritalin Window" output channel
+
+### Fixed
+- Resolved Electron module loading issues when spawned as child process
+- Fixed stdio configuration to ensure proper Electron initialization
+- Prevented macOS permission prompts by disabling hardware acceleration and adding permission handlers
+
+### Technical Details
+- Implemented workaround for Electron's require() behavior in spawned processes
+- Used `stdio: 'inherit'` configuration to match official Electron wrapper behavior
+- Added Content Security Policy headers to block unnecessary permissions
+- Created flexible Electron resolution strategy for both development and production
+
+### Known Issues
+- Window positioning and size preferences not yet implemented
+- Multi-monitor support pending implementation
+
+## [2024-06-04] - Game Management System Implementation
+
+### Added
+- itch.io game search and download functionality
+- Local game storage in VS Code global storage directory
+- Game selection and management interface
+- Python scripts for web scraping Unity WebGL games from itch.io
+
+### Fixed
+- Resolved CORS and CSP issues with Unity WebGL games in WebView
+- Improved error handling for game downloads and extraction
+
+### Technical Details
+- Games are stored in `globalStorage/ritalin-dev.ritalin/games/`
+- Implemented ZIP extraction with proper file path handling
+- Added comprehensive logging for debugging game loading issues
+
+## [2024-06-03] - Initial Extension Setup
+
+### Added
+- Basic VS Code extension structure with TypeScript
+- WebView panel implementation for game display
+- Command palette integration (show/hide/toggle game)
+- Placeholder Cursor AI detection framework
+- Extension packaging and installation workflow
+
+### Technical Details
+- Set up proper VS Code extension manifest
+- Implemented WebView with local resource loading
+- Created modular architecture with separate classes for game management and AI detection
+
+### Known Issues
+- Unity WebGL games incompatible with VS Code WebView security model
+- Large game assets (30MB+) may impact extension size
