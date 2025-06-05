@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: file:; media-src 'none'; microphone 'none'; camera 'none'; geolocation 'none';">
     <title>Ritalin Game Window</title>
     <style>
         * {
@@ -11,32 +12,40 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
             background: rgba(20, 20, 30, 0.95);
             border-radius: 12px;
             overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             position: relative;
             width: 100vw;
             height: 100vh;
         }
         
-        /* Title bar */
-        .title-bar {
+        /* Window drag area */
+        .window-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 32px;
             background: rgba(30, 30, 40, 0.8);
+            -webkit-app-region: drag;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             padding: 0 12px;
-            -webkit-app-region: drag;
-            user-select: none;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px 12px 0 0;
+            z-index: 1000;
         }
         
-        .title {
+        .window-title {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
+            flex: 1;
+            text-align: center;
+            user-select: none;
         }
         
         .window-controls {
@@ -58,44 +67,29 @@
             opacity: 0.8;
         }
         
-        .minimize {
-            background: #febc2e;
-        }
-        
-        .close {
+        .window-control.close {
             background: #ff5f57;
         }
         
-        /* Game container */
+        .window-control.minimize {
+            background: #ffbd2e;
+        }
+        
         #game-container {
             position: absolute;
             top: 32px;
             left: 0;
             right: 0;
             bottom: 0;
-            background: #000;
+            background: #1a1a2e;
             display: flex;
             align-items: center;
             justify-content: center;
             -webkit-app-region: no-drag;
         }
         
-        #game-container.empty {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        }
-        
-        .empty-state {
-            text-align: center;
+        #game-container.loading {
             color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .empty-state h2 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        .empty-state p {
             font-size: 14px;
         }
         
@@ -107,23 +101,11 @@
         }
         
         /* Loading spinner */
-        .loading {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .loading.active {
-            display: block;
-        }
-        
         .spinner {
             width: 40px;
             height: 40px;
             border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: rgba(255, 255, 255, 0.8);
+            border-top-color: rgba(255, 255, 255, 0.6);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -131,32 +113,31 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        .loading-text {
+            margin-top: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
-    <div class="title-bar">
-        <div class="title">Ritalin</div>
+    <div class="window-header">
         <div class="window-controls">
             <button class="window-control minimize" onclick="minimizeWindow()"></button>
             <button class="window-control close" onclick="closeWindow()"></button>
         </div>
+        <div class="window-title">Ritalin Game</div>
     </div>
     
-    <div id="game-container" class="empty">
-        <div class="empty-state">
-            <h2>Ready to Play</h2>
-            <p>Waiting for AI generation...</p>
-        </div>
-        <div class="loading">
+    <div id="game-container" class="loading">
+        <div>
             <div class="spinner"></div>
+            <div class="loading-text">Loading game...</div>
         </div>
     </div>
     
     <script>
-        const gameContainer = document.getElementById('game-container');
-        const loading = document.querySelector('.loading');
-        let currentGame = null;
-        
         // Window control functions
         function minimizeWindow() {
             window.electronAPI.sendWindowControl('minimize');
@@ -168,47 +149,33 @@
         
         // Game loading
         window.electronAPI.onLoadGame((gamePath) => {
-            console.log('Loading game:', gamePath);
+            console.log('Loading game from:', gamePath);
+            const container = document.getElementById('game-container');
+            container.classList.remove('loading');
             
-            // Show loading spinner
-            loading.classList.add('active');
-            gameContainer.classList.remove('empty');
-            
-            // Clear previous game
-            if (currentGame) {
-                gameContainer.removeChild(currentGame);
-                currentGame = null;
-            }
-            
-            // Create iframe for game
+            // Create iframe with sandbox for security
             const iframe = document.createElement('iframe');
             iframe.src = gamePath;
             iframe.sandbox = 'allow-scripts allow-same-origin';
+            iframe.allow = ''; // Explicitly no permissions
             
+            // Clear container and add iframe
+            container.innerHTML = '';
+            container.appendChild(iframe);
+            
+            // Update window title if possible
             iframe.onload = () => {
-                loading.classList.remove('active');
-                console.log('Game loaded successfully');
+                try {
+                    const gameTitle = iframe.contentDocument?.title || 'Game';
+                    document.querySelector('.window-title').textContent = `Ritalin - ${gameTitle}`;
+                } catch (e) {
+                    // Cross-origin, can't access title
+                }
             };
-            
-            iframe.onerror = () => {
-                loading.classList.remove('active');
-                gameContainer.classList.add('empty');
-                gameContainer.innerHTML = `
-                    <div class="empty-state">
-                        <h2>Error Loading Game</h2>
-                        <p>Failed to load: ${gamePath}</p>
-                    </div>
-                `;
-            };
-            
-            currentGame = iframe;
-            gameContainer.appendChild(iframe);
         });
         
-        // Cleanup on unload
-        window.addEventListener('beforeunload', () => {
-            window.electronAPI.removeAllListeners('load-game');
-        });
+        // Show initial state
+        console.log('Game window ready, waiting for game load command...');
     </script>
 </body>
 </html> 

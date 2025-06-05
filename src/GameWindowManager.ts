@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 import { GameInfo } from './gameManager';
 
 export class GameWindowManager {
@@ -12,145 +13,176 @@ export class GameWindowManager {
 
     constructor(context: vscode.ExtensionContext) {
         this.extensionPath = context.extensionPath;
-        this.outputChannel = vscode.window.createOutputChannel('Ritalin Game Window');
+        this.outputChannel = vscode.window.createOutputChannel('Ritalin Window');
+        this.outputChannel.appendLine('[GameWindowManager] Initialized');
         
-        // Register disposal
-        context.subscriptions.push({
-            dispose: () => this.dispose()
+        // Check for electron on initialization
+        this.checkElectronInstallation();
+    }
+    
+    private async checkElectronInstallation(): Promise<void> {
+        this.outputChannel.appendLine('[GameWindowManager] Checking for electron installation...');
+        
+        // Check if electron exists in the extension's node_modules
+        const electronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        
+        if (!fs.existsSync(electronPath)) {
+            this.outputChannel.appendLine('[GameWindowManager] Electron not found in extension node_modules');
+            
+            // Show a message to the user
+            const result = await vscode.window.showInformationMessage(
+                'Ritalin needs to install Electron for the external game window feature. This is a one-time setup.',
+                'Install Now',
+                'Later'
+            );
+            
+            if (result === 'Install Now') {
+                await this.installElectron();
+            }
+        } else {
+            this.outputChannel.appendLine('[GameWindowManager] Electron found at: ' + electronPath);
+        }
+    }
+    
+    private async installElectron(): Promise<void> {
+        return vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Installing Electron for Ritalin...',
+            cancellable: false
+        }, async (progress) => {
+            try {
+                progress.report({ message: 'Running npm install electron...' });
+                
+                // Run npm install in the extension directory
+                await new Promise<void>((resolve, reject) => {
+                    const npmProcess = cp.spawn('npm', ['install', 'electron@27.0.0', '--no-save'], {
+                        cwd: this.extensionPath,
+                        shell: true
+                    });
+                    
+                    npmProcess.stdout?.on('data', (data) => {
+                        this.outputChannel.appendLine(`[npm] ${data.toString()}`);
+                    });
+                    
+                    npmProcess.stderr?.on('data', (data) => {
+                        this.outputChannel.appendLine(`[npm error] ${data.toString()}`);
+                    });
+                    
+                    npmProcess.on('close', (code) => {
+                        if (code === 0) {
+                            this.outputChannel.appendLine('[GameWindowManager] Electron installed successfully');
+                            resolve();
+                        } else {
+                            reject(new Error(`npm install failed with code ${code}`));
+                        }
+                    });
+                });
+                
+                vscode.window.showInformationMessage('Electron installed successfully! You can now use the external game window.');
+            } catch (error: any) {
+                this.outputChannel.appendLine(`[GameWindowManager] Failed to install electron: ${error.message}`);
+                vscode.window.showErrorMessage(`Failed to install Electron: ${error.message}`);
+            }
         });
     }
 
     public async start(): Promise<void> {
         if (this.electronProcess) {
-            this.outputChannel.appendLine('Game window already running');
-            return;
+            this.outputChannel.appendLine('[GameWindowManager] Electron process already running');
+            return; // Already running
         }
-
-        this.outputChannel.appendLine('Starting game window...');
         
-        try {
-            const appPath = path.join(this.extensionPath, 'electron-game-window');
-            const runnerPath = path.join(appPath, 'run-electron.js');
+        // Check if electron is available before starting
+        const electronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        if (!fs.existsSync(electronPath)) {
+            this.outputChannel.appendLine('[GameWindowManager] Electron not installed, prompting user...');
+            await this.checkElectronInstallation();
             
-            this.outputChannel.appendLine(`Using runner script to start Electron`);
-            this.outputChannel.appendLine(`Runner path: ${runnerPath}`);
-            this.outputChannel.appendLine(`App path: ${appPath}`);
-            
-            // Use node to run our electron runner script
-            const nodePath = process.execPath;
-            
-            this.outputChannel.appendLine(`Spawning: ${nodePath} ${runnerPath}`);
-            
-            this.electronProcess = cp.spawn(nodePath, [runnerPath], {
-                stdio: ['pipe', 'pipe', 'pipe'],
-                env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: 'true' },
-                cwd: appPath
-            });
-            
-            this.outputChannel.appendLine(`Process spawned with PID: ${this.electronProcess.pid}`);
-
-            // Handle stdout (messages from Electron)
-            this.electronProcess.stdout?.on('data', (data) => {
-                const output = data.toString();
-                const messages = output.split('\n').filter((line: string) => line.trim());
-                messages.forEach((message: string) => {
-                    try {
-                        const parsed = JSON.parse(message);
-                        this.handleElectronMessage(parsed);
-                    } catch (e) {
-                        // Not JSON, could be npm install output or other info
-                        if (!message.includes('npm') && !message.includes('packages')) {
-                            this.outputChannel.appendLine(`Electron: ${message}`);
-                        }
-                    }
-                });
-            });
-
-            // Handle stderr
-            this.electronProcess.stderr?.on('data', (data) => {
-                const output = data.toString();
-                // Only log actual errors, not npm warnings
-                if (!output.includes('npm warn')) {
-                    this.outputChannel.appendLine(`Electron Error: ${output}`);
-                }
-            });
-
-            // Handle process exit
-            this.electronProcess.on('exit', (code) => {
-                this.outputChannel.appendLine(`Electron process exited with code ${code}`);
-                this.electronProcess = null;
-                this.isReady = false;
-            });
-
-            // Handle process errors
-            this.electronProcess.on('error', (err) => {
-                this.outputChannel.appendLine(`Failed to start Electron: ${err.message}`);
-                vscode.window.showErrorMessage(`Failed to start game window: ${err.message}`);
-                this.electronProcess = null;
-                this.isReady = false;
-            });
-
-            // Wait for ready signal
-            await this.waitForReady();
-            
-        } catch (error: any) {
-            this.outputChannel.appendLine(`Error starting game window: ${error.message}`);
-            vscode.window.showErrorMessage(`Failed to start game window: ${error.message}`);
-            throw error;
+            // If still not installed, abort
+            if (!fs.existsSync(electronPath)) {
+                throw new Error('Electron is not installed. Please install it first.');
+            }
         }
-    }
 
-
-
-    private waitForReady(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error('Timeout waiting for game window to be ready'));
-            }, 30000); // 30 seconds for initial Electron download
-
-            const checkReady = setInterval(() => {
-                if (this.isReady) {
-                    clearInterval(checkReady);
-                    clearTimeout(timeout);
-                    resolve();
-                }
-            }, 100);
+        const runnerPath = path.join(this.extensionPath, 'electron-game-window', 'run-electron.js');
+        
+        this.outputChannel.appendLine('[GameWindowManager] Starting Electron game window...');
+        this.outputChannel.appendLine(`[GameWindowManager] Runner path: ${runnerPath}`);
+        
+        // Use the run-electron.js script which handles Electron spawning correctly
+        this.electronProcess = cp.spawn('node', [runnerPath], {
+            cwd: path.join(this.extensionPath, 'electron-game-window'),
+            stdio: ['pipe', 'pipe', 'pipe'], // We can still pipe to our Node.js wrapper
+            env: {
+                ...process.env,
+                // Ensure we're not in Node mode
+                ELECTRON_RUN_AS_NODE: undefined
+            }
         });
-    }
 
-    private handleElectronMessage(message: any) {
-        this.outputChannel.appendLine(`Received from Electron: ${JSON.stringify(message)}`);
-        
-        switch (message.type) {
-            case 'ready':
-                this.isReady = true;
-                this.outputChannel.appendLine('Game window is ready');
-                // Process queued messages
-                this.messageQueue.forEach(msg => this.sendCommand(msg));
-                this.messageQueue = [];
-                break;
-            case 'shown':
-                this.outputChannel.appendLine('Game window shown');
-                break;
-            case 'hidden':
-                this.outputChannel.appendLine('Game window hidden');
-                break;
-        }
+        // Since the Electron process uses stdio: 'inherit', we need to parse stdout for JSON messages
+        this.electronProcess.stdout?.on('data', (data) => {
+            const output = data.toString();
+            const lines = output.split('\n');
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                    try {
+                        const message = JSON.parse(trimmed);
+                        if (message.type === 'ready') {
+                            this.outputChannel.appendLine('[GameWindowManager] Electron window is ready');
+                            this.isReady = true;
+                            // Process any queued messages
+                            this.processMessageQueue();
+                        }
+                    } catch (e) {
+                        // Not JSON, just regular output
+                    }
+                }
+                
+                // Log non-JSON output for debugging
+                if (trimmed && !trimmed.startsWith('{')) {
+                    this.outputChannel.appendLine(`[Electron]: ${trimmed}`);
+                }
+            }
+        });
+
+        this.electronProcess.stderr?.on('data', (data) => {
+            this.outputChannel.appendLine(`[Electron Error]: ${data.toString()}`);
+        });
+
+        this.electronProcess.on('error', (err) => {
+            this.outputChannel.appendLine(`[GameWindowManager] Failed to start game window: ${err.message}`);
+            vscode.window.showErrorMessage('Failed to start game window');
+            this.electronProcess = null;
+            this.isReady = false;
+        });
+
+        this.electronProcess.on('exit', (code) => {
+            this.outputChannel.appendLine(`[GameWindowManager] Electron process exited with code: ${code}`);
+            this.electronProcess = null;
+            this.isReady = false;
+        });
+
+        // Wait a bit for the process to be ready
+        await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     public show(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Show command called');
         this.sendCommand({ command: 'show' });
     }
 
     public hide(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Hide command called');
         this.sendCommand({ command: 'hide' });
     }
 
     public loadGame(game: GameInfo): void {
-        // Use the game's entry point which is the full path to the game
+        // Use the game's entry point from the downloaded itch.io games
         const gamePath = game.entryPoint;
-        this.outputChannel.appendLine(`Loading game: ${game.title}`);
-        this.outputChannel.appendLine(`Game path: ${gamePath}`);
+        this.outputChannel.appendLine(`[GameWindowManager] Loading game: ${game.title} from: ${gamePath}`);
         this.sendCommand({ command: 'loadGame', gamePath });
     }
 
@@ -164,34 +196,40 @@ export class GameWindowManager {
 
     private sendCommand(message: any): void {
         if (!this.electronProcess) {
-            this.outputChannel.appendLine('Cannot send command: Electron process not running');
+            this.outputChannel.appendLine('[GameWindowManager] Cannot send command - Electron process not running');
             return;
         }
 
         if (!this.isReady) {
-            this.outputChannel.appendLine(`Queueing command: ${JSON.stringify(message)}`);
+            this.outputChannel.appendLine(`[GameWindowManager] Queueing message until Electron is ready: ${JSON.stringify(message)}`);
             this.messageQueue.push(message);
             return;
         }
 
-        try {
-            this.outputChannel.appendLine(`Sending command: ${JSON.stringify(message)}`);
-            this.electronProcess.stdin?.write(JSON.stringify(message) + '\n');
-        } catch (error: any) {
-            this.outputChannel.appendLine(`Error sending command: ${error.message}`);
+        if (this.electronProcess.stdin) {
+            const jsonMessage = JSON.stringify(message) + '\n';
+            this.outputChannel.appendLine(`[GameWindowManager] Sending command to Electron: ${jsonMessage.trim()}`);
+            this.electronProcess.stdin.write(jsonMessage);
+        }
+    }
+
+    private processMessageQueue(): void {
+        while (this.messageQueue.length > 0) {
+            const message = this.messageQueue.shift();
+            this.sendCommand(message);
         }
     }
 
     public dispose(): void {
-        this.outputChannel.appendLine('Disposing GameWindowManager');
         if (this.electronProcess) {
             this.sendCommand({ command: 'quit' });
             // Give it a moment to quit gracefully
             setTimeout(() => {
-                if (this.electronProcess) {
+                if (this.electronProcess && !this.electronProcess.killed) {
                     this.electronProcess.kill();
-                    this.electronProcess = null;
                 }
+                this.electronProcess = null;
+                this.isReady = false;
             }, 1000);
         }
         this.outputChannel.dispose();

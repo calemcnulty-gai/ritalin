@@ -131,6 +131,9 @@
     "test": "node ./out/test/runTest.js",
     "package": "vsce package"
   },
+  "dependencies": {
+    "electron": "^27.0.0"
+  },
   "devDependencies": {
     "@types/vscode": "^1.74.0",
     "@types/node": "16.x",

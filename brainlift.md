@@ -142,6 +142,7 @@
   - **Electron Process Management**: VS Code extensions can spawn child processes without restrictions. Using Electron as a child process provides a full browser environment for games while maintaining IPC communication with the extension.
   - **IPC Design**: JSON-RPC over stdin/stdout provides simple, reliable communication between extension and Electron window. No need for complex protocols - just line-delimited JSON messages.
   - **Window Positioning**: Electron's screen API allows precise window positioning. Bottom-left corner placement keeps games visible but unobtrusive during AI generation.
+  - **Electron Module Loading Issue**: When spawning Electron as a child process from Node.js, `require('electron')` returns the executable path instead of API modules. This is because the electron npm package only exports the path, and Electron modules are only available within the Electron runtime. Solution: Use `stdio: 'inherit'` like the official wrapper, and implement file-based IPC when standard streams aren't available.
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time

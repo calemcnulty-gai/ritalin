@@ -456,3 +456,54 @@ cursorDetector.on('ai-generation-end', () => {
 4. Integrate with CursorDetector events
 5. Add user preferences for position/size/opacity
 6. Package for distribution 
+
+## Research Update: Electron Module Loading Issue
+
+### Next Steps:
+
+1. Implement basic proof of concept following Step 1
+2. Test IPC communication between extension and Electron
+3. Add simple HTML5 game (Snake or Tetris)
+4. Integrate with CursorDetector events
+5. Add user preferences for position/size/opacity
+6. Package for distribution 
+
+## Resolution: Successful Implementation
+
+### Final Solution
+
+After extensive research and testing, we successfully resolved the Electron module loading issue by understanding the root cause and implementing a proper solution:
+
+**Root Cause**: When Electron is spawned as a child process from Node.js, the `require('electron')` mechanism returns the path to the executable instead of the Electron API modules. This happens because:
+1. The electron npm package's index.js only exports the executable path
+2. Electron modules are only available when running inside the Electron runtime
+3. The process context detection fails when spawned with custom stdio configurations
+
+**Working Solution**:
+1. **Use `stdio: 'inherit'`**: The official electron wrapper uses this configuration, which ensures Electron gets the proper terminal context
+2. **File-based IPC**: Since `stdio: 'inherit'` prevents direct stdin/stdout communication, we implemented a file-based IPC mechanism:
+   - The Node.js wrapper writes commands to a temporary file
+   - The Electron process watches this file and reads new commands
+   - This maintains full IPC capability while preserving the working Electron launch
+
+**Implementation Details**:
+- `run-electron.js`: Uses the electron npm package to get the binary path, spawns with `stdio: 'inherit'`
+- `main.js`: Checks for `RITALIN_IPC_PATH` environment variable to use file-based IPC when spawned via wrapper
+- `GameWindowManager.ts`: Handles the Node.js side, sending commands via stdin to the wrapper
+
+### Key Learnings
+
+1. **Process Context Matters**: Electron's module loading is highly dependent on how the process is launched
+2. **stdio Configuration**: The `stdio: 'inherit'` option is crucial for Electron to properly initialize
+3. **Alternative IPC**: When standard streams aren't available, file-based IPC provides a reliable alternative
+4. **Bootstrap Scripts**: Using a bootstrap script can help, but doesn't solve the fundamental stdio issue
+
+### Current Status
+
+✅ **Electron window launches successfully**
+✅ **All Electron modules load properly** (app, BrowserWindow, ipcMain, screen)
+✅ **IPC communication works** via file-based mechanism
+✅ **Window positioning and transparency work**
+✅ **Ready for game integration**
+
+The external game window is now fully functional and ready for the next phase of development. 

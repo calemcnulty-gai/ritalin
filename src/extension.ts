@@ -197,24 +197,31 @@ Debug Status:
     // Test command for external game window
     const testExternalWindowCommand = vscode.commands.registerCommand('ritalin.testExternalWindow', async () => {
         console.log('[Ritalin] Test external window command triggered');
+        vscode.window.showInformationMessage('Test external window command triggered!');
         
         if (!gameWindowManager || !gameManager) {
+            console.error('[Ritalin] Game window manager or game manager not initialized');
             vscode.window.showErrorMessage('Game window manager or game manager not initialized');
             return;
         }
         
         const selectedGame = gameManager.getSelectedGame();
         if (!selectedGame) {
+            console.warn('[Ritalin] No game selected');
             vscode.window.showWarningMessage('No game selected. Use "Search itch.io Games" to download a game first.');
             return;
         }
         
         try {
+            console.log('[Ritalin] Starting game window manager...');
             await gameWindowManager.start();
+            console.log('[Ritalin] Showing game window...');
             gameWindowManager.show();
+            console.log('[Ritalin] Loading game:', selectedGame.title);
             gameWindowManager.loadGame(selectedGame);
             vscode.window.showInformationMessage(`External game window opened with ${selectedGame.title}!`);
         } catch (error: any) {
+            console.error('[Ritalin] Error opening game window:', error);
             vscode.window.showErrorMessage(`Failed to open game window: ${error.message}`);
         }
     });
