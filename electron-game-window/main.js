@@ -13,7 +13,7 @@ console.log('Electron modules:', {
 let mainWindow;
 let windowPreferences = {
   enabled: false,
-  position: 'bottom-right',
+  position: 'bottom-left',
   customX: 0,
   customY: 0,
   width: 400,

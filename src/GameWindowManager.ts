@@ -45,7 +45,7 @@ export class GameWindowManager {
         const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
         return {
             enabled: config.get<boolean>('enabled', false),
-            position: config.get<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'custom'>('position', 'bottom-right'),
+            position: config.get<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'custom'>('position', 'bottom-left'),
             customX: config.get<number>('customX', 0),
             customY: config.get<number>('customY', 0),
             width: config.get<number>('width', 400),
@@ -114,7 +114,7 @@ export class GameWindowManager {
                 };
             default:
                 return {
-                    x: monitor.x + monitor.width - winWidth - 20,
+                    x: monitor.x + 20,
                     y: monitor.y + monitor.height - winHeight - 50
                 };
         }

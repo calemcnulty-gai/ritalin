@@ -132,7 +132,7 @@
         "ritalin.externalWindow.position": {
           "type": "string",
           "enum": ["bottom-left", "bottom-right", "top-left", "top-right", "center", "custom"],
-          "default": "bottom-right",
+          "default": "bottom-left",
           "description": "Position of the external game window"
         },
         "ritalin.externalWindow.customX": {
