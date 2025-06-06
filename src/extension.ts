@@ -553,6 +553,7 @@ async function configurePosition(): Promise<void> {
     const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
     
     const positions = [
+        { label: 'Overlay (Center of Screen)', value: 'overlay' },
         { label: 'Bottom Left', value: 'bottom-left' },
         { label: 'Bottom Right', value: 'bottom-right' },
         { label: 'Top Left', value: 'top-left' },

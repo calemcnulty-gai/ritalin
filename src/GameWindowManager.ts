@@ -6,7 +6,7 @@ import { GameInfo } from './gameManager';
 
 export interface WindowPreferences {
     enabled: boolean;
-    position: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'custom';
+    position: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'overlay' | 'custom';
     customX: number;
     customY: number;
     width: number;
@@ -50,7 +50,7 @@ export class GameWindowManager {
         const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
         return {
             enabled: config.get<boolean>('enabled', false),
-            position: config.get<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'custom'>('position', 'bottom-left'),
+            position: config.get<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'overlay' | 'custom'>('position', 'bottom-left'),
             customX: config.get<number>('customX', 0),
             customY: config.get<number>('customY', 0),
             width: config.get<number>('width', 400),
@@ -121,6 +121,13 @@ export class GameWindowManager {
                     y: monitor.y + 80
                 };
             case 'center':
+                return {
+                    x: monitor.x + (monitor.width - winWidth) / 2,
+                    y: monitor.y + (monitor.height - winHeight) / 2
+                };
+            case 'overlay':
+                // Overlay mode - position in center of the monitor where Cursor is
+                // This creates a floating overlay effect
                 return {
                     x: monitor.x + (monitor.width - winWidth) / 2,
                     y: monitor.y + (monitor.height - winHeight) / 2

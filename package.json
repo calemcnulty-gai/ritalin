@@ -131,9 +131,9 @@
         },
         "ritalin.externalWindow.position": {
           "type": "string",
-          "enum": ["bottom-left", "bottom-right", "top-left", "top-right", "center", "custom"],
+          "enum": ["bottom-left", "bottom-right", "top-left", "top-right", "center", "overlay", "custom"],
           "default": "bottom-left",
-          "description": "Position of the external game window"
+          "description": "Position of the external game window (overlay = on top of Cursor)"
         },
         "ritalin.externalWindow.customX": {
           "type": "number",

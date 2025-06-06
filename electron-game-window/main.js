@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -7,7 +7,8 @@ console.log('Electron modules:', {
   app: !!app, 
   BrowserWindow: !!BrowserWindow, 
   ipcMain: !!ipcMain, 
-  screen: !!screen 
+  screen: !!screen,
+  globalShortcut: !!globalShortcut
 });
 
 let mainWindow;
@@ -123,7 +124,8 @@ function createWindow() {
     alwaysOnTop: windowPreferences.alwaysOnTop,
     skipTaskbar: true,
     resizable: false,
-    hasShadow: true,
+    hasShadow: windowPreferences.position !== 'overlay', // No shadow in overlay mode
+    opacity: windowPreferences.position === 'overlay' ? 0.95 : 1.0, // Slight transparency in overlay
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -146,8 +148,24 @@ function createWindow() {
     mainWindow.setAlwaysOnTop(true, 'floating');
   }
   
+  // Special handling for overlay mode
+  if (windowPreferences.position === 'overlay') {
+    // Make window level higher for true overlay effect
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    // Enable click-through when window loses focus (so you can still use Cursor)
+    mainWindow.on('blur', () => {
+      if (windowPreferences.position === 'overlay') {
+        mainWindow.setIgnoreMouseEvents(true);
+      }
+    });
+    // Re-enable mouse events when window gains focus
+    mainWindow.on('focus', () => {
+      mainWindow.setIgnoreMouseEvents(false);
+    });
+  }
+  
   // Handle hide on blur if enabled
-  if (windowPreferences.hideOnBlur) {
+  if (windowPreferences.hideOnBlur && windowPreferences.position !== 'overlay') {
     mainWindow.on('blur', () => {
       mainWindow.hide();
     });
@@ -317,6 +335,26 @@ function handleExtensionMessage(message) {
 app.whenReady().then(() => {
   createWindow();
   setupIPC();
+  
+  // Register global shortcut for overlay mode toggle (Cmd/Ctrl+Shift+G)
+  const toggleShortcut = process.platform === 'darwin' ? 'Cmd+Shift+G' : 'Ctrl+Shift+G';
+  globalShortcut.register(toggleShortcut, () => {
+    if (mainWindow && windowPreferences.position === 'overlay') {
+      const isIgnoring = mainWindow.isAlwaysOnTop();
+      if (isIgnoring) {
+        // Make interactive
+        mainWindow.setIgnoreMouseEvents(false);
+        mainWindow.setOpacity(1.0);
+        console.log('Overlay mode: Interactive');
+      } else {
+        // Make click-through
+        mainWindow.setIgnoreMouseEvents(true);
+        mainWindow.setOpacity(0.7);
+        console.log('Overlay mode: Click-through');
+      }
+    }
+  });
+  
   process.stdout.write(JSON.stringify({ type: 'ready' }) + '\n');
   
   // Also send via IPC if available
@@ -344,4 +382,9 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   app.quit();
+});
+
+app.on('will-quit', () => {
+  // Unregister all shortcuts
+  globalShortcut.unregisterAll();
 }); 
