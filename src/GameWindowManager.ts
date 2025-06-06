@@ -419,6 +419,21 @@ export class GameWindowManager {
         this.sendCommand({ command: 'setSize', width, height });
     }
 
+    public saveGameState(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Saving game state...');
+        this.sendCommand({ command: 'saveGameState' });
+    }
+
+    public loadGameState(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Loading game state...');
+        this.sendCommand({ command: 'loadGameState' });
+    }
+
+    public clearGameState(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Clearing game state...');
+        this.sendCommand({ command: 'clearGameState' });
+    }
+
     private sendCommand(message: any): void {
         if (!this.electronProcess) {
             this.outputChannel.appendLine('[GameWindowManager] Cannot send command - Electron process not running');

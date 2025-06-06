@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -77,6 +77,132 @@ function findBestMonitorForGameWindow() {
   };
 }
 
+// Get the path for storing game state
+function getGameStatePath() {
+  // Use app.getPath('userData') which persists across sessions
+  const userDataPath = app.getPath('userData');
+  const gameStatePath = path.join(userDataPath, 'game-state');
+  
+  // Ensure directory exists
+  if (!fs.existsSync(gameStatePath)) {
+    fs.mkdirSync(gameStatePath, { recursive: true });
+  }
+  
+  return gameStatePath;
+}
+
+// Save all game state (localStorage, sessionStorage, cookies, IndexedDB)
+async function saveGameState() {
+  if (!mainWindow) return;
+  
+  try {
+    const gameStatePath = getGameStatePath();
+    
+    // Execute JavaScript in the renderer to get all storage data
+    const storageData = await mainWindow.webContents.executeJavaScript(`
+      (function() {
+        const data = {
+          localStorage: {},
+          sessionStorage: {},
+          cookies: document.cookie,
+          timestamp: Date.now()
+        };
+        
+        // Get localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          data.localStorage[key] = localStorage.getItem(key);
+        }
+        
+        // Get sessionStorage
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          data.sessionStorage[key] = sessionStorage.getItem(key);
+        }
+        
+        return data;
+      })();
+    `);
+    
+    // Save to file
+    const statePath = path.join(gameStatePath, 'storage.json');
+    fs.writeFileSync(statePath, JSON.stringify(storageData, null, 2));
+    
+    // Also save cookies using Electron's session API
+    const cookies = await mainWindow.webContents.session.cookies.get({});
+    const cookiesPath = path.join(gameStatePath, 'cookies.json');
+    fs.writeFileSync(cookiesPath, JSON.stringify(cookies, null, 2));
+    
+    console.log('Game state saved successfully');
+  } catch (error) {
+    console.error('Failed to save game state:', error);
+  }
+}
+
+// Restore game state on startup
+async function restoreGameState() {
+  if (!mainWindow) return;
+  
+  try {
+    const gameStatePath = getGameStatePath();
+    const statePath = path.join(gameStatePath, 'storage.json');
+    const cookiesPath = path.join(gameStatePath, 'cookies.json');
+    
+    // Restore localStorage and sessionStorage
+    if (fs.existsSync(statePath)) {
+      const storageData = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+      
+      await mainWindow.webContents.executeJavaScript(`
+        (function() {
+          const data = ${JSON.stringify(storageData)};
+          
+          // Restore localStorage
+          Object.keys(data.localStorage || {}).forEach(key => {
+            localStorage.setItem(key, data.localStorage[key]);
+          });
+          
+          // Restore sessionStorage
+          Object.keys(data.sessionStorage || {}).forEach(key => {
+            sessionStorage.setItem(key, data.sessionStorage[key]);
+          });
+          
+          // Restore cookies
+          if (data.cookies) {
+            document.cookie = data.cookies;
+          }
+          
+          console.log('Game state restored from', new Date(data.timestamp));
+        })();
+      `);
+    }
+    
+    // Restore cookies using Electron's session API
+    if (fs.existsSync(cookiesPath)) {
+      const cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf8'));
+      for (const cookie of cookies) {
+        // Set each cookie back
+        await mainWindow.webContents.session.cookies.set({
+          url: cookie.domain ? `https://${cookie.domain}` : 'file://',
+          name: cookie.name,
+          value: cookie.value,
+          domain: cookie.domain,
+          path: cookie.path,
+          secure: cookie.secure,
+          httpOnly: cookie.httpOnly,
+          expirationDate: cookie.expirationDate
+        }).catch(err => {
+          // Some cookies might fail to set, that's okay
+          console.log('Failed to restore cookie:', cookie.name, err.message);
+        });
+      }
+    }
+    
+    console.log('Game state restored successfully');
+  } catch (error) {
+    console.error('Failed to restore game state:', error);
+  }
+}
+
 // Handle permission requests - deny all by default
 app.on('web-contents-created', (event, contents) => {
   contents.session.setPermissionRequestHandler((webContents, permission, callback) => {
@@ -143,6 +269,27 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
   
+  // Restore game state when the window loads
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Window loaded, restoring game state...');
+    restoreGameState();
+  });
+  
+  // Save game state periodically (every 30 seconds)
+  setInterval(() => {
+    saveGameState();
+  }, 30000);
+  
+  // Save game state when window is about to close
+  mainWindow.on('close', (event) => {
+    // Don't close immediately, save state first
+    event.preventDefault();
+    saveGameState().then(() => {
+      // Now actually close
+      mainWindow.destroy();
+    });
+  });
+  
   // Set always on top behavior based on preferences
   if (windowPreferences.alwaysOnTop) {
     mainWindow.setAlwaysOnTop(true, 'floating');
@@ -200,6 +347,12 @@ function setupIPC() {
         mainWindow.hide();
         break;
     }
+  });
+  
+  // Handle IndexedDB changes
+  ipcMain.on('indexeddb-changed', () => {
+    console.log('IndexedDB changed, saving game state...');
+    saveGameState();
   });
   
   // Check if we're using file-based IPC (when spawned with stdio: 'inherit')
@@ -322,6 +475,37 @@ function handleExtensionMessage(message) {
         // Verify the size was set correctly
         const [actualWidth, actualHeight] = mainWindow.getSize();
         console.log(`Window size after setting: ${actualWidth}x${actualHeight}`);
+      }
+      break;
+      
+    case 'saveGameState':
+      console.log('Manually saving game state...');
+      saveGameState().then(() => {
+        process.stdout.write(JSON.stringify({ type: 'gameStateSaved' }) + '\n');
+      });
+      break;
+      
+    case 'loadGameState':
+      console.log('Manually loading game state...');
+      restoreGameState().then(() => {
+        process.stdout.write(JSON.stringify({ type: 'gameStateLoaded' }) + '\n');
+      });
+      break;
+      
+    case 'clearGameState':
+      console.log('Clearing game state...');
+      const gameStatePath = getGameStatePath();
+      try {
+        fs.rmSync(gameStatePath, { recursive: true, force: true });
+        // Clear current browser storage
+        mainWindow.webContents.executeJavaScript(`
+          localStorage.clear();
+          sessionStorage.clear();
+          console.log('Game state cleared');
+        `);
+        process.stdout.write(JSON.stringify({ type: 'gameStateCleared' }) + '\n');
+      } catch (error) {
+        console.error('Failed to clear game state:', error);
       }
       break;
       
