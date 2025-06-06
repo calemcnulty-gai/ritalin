@@ -1,5 +1,124 @@
 # Ritalin for Cursor - Changelog
 
+## 2024-12-30
+
+### External Game Window Implementation - COMPLETED ✅
+- ✅ Successfully implemented Electron-based external game window
+- ✅ Created GameWindowManager class for process management
+- ✅ Implemented IPC communication between extension and Electron window
+- ✅ Added test command for external window functionality
+- ✅ Fixed file:// protocol issue for loading local game files
+- ✅ Added comprehensive logging to "Ritalin Window" output channel
+- ✅ Disabled webSecurity to allow iframe to load local Unity WebGL games
+- ✅ **NEW**: Complete window positioning and size preferences system
+- ✅ **NEW**: Multi-monitor support with primary/secondary/auto selection
+- ✅ **NEW**: User-friendly configuration UI for external window settings
+- ✅ **NEW**: Window behavior options (always on top, hide on blur)
+
+### Window Positioning Features
+- Position options: bottom-left, bottom-right, top-left, top-right, center, custom
+- Configurable window size with validation (200-1200px width, 150-800px height)
+- Multi-monitor support for dual/triple monitor setups
+- Always on top and hide on blur preferences
+- Custom positioning with pixel-perfect X/Y coordinates
+- New command: "Ritalin: Configure External Window"
+
+### Current Status
+- External window system fully functional and configurable
+- Unity WebGL games loading correctly in external window
+- Configuration system complete with validation and error handling
+
+### Next Steps
+- Move to Task 9: Game State Management
+- Implement game state persistence
+- Add game rotation/selection system
+- Implement Cursor AI detection for production use
+
+### Debugging External Window
+- Added detailed console logging in Electron renderer
+- Fixed game path to use file:// protocol
+- Created dedicated output channel for Electron window logs
+- User can view logs via Output panel → "Ritalin Window"
+
+### Task 8: External Game Window Implementation - COMPLETED ✅
+
+Successfully implemented a fully-featured external game window system using Electron, providing an alternative to the WebView panel approach for running Unity WebGL games.
+
+#### Core Features Implemented:
+- ✅ **Electron-based floating window** - Separate process for game rendering
+- ✅ **Full Unity WebGL support** - Fixed WebGL context issues with proper GPU acceleration
+- ✅ **Cross-platform window positioning** - Works on Windows, macOS, and Linux
+- ✅ **Multi-monitor support** - Detects active monitor using cursor position
+- ✅ **Comprehensive configuration UI** - User-friendly settings dialog
+- ✅ **Window positioning modes** - 6 presets + custom positioning
+- ✅ **Overlay mode** - Float games directly over Cursor with transparency
+- ✅ **Persistent Electron installation** - One-time setup, survives reloads
+- ✅ **Game state persistence** - Save/restore localStorage, cookies, IndexedDB
+
+#### Technical Implementation:
+- GameWindowManager class handles Electron process lifecycle
+- IPC communication via stdin/stdout and file-based messaging
+- Smart monitor detection using cursor position as proxy for active window
+- Window preferences stored in VS Code configuration
+- Electron installed in global storage for persistence
+- Automatic game state saving every 30 seconds and on close
+
+#### Configuration Options:
+- Position: bottom-left (default), bottom-right, top-left, top-right, center, overlay, custom
+- Size: Configurable width (200-1200px) and height (150-800px)
+- Monitor: primary, secondary, or auto-detect
+- Behavior: always on top, hide on blur
+- Overlay mode: Cmd/Ctrl+Shift+G to toggle click-through
+
+#### Commands Added:
+- `Ritalin: Test External Game Window` - Test the external window
+- `Ritalin: Configure External Window` - Open configuration dialog
+
+### Next Steps
+- Move to Task 9: Game State Management (partially implemented)
+- Implement Cursor AI detection for automatic game showing
+- Add game rotation and selection system
+
+## 2024-12-29
+
+### Unity WebGL Investigation Complete
+- ✅ Downloaded and extracted Unity WebGL game from itch.io
+- ✅ Analyzed Unity WebGL file structure and requirements
+- ❌ Discovered Unity WebGL incompatible with VS Code WebView security model
+- ❌ Unity requires service workers and unrestricted JavaScript execution
+- ❌ 34MB+ file size makes extension distribution impractical
+
+### Pivot Decision
+- Abandoning Unity WebGL approach due to technical limitations
+- Will implement lightweight HTML5/Canvas games instead
+- Considering external Electron window for full game compatibility
+
+### Game Management System
+- ✅ Implemented GameManager class for downloading/managing games
+- ✅ Created Python scripts for itch.io game discovery and download
+- ✅ Added game selection and management UI
+- ✅ Implemented persistent game storage and preferences
+
+### Extension Architecture
+- ✅ Switched from WebView panel to WebviewView (bottom panel)
+- ✅ Improved resource loading and debugging
+- ✅ Added comprehensive error handling and logging
+- ✅ Created modular architecture for future game types
+
+## 2024-12-28
+
+### Initial Development
+- ✅ Created VS Code extension boilerplate
+- ✅ Implemented basic WebView panel system
+- ✅ Added show/hide/toggle commands
+- ✅ Created placeholder CursorDetector class
+- ✅ Set up extension packaging and installation
+
+### Outstanding Issues
+1. Unity WebGL games don't work in WebView environment
+2. Need alternative game implementation approach
+3. Cursor AI detection not yet implemented
+
 ## 2024-12-19 - Task 6: VS Code Extension Boilerplate - COMPLETED
 
 ### Summary

@@ -4,34 +4,188 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { GameInfo } from './gameManager';
 
+export interface WindowPreferences {
+    enabled: boolean;
+    position: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'overlay' | 'custom';
+    customX: number;
+    customY: number;
+    width: number;
+    height: number;
+    monitor: 'primary' | 'secondary' | 'auto';
+    alwaysOnTop: boolean;
+    hideOnBlur: boolean;
+}
+
+export interface MonitorInfo {
+    id: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    isPrimary: boolean;
+    isActive: boolean; // Monitor where Cursor is running
+    cursorPoint?: {
+        x: number;
+        y: number;
+    } | null;
+}
+
 export class GameWindowManager {
     private electronProcess: cp.ChildProcess | null = null;
     private extensionPath: string;
     private isReady: boolean = false;
     private messageQueue: any[] = [];
     private outputChannel: vscode.OutputChannel;
+    private context: vscode.ExtensionContext;
 
     constructor(context: vscode.ExtensionContext) {
         this.extensionPath = context.extensionPath;
         this.outputChannel = vscode.window.createOutputChannel('Ritalin Window');
         this.outputChannel.appendLine('[GameWindowManager] Initialized');
         
+        // Store context for later use
+        this.context = context;
+        
         // Check for electron on initialization
         this.checkElectronInstallation();
+    }
+    
+    private getWindowPreferences(): WindowPreferences {
+        const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
+        return {
+            enabled: config.get<boolean>('enabled', false),
+            position: config.get<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'overlay' | 'custom'>('position', 'bottom-left'),
+            customX: config.get<number>('customX', 0),
+            customY: config.get<number>('customY', 0),
+            width: config.get<number>('width', 400),
+            height: config.get<number>('height', 300),
+            monitor: config.get<'primary' | 'secondary' | 'auto'>('monitor', 'primary'),
+            alwaysOnTop: config.get<boolean>('alwaysOnTop', true),
+            hideOnBlur: config.get<boolean>('hideOnBlur', false)
+        };
+    }
+    
+    private calculateWindowPosition(preferences: WindowPreferences, monitors: MonitorInfo[]): { x: number, y: number } {
+        // Find the target monitor - prefer the active monitor (where Cursor likely is)
+        let targetMonitor = monitors.find(m => m.isActive) || monitors.find(m => m.isPrimary); // Prefer active, fallback to primary
+        
+        if (preferences.monitor === 'secondary') {
+            const secondaryMonitor = monitors.find(m => !m.isPrimary);
+            if (secondaryMonitor) {
+                targetMonitor = secondaryMonitor;
+            }
+        } else if (preferences.monitor === 'auto') {
+            // Use the monitor with the most available space
+            targetMonitor = monitors.reduce((largest, current) => 
+                (current.width * current.height) > (largest.width * largest.height) ? current : largest
+            );
+        } else if (preferences.monitor === 'primary') {
+            // Only override to primary if explicitly requested
+            targetMonitor = monitors.find(m => m.isPrimary) || targetMonitor;
+        }
+        // For default case, we already prefer active monitor above
+        
+        if (!targetMonitor) {
+            this.outputChannel.appendLine('[GameWindowManager] Warning: No target monitor found, using default positioning');
+            return { x: 0, y: 0 };
+        }
+
+        this.outputChannel.appendLine(`[GameWindowManager] Using monitor: ${targetMonitor.id} (active: ${targetMonitor.isActive}, primary: ${targetMonitor.isPrimary})`);
+
+        const monitor = targetMonitor;
+        const { width: winWidth, height: winHeight } = preferences;
+        
+        // If we have Cursor's actual window position, use it for more precise positioning
+        const cursorPoint = targetMonitor.cursorPoint;
+        if (cursorPoint) {
+            this.outputChannel.appendLine(`[GameWindowManager] Cursor point detected at: ${cursorPoint.x}, ${cursorPoint.y}`);
+        }
+        
+        // Calculate position based on preference
+        switch (preferences.position) {
+            case 'bottom-left':
+                // Position at bottom-left of the monitor where cursor/VS Code likely is
+                return {
+                    x: monitor.x + 60, // Offset from left edge to avoid sidebars
+                    y: monitor.y + monitor.height - winHeight - 100 // Offset from bottom for taskbar/dock
+                };
+            case 'bottom-right':
+                return {
+                    x: monitor.x + monitor.width - winWidth - 60,
+                    y: monitor.y + monitor.height - winHeight - 100
+                };
+            case 'top-left':
+                return {
+                    x: monitor.x + 60,
+                    y: monitor.y + 80 // Offset for menu bar
+                };
+            case 'top-right':
+                return {
+                    x: monitor.x + monitor.width - winWidth - 60,
+                    y: monitor.y + 80
+                };
+            case 'center':
+                return {
+                    x: monitor.x + (monitor.width - winWidth) / 2,
+                    y: monitor.y + (monitor.height - winHeight) / 2
+                };
+            case 'overlay':
+                // Overlay mode - position in center of the monitor where Cursor is
+                // This creates a floating overlay effect
+                return {
+                    x: monitor.x + (monitor.width - winWidth) / 2,
+                    y: monitor.y + (monitor.height - winHeight) / 2
+                };
+            case 'custom':
+                return {
+                    x: preferences.customX,
+                    y: preferences.customY
+                };
+            default:
+                // Default to bottom-left
+                return {
+                    x: monitor.x + 60,
+                    y: monitor.y + monitor.height - winHeight - 100
+                };
+        }
+    }
+    
+    private async getVSCodeWindowState(): Promise<any> {
+        // VS Code doesn't directly expose window position, but we can use some tricks
+        // We'll use the active text editor's visible ranges as a proxy for window focus
+        const activeEditor = vscode.window.activeTextEditor;
+        const workbenchConfig = vscode.workspace.getConfiguration('workbench');
+        
+        // Get some hints about the window state
+        const state = {
+            isFocused: vscode.window.state.focused,
+            activeEditorColumn: activeEditor?.viewColumn,
+            visibleEditors: vscode.window.visibleTextEditors.length,
+            // We can't get exact window position, but we can make educated guesses
+            // based on workspace configuration and active state
+            workspaceFolder: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+            timestamp: Date.now()
+        };
+        
+        return state;
     }
     
     private async checkElectronInstallation(): Promise<void> {
         this.outputChannel.appendLine('[GameWindowManager] Checking for electron installation...');
         
-        // Check if electron exists in the extension's node_modules
-        const electronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        // Use global storage path for persistent electron installation
+        const globalStoragePath = this.context.globalStorageUri.fsPath;
+        const electronPath = path.join(globalStoragePath, 'electron-cache', 'node_modules', 'electron');
         
-        if (!fs.existsSync(electronPath)) {
-            this.outputChannel.appendLine('[GameWindowManager] Electron not found in extension node_modules');
+        // Also check if electron exists in the extension's node_modules (for development)
+        const extensionElectronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        
+        if (!fs.existsSync(electronPath) && !fs.existsSync(extensionElectronPath)) {
+            this.outputChannel.appendLine('[GameWindowManager] Electron not found in global storage or extension');
             
             // Show a message to the user
             const result = await vscode.window.showInformationMessage(
-                'Ritalin needs to install Electron for the external game window feature. This is a one-time setup.',
+                'Ritalin needs to install Electron for the external game window feature. This is a one-time setup that will persist across reloads.',
                 'Install Now',
                 'Later'
             );
@@ -40,7 +194,8 @@ export class GameWindowManager {
                 await this.installElectron();
             }
         } else {
-            this.outputChannel.appendLine('[GameWindowManager] Electron found at: ' + electronPath);
+            const foundPath = fs.existsSync(electronPath) ? electronPath : extensionElectronPath;
+            this.outputChannel.appendLine('[GameWindowManager] Electron found at: ' + foundPath);
         }
     }
     
@@ -51,12 +206,33 @@ export class GameWindowManager {
             cancellable: false
         }, async (progress) => {
             try {
+                progress.report({ message: 'Preparing installation directory...' });
+                
+                // Create electron cache directory in global storage
+                const globalStoragePath = this.context.globalStorageUri.fsPath;
+                const electronCachePath = path.join(globalStoragePath, 'electron-cache');
+                
+                // Ensure the directory exists
+                if (!fs.existsSync(electronCachePath)) {
+                    fs.mkdirSync(electronCachePath, { recursive: true });
+                }
+                
+                // Create a minimal package.json for npm install
+                const packageJsonPath = path.join(electronCachePath, 'package.json');
+                if (!fs.existsSync(packageJsonPath)) {
+                    fs.writeFileSync(packageJsonPath, JSON.stringify({
+                        name: 'ritalin-electron-cache',
+                        version: '1.0.0',
+                        private: true
+                    }, null, 2));
+                }
+                
                 progress.report({ message: 'Running npm install electron...' });
                 
-                // Run npm install in the extension directory
+                // Run npm install in the global storage directory
                 await new Promise<void>((resolve, reject) => {
-                    const npmProcess = cp.spawn('npm', ['install', 'electron@27.0.0', '--no-save'], {
-                        cwd: this.extensionPath,
+                    const npmProcess = cp.spawn('npm', ['install', 'electron@27.0.0', '--save'], {
+                        cwd: electronCachePath,
                         shell: true
                     });
                     
@@ -70,7 +246,7 @@ export class GameWindowManager {
                     
                     npmProcess.on('close', (code) => {
                         if (code === 0) {
-                            this.outputChannel.appendLine('[GameWindowManager] Electron installed successfully');
+                            this.outputChannel.appendLine('[GameWindowManager] Electron installed successfully in global storage');
                             resolve();
                         } else {
                             reject(new Error(`npm install failed with code ${code}`));
@@ -78,7 +254,7 @@ export class GameWindowManager {
                     });
                 });
                 
-                vscode.window.showInformationMessage('Electron installed successfully! You can now use the external game window.');
+                vscode.window.showInformationMessage('Electron installed successfully! This installation will persist across reloads.');
             } catch (error: any) {
                 this.outputChannel.appendLine(`[GameWindowManager] Failed to install electron: ${error.message}`);
                 vscode.window.showErrorMessage(`Failed to install Electron: ${error.message}`);
@@ -92,22 +268,48 @@ export class GameWindowManager {
             return; // Already running
         }
         
-        // Check if electron is available before starting
-        const electronPath = path.join(this.extensionPath, 'node_modules', 'electron');
-        if (!fs.existsSync(electronPath)) {
+        // Check for electron in both locations
+        const globalStoragePath = this.context.globalStorageUri.fsPath;
+        const globalElectronPath = path.join(globalStoragePath, 'electron-cache', 'node_modules', 'electron');
+        const extensionElectronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        
+        let electronPath: string | null = null;
+        if (fs.existsSync(globalElectronPath)) {
+            electronPath = globalElectronPath;
+            this.outputChannel.appendLine('[GameWindowManager] Using Electron from global storage');
+        } else if (fs.existsSync(extensionElectronPath)) {
+            electronPath = extensionElectronPath;
+            this.outputChannel.appendLine('[GameWindowManager] Using Electron from extension directory');
+        }
+        
+        if (!electronPath) {
             this.outputChannel.appendLine('[GameWindowManager] Electron not installed, prompting user...');
             await this.checkElectronInstallation();
             
-            // If still not installed, abort
-            if (!fs.existsSync(electronPath)) {
+            // Check again after potential installation
+            if (fs.existsSync(globalElectronPath)) {
+                electronPath = globalElectronPath;
+            } else if (fs.existsSync(extensionElectronPath)) {
+                electronPath = extensionElectronPath;
+            }
+            
+            if (!electronPath) {
                 throw new Error('Electron is not installed. Please install it first.');
             }
         }
 
+        const preferences = this.getWindowPreferences();
+        this.outputChannel.appendLine(`[GameWindowManager] Window preferences: ${JSON.stringify(preferences)}`);
+        
+        // Get VS Code window state
+        const windowState = await this.getVSCodeWindowState();
+        this.outputChannel.appendLine(`[GameWindowManager] VS Code window state: ${JSON.stringify(windowState)}`);
+        
         const runnerPath = path.join(this.extensionPath, 'electron-game-window', 'run-electron.js');
         
         this.outputChannel.appendLine('[GameWindowManager] Starting Electron game window...');
         this.outputChannel.appendLine(`[GameWindowManager] Runner path: ${runnerPath}`);
+        this.outputChannel.appendLine(`[GameWindowManager] Electron path: ${electronPath}`);
         
         // Use the run-electron.js script which handles Electron spawning correctly
         this.electronProcess = cp.spawn('node', [runnerPath], {
@@ -116,7 +318,13 @@ export class GameWindowManager {
             env: {
                 ...process.env,
                 // Ensure we're not in Node mode
-                ELECTRON_RUN_AS_NODE: undefined
+                ELECTRON_RUN_AS_NODE: undefined,
+                // Pass window preferences as environment variables
+                RITALIN_WINDOW_PREFS: JSON.stringify(preferences),
+                // Pass VS Code window state
+                RITALIN_VSCODE_WINDOW: JSON.stringify(windowState),
+                // Pass the electron path to use
+                RITALIN_ELECTRON_PATH: electronPath
             }
         });
 
@@ -135,6 +343,15 @@ export class GameWindowManager {
                             this.isReady = true;
                             // Process any queued messages
                             this.processMessageQueue();
+                        } else if (message.type === 'monitors') {
+                            // Received monitor information from Electron
+                            this.outputChannel.appendLine(`[GameWindowManager] Monitor info: ${JSON.stringify(message.monitors)}`);
+                            
+                            // Calculate and set window position
+                            const position = this.calculateWindowPosition(preferences, message.monitors);
+                            this.outputChannel.appendLine(`[GameWindowManager] Calculated position: ${JSON.stringify(position)}`);
+                            this.setPosition(position.x, position.y);
+                            this.setSize(preferences.width, preferences.height);
                         }
                     } catch (e) {
                         // Not JSON, just regular output
@@ -183,7 +400,15 @@ export class GameWindowManager {
         // Use the game's entry point from the downloaded itch.io games
         const gamePath = game.entryPoint;
         this.outputChannel.appendLine(`[GameWindowManager] Loading game: ${game.title} from: ${gamePath}`);
-        this.sendCommand({ command: 'loadGame', gamePath });
+        
+        // Convert absolute path to file:// URL
+        let gameUrl = gamePath;
+        if (gamePath && !gamePath.startsWith('file://')) {
+            gameUrl = 'file://' + gamePath;
+        }
+        
+        this.outputChannel.appendLine(`[GameWindowManager] Game URL: ${gameUrl}`);
+        this.sendCommand({ command: 'loadGame', gamePath: gameUrl });
     }
 
     public setPosition(x: number, y: number): void {
@@ -192,6 +417,21 @@ export class GameWindowManager {
 
     public setSize(width: number, height: number): void {
         this.sendCommand({ command: 'setSize', width, height });
+    }
+
+    public saveGameState(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Saving game state...');
+        this.sendCommand({ command: 'saveGameState' });
+    }
+
+    public loadGameState(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Loading game state...');
+        this.sendCommand({ command: 'loadGameState' });
+    }
+
+    public clearGameState(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Clearing game state...');
+        this.sendCommand({ command: 'clearGameState' });
     }
 
     private sendCommand(message: any): void {
