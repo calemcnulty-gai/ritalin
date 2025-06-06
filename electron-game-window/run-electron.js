@@ -7,6 +7,30 @@ const readline = require('readline');
 
 // Try multiple strategies to find electron
 function findElectron() {
+    // Strategy 0: Use the path provided by the extension (highest priority)
+    if (process.env.RITALIN_ELECTRON_PATH) {
+        const providedPath = process.env.RITALIN_ELECTRON_PATH;
+        console.log('Using Electron path provided by extension:', providedPath);
+        
+        // Find the actual electron executable within the provided path
+        const possiblePaths = [
+            path.join(providedPath, 'dist', 'Electron.app', 'Contents', 'MacOS', 'Electron'), // macOS
+            path.join(providedPath, 'dist', 'electron.exe'), // Windows
+            path.join(providedPath, 'dist', 'electron'), // Linux
+            require(path.join(providedPath, 'index.js')) // Fallback to require
+        ];
+        
+        for (const electronPath of possiblePaths) {
+            if (typeof electronPath === 'string' && fs.existsSync(electronPath)) {
+                console.log('Found Electron executable at:', electronPath);
+                return electronPath;
+            } else if (typeof electronPath === 'string' && electronPath !== require(path.join(providedPath, 'index.js'))) {
+                // Not a string, must be the require result
+                return electronPath;
+            }
+        }
+    }
+    
     // Strategy 1: Try local node_modules
     try {
         const localElectron = require('./node_modules/electron');

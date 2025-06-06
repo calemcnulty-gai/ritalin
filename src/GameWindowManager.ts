@@ -36,11 +36,15 @@ export class GameWindowManager {
     private isReady: boolean = false;
     private messageQueue: any[] = [];
     private outputChannel: vscode.OutputChannel;
+    private context: vscode.ExtensionContext;
 
     constructor(context: vscode.ExtensionContext) {
         this.extensionPath = context.extensionPath;
         this.outputChannel = vscode.window.createOutputChannel('Ritalin Window');
         this.outputChannel.appendLine('[GameWindowManager] Initialized');
+        
+        // Store context for later use
+        this.context = context;
         
         // Check for electron on initialization
         this.checkElectronInstallation();
@@ -169,15 +173,19 @@ export class GameWindowManager {
     private async checkElectronInstallation(): Promise<void> {
         this.outputChannel.appendLine('[GameWindowManager] Checking for electron installation...');
         
-        // Check if electron exists in the extension's node_modules
-        const electronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        // Use global storage path for persistent electron installation
+        const globalStoragePath = this.context.globalStorageUri.fsPath;
+        const electronPath = path.join(globalStoragePath, 'electron-cache', 'node_modules', 'electron');
         
-        if (!fs.existsSync(electronPath)) {
-            this.outputChannel.appendLine('[GameWindowManager] Electron not found in extension node_modules');
+        // Also check if electron exists in the extension's node_modules (for development)
+        const extensionElectronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        
+        if (!fs.existsSync(electronPath) && !fs.existsSync(extensionElectronPath)) {
+            this.outputChannel.appendLine('[GameWindowManager] Electron not found in global storage or extension');
             
             // Show a message to the user
             const result = await vscode.window.showInformationMessage(
-                'Ritalin needs to install Electron for the external game window feature. This is a one-time setup.',
+                'Ritalin needs to install Electron for the external game window feature. This is a one-time setup that will persist across reloads.',
                 'Install Now',
                 'Later'
             );
@@ -186,7 +194,8 @@ export class GameWindowManager {
                 await this.installElectron();
             }
         } else {
-            this.outputChannel.appendLine('[GameWindowManager] Electron found at: ' + electronPath);
+            const foundPath = fs.existsSync(electronPath) ? electronPath : extensionElectronPath;
+            this.outputChannel.appendLine('[GameWindowManager] Electron found at: ' + foundPath);
         }
     }
     
@@ -197,12 +206,33 @@ export class GameWindowManager {
             cancellable: false
         }, async (progress) => {
             try {
+                progress.report({ message: 'Preparing installation directory...' });
+                
+                // Create electron cache directory in global storage
+                const globalStoragePath = this.context.globalStorageUri.fsPath;
+                const electronCachePath = path.join(globalStoragePath, 'electron-cache');
+                
+                // Ensure the directory exists
+                if (!fs.existsSync(electronCachePath)) {
+                    fs.mkdirSync(electronCachePath, { recursive: true });
+                }
+                
+                // Create a minimal package.json for npm install
+                const packageJsonPath = path.join(electronCachePath, 'package.json');
+                if (!fs.existsSync(packageJsonPath)) {
+                    fs.writeFileSync(packageJsonPath, JSON.stringify({
+                        name: 'ritalin-electron-cache',
+                        version: '1.0.0',
+                        private: true
+                    }, null, 2));
+                }
+                
                 progress.report({ message: 'Running npm install electron...' });
                 
-                // Run npm install in the extension directory
+                // Run npm install in the global storage directory
                 await new Promise<void>((resolve, reject) => {
-                    const npmProcess = cp.spawn('npm', ['install', 'electron@27.0.0', '--no-save'], {
-                        cwd: this.extensionPath,
+                    const npmProcess = cp.spawn('npm', ['install', 'electron@27.0.0', '--save'], {
+                        cwd: electronCachePath,
                         shell: true
                     });
                     
@@ -216,7 +246,7 @@ export class GameWindowManager {
                     
                     npmProcess.on('close', (code) => {
                         if (code === 0) {
-                            this.outputChannel.appendLine('[GameWindowManager] Electron installed successfully');
+                            this.outputChannel.appendLine('[GameWindowManager] Electron installed successfully in global storage');
                             resolve();
                         } else {
                             reject(new Error(`npm install failed with code ${code}`));
@@ -224,7 +254,7 @@ export class GameWindowManager {
                     });
                 });
                 
-                vscode.window.showInformationMessage('Electron installed successfully! You can now use the external game window.');
+                vscode.window.showInformationMessage('Electron installed successfully! This installation will persist across reloads.');
             } catch (error: any) {
                 this.outputChannel.appendLine(`[GameWindowManager] Failed to install electron: ${error.message}`);
                 vscode.window.showErrorMessage(`Failed to install Electron: ${error.message}`);
@@ -238,14 +268,32 @@ export class GameWindowManager {
             return; // Already running
         }
         
-        // Check if electron is available before starting
-        const electronPath = path.join(this.extensionPath, 'node_modules', 'electron');
-        if (!fs.existsSync(electronPath)) {
+        // Check for electron in both locations
+        const globalStoragePath = this.context.globalStorageUri.fsPath;
+        const globalElectronPath = path.join(globalStoragePath, 'electron-cache', 'node_modules', 'electron');
+        const extensionElectronPath = path.join(this.extensionPath, 'node_modules', 'electron');
+        
+        let electronPath: string | null = null;
+        if (fs.existsSync(globalElectronPath)) {
+            electronPath = globalElectronPath;
+            this.outputChannel.appendLine('[GameWindowManager] Using Electron from global storage');
+        } else if (fs.existsSync(extensionElectronPath)) {
+            electronPath = extensionElectronPath;
+            this.outputChannel.appendLine('[GameWindowManager] Using Electron from extension directory');
+        }
+        
+        if (!electronPath) {
             this.outputChannel.appendLine('[GameWindowManager] Electron not installed, prompting user...');
             await this.checkElectronInstallation();
             
-            // If still not installed, abort
-            if (!fs.existsSync(electronPath)) {
+            // Check again after potential installation
+            if (fs.existsSync(globalElectronPath)) {
+                electronPath = globalElectronPath;
+            } else if (fs.existsSync(extensionElectronPath)) {
+                electronPath = extensionElectronPath;
+            }
+            
+            if (!electronPath) {
                 throw new Error('Electron is not installed. Please install it first.');
             }
         }
@@ -261,6 +309,7 @@ export class GameWindowManager {
         
         this.outputChannel.appendLine('[GameWindowManager] Starting Electron game window...');
         this.outputChannel.appendLine(`[GameWindowManager] Runner path: ${runnerPath}`);
+        this.outputChannel.appendLine(`[GameWindowManager] Electron path: ${electronPath}`);
         
         // Use the run-electron.js script which handles Electron spawning correctly
         this.electronProcess = cp.spawn('node', [runnerPath], {
@@ -273,7 +322,9 @@ export class GameWindowManager {
                 // Pass window preferences as environment variables
                 RITALIN_WINDOW_PREFS: JSON.stringify(preferences),
                 // Pass VS Code window state
-                RITALIN_VSCODE_WINDOW: JSON.stringify(windowState)
+                RITALIN_VSCODE_WINDOW: JSON.stringify(windowState),
+                // Pass the electron path to use
+                RITALIN_ELECTRON_PATH: electronPath
             }
         });
 
