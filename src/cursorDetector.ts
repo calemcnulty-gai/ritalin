@@ -18,7 +18,8 @@ export class CursorDetector {
 
     private _setupDetection(): void {
         // Method 1: Monitor status bar for "Generating..." text
-        this._monitorStatusBar();
+        // TEMPORARILY DISABLED - causing false positives
+        // this._monitorStatusBar();
         
         // Method 2: Intercept Cursor-specific commands
         this._interceptCursorCommands();
@@ -31,6 +32,10 @@ export class CursorDetector {
     }
 
     private _monitorStatusBar(): void {
+        // TEMPORARILY DISABLED - this method was causing repeated triggers
+        // The checks were too broad and detecting false positives
+        return;
+        
         // Check status bar items periodically
         this._statusBarCheckInterval = setInterval(() => {
             try {
@@ -118,6 +123,11 @@ export class CursorDetector {
         let changeCount = 0;
         
         const changeListener = vscode.workspace.onDidChangeTextDocument((event) => {
+            // Skip if already generating to avoid repeated triggers
+            if (this._isGenerating) {
+                return;
+            }
+            
             const now = Date.now();
             const timeSinceLastChange = now - lastChangeTime;
             
@@ -131,10 +141,8 @@ export class CursorDetector {
             const isRapidChange = timeSinceLastChange < 100;
             
             if (isLargeChange || (isRapidChange && ++changeCount > 3)) {
-                if (!this._isGenerating) {
-                    console.log('[CursorDetector] Detected rapid/large text changes - possible AI generation');
-                    this._startGeneration();
-                }
+                console.log('[CursorDetector] Detected rapid/large text changes - possible AI generation');
+                this._startGeneration();
             }
             
             lastChangeTime = now;
@@ -170,6 +178,10 @@ export class CursorDetector {
             this._isGenerating = true;
             this._onAiGenerationStart.fire();
             console.log('[CursorDetector] AI generation started');
+            this._setGenerationTimeout();
+        } else {
+            // Generation already in progress, just reset the timeout
+            console.log('[CursorDetector] AI generation already in progress, resetting timeout');
             this._setGenerationTimeout();
         }
     }

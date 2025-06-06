@@ -32,6 +32,12 @@
   - `Ritalin: Test AI End (Debug)` - Simulates AI generation end
 - Configuration respects `ritalin.externalWindow.enabled` setting
 
+### Bug Fix: Repeated Game Reloading
+- Fixed issue where game window would repeatedly show/hide
+- Disabled overly sensitive status bar monitoring that was causing false positives
+- Added guard to prevent multiple triggers during active generation
+- Improved timeout handling to avoid resetting during active generation
+
 ### External Game Window Implementation - COMPLETED ✅
 - ✅ Successfully implemented Electron-based external game window
 - ✅ Created GameWindowManager class for process management
