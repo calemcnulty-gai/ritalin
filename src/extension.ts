@@ -232,6 +232,23 @@ Debug Status:
         await showExternalWindowConfigDialog();
     });
 
+    // Test AI detection commands
+    const testAiStartCommand = vscode.commands.registerCommand('ritalin.testAiStart', () => {
+        console.log('[Ritalin] Test AI start command triggered');
+        if (cursorDetector) {
+            cursorDetector.triggerAiStart();
+            vscode.window.showInformationMessage('Simulated AI generation start');
+        }
+    });
+
+    const testAiEndCommand = vscode.commands.registerCommand('ritalin.testAiEnd', () => {
+        console.log('[Ritalin] Test AI end command triggered');
+        if (cursorDetector) {
+            cursorDetector.triggerAiEnd();
+            vscode.window.showInformationMessage('Simulated AI generation end');
+        }
+    });
+
     // Add to subscriptions for cleanup
     context.subscriptions.push(
         preloadGameCommand,
@@ -242,7 +259,9 @@ Debug Status:
         manageGamesCommand,
         openSettingsCommand,
         testExternalWindowCommand,
-        configureExternalWindowCommand
+        configureExternalWindowCommand,
+        testAiStartCommand,
+        testAiEndCommand
     );
 
     console.log('[Ritalin] Commands registered successfully');
@@ -250,25 +269,55 @@ Debug Status:
     // Set up cursor detection event handlers
     if (cursorDetector) {
         console.log('[Ritalin] Setting up cursor detection handlers...');
-        cursorDetector.onAiGenerationStart(() => {
+        cursorDetector.onAiGenerationStart(async () => {
             console.log('[Ritalin] AI generation detected - checking config...');
             const config = vscode.workspace.getConfiguration('ritalin');
             const enabled = config.get<boolean>('enabled', true);
+            const useExternalWindow = config.get<boolean>('externalWindow.enabled', false);
             const delay = config.get<number>('showDelay', 2000);
 
-            console.log('[Ritalin] Config - enabled:', enabled, 'delay:', delay);
+            console.log('[Ritalin] Config - enabled:', enabled, 'useExternalWindow:', useExternalWindow, 'delay:', delay);
 
             if (enabled) {
                 console.log('[Ritalin] Showing game after delay...');
-                setTimeout(() => {
-                    showGame();
+                setTimeout(async () => {
+                    if (useExternalWindow && gameWindowManager && gameManager) {
+                        // Use external window
+                        try {
+                            const selectedGame = gameManager.getSelectedGame();
+                            if (selectedGame) {
+                                console.log('[Ritalin] Starting external game window...');
+                                await gameWindowManager.start();
+                                gameWindowManager.show();
+                                gameWindowManager.loadGame(selectedGame);
+                            } else {
+                                console.warn('[Ritalin] No game selected for external window');
+                                vscode.window.showWarningMessage('No game selected. Use "Search itch.io Games" to download a game first.');
+                            }
+                        } catch (error) {
+                            console.error('[Ritalin] Error showing external game window:', error);
+                            vscode.window.showErrorMessage(`Failed to show game window: ${error}`);
+                        }
+                    } else {
+                        // Use panel view
+                        showGame();
+                    }
                 }, delay);
             }
         });
 
         cursorDetector.onAiGenerationEnd(() => {
             console.log('[Ritalin] AI generation ended - hiding game');
-            hideGame();
+            const config = vscode.workspace.getConfiguration('ritalin');
+            const useExternalWindow = config.get<boolean>('externalWindow.enabled', false);
+            
+            if (useExternalWindow && gameWindowManager) {
+                // Hide external window
+                gameWindowManager.hide();
+            } else {
+                // Hide panel view
+                hideGame();
+            }
         });
     }
 

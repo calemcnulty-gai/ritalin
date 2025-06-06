@@ -87,6 +87,16 @@
         "command": "ritalin.configureExternalWindow",
         "title": "Configure External Window",
         "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.testAiStart",
+        "title": "Test AI Start (Debug)",
+        "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.testAiEnd",
+        "title": "Test AI End (Debug)",
+        "category": "Ritalin"
       }
     ],
     "keybindings": [

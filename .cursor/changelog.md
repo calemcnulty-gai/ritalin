@@ -22,6 +22,16 @@
 - Added timeout mechanism to auto-end generation after 5 seconds
 - Included comprehensive logging for debugging
 
+### Game Window Auto-Show/Hide Integration
+- Connected CursorDetector events to GameWindowManager
+- Added support for both panel view and external window modes
+- External window automatically shows when AI generation starts
+- Window hides when AI generation ends
+- Added test commands for debugging:
+  - `Ritalin: Test AI Start (Debug)` - Simulates AI generation start
+  - `Ritalin: Test AI End (Debug)` - Simulates AI generation end
+- Configuration respects `ritalin.externalWindow.enabled` setting
+
 ### External Game Window Implementation - COMPLETED ✅
 - ✅ Successfully implemented Electron-based external game window
 - ✅ Created GameWindowManager class for process management
