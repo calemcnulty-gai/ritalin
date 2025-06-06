@@ -82,6 +82,11 @@
         "command": "ritalin.testExternalWindow",
         "title": "Test External Game Window",
         "category": "Ritalin"
+      },
+      {
+        "command": "ritalin.configureExternalWindow",
+        "title": "Configure External Window",
+        "category": "Ritalin"
       }
     ],
     "keybindings": [
@@ -118,6 +123,57 @@
           "type": "boolean",
           "default": true,
           "description": "Show tip about resizing the panel when opening games"
+        },
+        "ritalin.externalWindow.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use external floating window instead of panel"
+        },
+        "ritalin.externalWindow.position": {
+          "type": "string",
+          "enum": ["bottom-left", "bottom-right", "top-left", "top-right", "center", "custom"],
+          "default": "bottom-right",
+          "description": "Position of the external game window"
+        },
+        "ritalin.externalWindow.customX": {
+          "type": "number",
+          "default": 0,
+          "description": "Custom X position (only used when position is 'custom')"
+        },
+        "ritalin.externalWindow.customY": {
+          "type": "number",
+          "default": 0,
+          "description": "Custom Y position (only used when position is 'custom')"
+        },
+        "ritalin.externalWindow.width": {
+          "type": "number",
+          "default": 400,
+          "minimum": 200,
+          "maximum": 1200,
+          "description": "Width of the external game window"
+        },
+        "ritalin.externalWindow.height": {
+          "type": "number",
+          "default": 300,
+          "minimum": 150,
+          "maximum": 800,
+          "description": "Height of the external game window"
+        },
+        "ritalin.externalWindow.monitor": {
+          "type": "string",
+          "enum": ["primary", "secondary", "auto"],
+          "default": "primary",
+          "description": "Which monitor to place the window on"
+        },
+        "ritalin.externalWindow.alwaysOnTop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep the external window always on top"
+        },
+        "ritalin.externalWindow.hideOnBlur": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hide window when it loses focus"
         }
       }
     }

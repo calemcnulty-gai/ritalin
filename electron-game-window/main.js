@@ -11,9 +11,34 @@ console.log('Electron modules:', {
 });
 
 let mainWindow;
+let windowPreferences = {
+  enabled: false,
+  position: 'bottom-right',
+  customX: 0,
+  customY: 0,
+  width: 400,
+  height: 300,
+  monitor: 'primary',
+  alwaysOnTop: true,
+  hideOnBlur: false
+};
 
-// Disable hardware acceleration to prevent some permission prompts
-app.disableHardwareAcceleration();
+// Try to read window preferences from environment
+try {
+  if (process.env.RITALIN_WINDOW_PREFS) {
+    windowPreferences = JSON.parse(process.env.RITALIN_WINDOW_PREFS);
+    console.log('Loaded window preferences:', windowPreferences);
+  }
+} catch (e) {
+  console.error('Failed to parse window preferences:', e);
+}
+
+// Enable WebGL and GPU features for Unity games
+app.commandLine.appendSwitch('enable-webgl');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-accelerated-2d-canvas');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('disable-gpu-sandbox');
 
 // Handle permission requests - deny all by default
 app.on('web-contents-created', (event, contents) => {
@@ -25,18 +50,32 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 function createWindow() {
-  // Get primary display dimensions
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
+  // Get all displays
+  const displays = screen.getAllDisplays();
+  console.log('Available displays:', displays.length);
   
+  // Convert displays to our monitor format and send to extension
+  const monitors = displays.map((display, index) => ({
+    id: index,
+    x: display.bounds.x,
+    y: display.bounds.y,
+    width: display.bounds.width,
+    height: display.bounds.height,
+    isPrimary: display === screen.getPrimaryDisplay()
+  }));
+  
+  // Send monitor info to extension (it will calculate position and send it back)
+  process.stdout.write(JSON.stringify({ type: 'monitors', monitors }) + '\n');
+  
+  // Use preferences for initial window setup
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
-    x: 0,  // Position at left edge
-    y: height - 300,  // Position at bottom
+    width: windowPreferences.width,
+    height: windowPreferences.height,
+    x: 0,  // Will be set by extension based on preferences
+    y: 0,  // Will be set by extension based on preferences
     frame: false,
     transparent: true,
-    alwaysOnTop: true,
+    alwaysOnTop: windowPreferences.alwaysOnTop,
     skipTaskbar: true,
     resizable: false,
     hasShadow: true,
@@ -45,7 +84,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       // Additional security settings to prevent permission requests
-      webSecurity: true,
+      webSecurity: false, // Allow loading local files
       allowRunningInsecureContent: false,
       experimentalFeatures: false,
       enableBlinkFeatures: '', // Disable all blink features
@@ -57,8 +96,17 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
   
-  // Prevent window from being hidden when it loses focus
-  mainWindow.setAlwaysOnTop(true, 'floating');
+  // Set always on top behavior based on preferences
+  if (windowPreferences.alwaysOnTop) {
+    mainWindow.setAlwaysOnTop(true, 'floating');
+  }
+  
+  // Handle hide on blur if enabled
+  if (windowPreferences.hideOnBlur) {
+    mainWindow.on('blur', () => {
+      mainWindow.hide();
+    });
+  }
   
   // Prevent navigation to external URLs
   mainWindow.webContents.on('will-navigate', (event, url) => {

@@ -4,6 +4,27 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { GameInfo } from './gameManager';
 
+export interface WindowPreferences {
+    enabled: boolean;
+    position: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'custom';
+    customX: number;
+    customY: number;
+    width: number;
+    height: number;
+    monitor: 'primary' | 'secondary' | 'auto';
+    alwaysOnTop: boolean;
+    hideOnBlur: boolean;
+}
+
+export interface MonitorInfo {
+    id: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    isPrimary: boolean;
+}
+
 export class GameWindowManager {
     private electronProcess: cp.ChildProcess | null = null;
     private extensionPath: string;
@@ -18,6 +39,85 @@ export class GameWindowManager {
         
         // Check for electron on initialization
         this.checkElectronInstallation();
+    }
+    
+    private getWindowPreferences(): WindowPreferences {
+        const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
+        return {
+            enabled: config.get<boolean>('enabled', false),
+            position: config.get<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'custom'>('position', 'bottom-right'),
+            customX: config.get<number>('customX', 0),
+            customY: config.get<number>('customY', 0),
+            width: config.get<number>('width', 400),
+            height: config.get<number>('height', 300),
+            monitor: config.get<'primary' | 'secondary' | 'auto'>('monitor', 'primary'),
+            alwaysOnTop: config.get<boolean>('alwaysOnTop', true),
+            hideOnBlur: config.get<boolean>('hideOnBlur', false)
+        };
+    }
+    
+    private calculateWindowPosition(preferences: WindowPreferences, monitors: MonitorInfo[]): { x: number, y: number } {
+        // Find the target monitor
+        let targetMonitor = monitors.find(m => m.isPrimary); // Default to primary
+        
+        if (preferences.monitor === 'secondary') {
+            const secondaryMonitor = monitors.find(m => !m.isPrimary);
+            if (secondaryMonitor) {
+                targetMonitor = secondaryMonitor;
+            }
+        } else if (preferences.monitor === 'auto') {
+            // Use the monitor with the most available space
+            targetMonitor = monitors.reduce((largest, current) => 
+                (current.width * current.height) > (largest.width * largest.height) ? current : largest
+            );
+        }
+        
+        if (!targetMonitor) {
+            this.outputChannel.appendLine('[GameWindowManager] Warning: No target monitor found, using default positioning');
+            return { x: 0, y: 0 };
+        }
+        
+        const monitor = targetMonitor;
+        const { width: winWidth, height: winHeight } = preferences;
+        
+        // Calculate position based on preference
+        switch (preferences.position) {
+            case 'bottom-left':
+                return {
+                    x: monitor.x + 20,
+                    y: monitor.y + monitor.height - winHeight - 50
+                };
+            case 'bottom-right':
+                return {
+                    x: monitor.x + monitor.width - winWidth - 20,
+                    y: monitor.y + monitor.height - winHeight - 50
+                };
+            case 'top-left':
+                return {
+                    x: monitor.x + 20,
+                    y: monitor.y + 50
+                };
+            case 'top-right':
+                return {
+                    x: monitor.x + monitor.width - winWidth - 20,
+                    y: monitor.y + 50
+                };
+            case 'center':
+                return {
+                    x: monitor.x + (monitor.width - winWidth) / 2,
+                    y: monitor.y + (monitor.height - winHeight) / 2
+                };
+            case 'custom':
+                return {
+                    x: preferences.customX,
+                    y: preferences.customY
+                };
+            default:
+                return {
+                    x: monitor.x + monitor.width - winWidth - 20,
+                    y: monitor.y + monitor.height - winHeight - 50
+                };
+        }
     }
     
     private async checkElectronInstallation(): Promise<void> {
@@ -104,6 +204,9 @@ export class GameWindowManager {
             }
         }
 
+        const preferences = this.getWindowPreferences();
+        this.outputChannel.appendLine(`[GameWindowManager] Window preferences: ${JSON.stringify(preferences)}`);
+        
         const runnerPath = path.join(this.extensionPath, 'electron-game-window', 'run-electron.js');
         
         this.outputChannel.appendLine('[GameWindowManager] Starting Electron game window...');
@@ -116,7 +219,9 @@ export class GameWindowManager {
             env: {
                 ...process.env,
                 // Ensure we're not in Node mode
-                ELECTRON_RUN_AS_NODE: undefined
+                ELECTRON_RUN_AS_NODE: undefined,
+                // Pass window preferences as environment variables
+                RITALIN_WINDOW_PREFS: JSON.stringify(preferences)
             }
         });
 
@@ -135,6 +240,15 @@ export class GameWindowManager {
                             this.isReady = true;
                             // Process any queued messages
                             this.processMessageQueue();
+                        } else if (message.type === 'monitors') {
+                            // Received monitor information from Electron
+                            this.outputChannel.appendLine(`[GameWindowManager] Monitor info: ${JSON.stringify(message.monitors)}`);
+                            
+                            // Calculate and set window position
+                            const position = this.calculateWindowPosition(preferences, message.monitors);
+                            this.outputChannel.appendLine(`[GameWindowManager] Calculated position: ${JSON.stringify(position)}`);
+                            this.setPosition(position.x, position.y);
+                            this.setSize(preferences.width, preferences.height);
                         }
                     } catch (e) {
                         // Not JSON, just regular output
@@ -183,7 +297,15 @@ export class GameWindowManager {
         // Use the game's entry point from the downloaded itch.io games
         const gamePath = game.entryPoint;
         this.outputChannel.appendLine(`[GameWindowManager] Loading game: ${game.title} from: ${gamePath}`);
-        this.sendCommand({ command: 'loadGame', gamePath });
+        
+        // Convert absolute path to file:// URL
+        let gameUrl = gamePath;
+        if (gamePath && !gamePath.startsWith('file://')) {
+            gameUrl = 'file://' + gamePath;
+        }
+        
+        this.outputChannel.appendLine(`[GameWindowManager] Game URL: ${gameUrl}`);
+        this.sendCommand({ command: 'loadGame', gamePath: gameUrl });
     }
 
     public setPosition(x: number, y: number): void {

@@ -61,8 +61,10 @@ Options to explore:
 - [x] **DONE** - Add test command for external window
 - [x] **DONE** - Test external window with Cursor AI detection
 - [x] **DONE** - Implement game loading from downloaded itch.io games
-- [ ] Add window positioning and size preferences
-- [ ] Handle multi-monitor support
+- [x] **DONE** - Fix WebGL context issues for Unity games
+- [x] **DONE** - Add window positioning and size preferences
+- [x] **DONE** - Handle multi-monitor support
+- [x] **DONE** - Create configuration UI for external window settings
 
 #### Task 9: Game State Management
 - [ ] Implement game state persistence between sessions

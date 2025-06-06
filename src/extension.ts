@@ -226,6 +226,12 @@ Debug Status:
         }
     });
 
+    // Configuration command for external window
+    const configureExternalWindowCommand = vscode.commands.registerCommand('ritalin.configureExternalWindow', async () => {
+        console.log('[Ritalin] Configure external window command triggered');
+        await showExternalWindowConfigDialog();
+    });
+
     // Add to subscriptions for cleanup
     context.subscriptions.push(
         preloadGameCommand,
@@ -235,7 +241,8 @@ Debug Status:
         searchGamesCommand,
         manageGamesCommand,
         openSettingsCommand,
-        testExternalWindowCommand
+        testExternalWindowCommand,
+        configureExternalWindowCommand
     );
 
     console.log('[Ritalin] Commands registered successfully');
@@ -448,6 +455,201 @@ async function downloadAndSelectGame(game: GameInfo, loadGameIntoPanel: (game: G
             vscode.window.showErrorMessage(`Download failed: ${error}`);
         }
     });
+}
+
+async function showExternalWindowConfigDialog(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
+    
+    // Main configuration menu
+    const configOptions = [
+        { 
+            label: '$(window) Enable External Window', 
+            description: config.get<boolean>('enabled') ? '✓ Enabled' : 'Disabled',
+            action: 'toggle-enabled' 
+        },
+        { 
+            label: '$(location) Window Position', 
+            description: `Currently: ${config.get<string>('position', 'bottom-right')}`,
+            action: 'position' 
+        },
+        { 
+            label: '$(expand) Window Size', 
+            description: `${config.get<number>('width', 400)}x${config.get<number>('height', 300)}`,
+            action: 'size' 
+        },
+        { 
+            label: '$(desktop-download) Monitor Selection', 
+            description: `Currently: ${config.get<string>('monitor', 'primary')}`,
+            action: 'monitor' 
+        },
+        { 
+            label: '$(pin) Always On Top', 
+            description: config.get<boolean>('alwaysOnTop') ? '✓ Enabled' : 'Disabled',
+            action: 'toggle-ontop' 
+        },
+        { 
+            label: '$(eye-closed) Hide On Blur', 
+            description: config.get<boolean>('hideOnBlur') ? '✓ Enabled' : 'Disabled',
+            action: 'toggle-blur' 
+        },
+        { 
+            label: '$(play) Test Window', 
+            description: 'Open test window with current settings',
+            action: 'test' 
+        }
+    ];
+
+    const selected = await vscode.window.showQuickPick(configOptions, {
+        title: 'Configure External Game Window',
+        placeHolder: 'Select a setting to configure'
+    });
+
+    if (!selected) {
+        return;
+    }
+
+    try {
+        switch (selected.action) {
+            case 'toggle-enabled':
+                const currentEnabled = config.get<boolean>('enabled', false);
+                await config.update('enabled', !currentEnabled, vscode.ConfigurationTarget.Global);
+                vscode.window.showInformationMessage(`External window ${!currentEnabled ? 'enabled' : 'disabled'}`);
+                break;
+
+            case 'position':
+                await configurePosition();
+                break;
+
+            case 'size':
+                await configureSize();
+                break;
+
+            case 'monitor':
+                await configureMonitor();
+                break;
+
+            case 'toggle-ontop':
+                const currentOnTop = config.get<boolean>('alwaysOnTop', true);
+                await config.update('alwaysOnTop', !currentOnTop, vscode.ConfigurationTarget.Global);
+                vscode.window.showInformationMessage(`Always on top ${!currentOnTop ? 'enabled' : 'disabled'}`);
+                break;
+
+            case 'toggle-blur':
+                const currentBlur = config.get<boolean>('hideOnBlur', false);
+                await config.update('hideOnBlur', !currentBlur, vscode.ConfigurationTarget.Global);
+                vscode.window.showInformationMessage(`Hide on blur ${!currentBlur ? 'enabled' : 'disabled'}`);
+                break;
+
+            case 'test':
+                vscode.commands.executeCommand('ritalin.testExternalWindow');
+                break;
+        }
+    } catch (error: any) {
+        vscode.window.showErrorMessage(`Configuration failed: ${error.message}`);
+    }
+}
+
+async function configurePosition(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
+    
+    const positions = [
+        { label: 'Bottom Right', value: 'bottom-right' },
+        { label: 'Bottom Left', value: 'bottom-left' },
+        { label: 'Top Right', value: 'top-right' },
+        { label: 'Top Left', value: 'top-left' },
+        { label: 'Center', value: 'center' },
+        { label: 'Custom Position', value: 'custom' }
+    ];
+
+    const selected = await vscode.window.showQuickPick(positions, {
+        title: 'Select Window Position',
+        placeHolder: 'Choose where to place the external window'
+    });
+
+    if (!selected) {
+        return;
+    }
+
+    await config.update('position', selected.value, vscode.ConfigurationTarget.Global);
+
+    if (selected.value === 'custom') {
+        const x = await vscode.window.showInputBox({
+            prompt: 'Enter X position (pixels from left edge)',
+            value: config.get<number>('customX', 0).toString(),
+            validateInput: (value) => {
+                const num = parseInt(value);
+                return isNaN(num) ? 'Please enter a valid number' : null;
+            }
+        });
+
+        const y = await vscode.window.showInputBox({
+            prompt: 'Enter Y position (pixels from top edge)',
+            value: config.get<number>('customY', 0).toString(),
+            validateInput: (value) => {
+                const num = parseInt(value);
+                return isNaN(num) ? 'Please enter a valid number' : null;
+            }
+        });
+
+        if (x && y) {
+            await config.update('customX', parseInt(x), vscode.ConfigurationTarget.Global);
+            await config.update('customY', parseInt(y), vscode.ConfigurationTarget.Global);
+        }
+    }
+
+    vscode.window.showInformationMessage(`Window position set to: ${selected.label}`);
+}
+
+async function configureSize(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
+    
+    const width = await vscode.window.showInputBox({
+        prompt: 'Enter window width (200-1200 pixels)',
+        value: config.get<number>('width', 400).toString(),
+        validateInput: (value) => {
+            const num = parseInt(value);
+            if (isNaN(num)) return 'Please enter a valid number';
+            if (num < 200 || num > 1200) return 'Width must be between 200 and 1200 pixels';
+            return null;
+        }
+    });
+
+    const height = await vscode.window.showInputBox({
+        prompt: 'Enter window height (150-800 pixels)',
+        value: config.get<number>('height', 300).toString(),
+        validateInput: (value) => {
+            const num = parseInt(value);
+            if (isNaN(num)) return 'Please enter a valid number';
+            if (num < 150 || num > 800) return 'Height must be between 150 and 800 pixels';
+            return null;
+        }
+    });
+
+    if (width && height) {
+        await config.update('width', parseInt(width), vscode.ConfigurationTarget.Global);
+        await config.update('height', parseInt(height), vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Window size set to: ${width}x${height}`);
+    }
+}
+
+async function configureMonitor(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('ritalin.externalWindow');
+    
+    const monitors = [
+        { label: 'Primary Monitor', value: 'primary' },
+        { label: 'Secondary Monitor', value: 'secondary' },
+        { label: 'Auto (Largest)', value: 'auto' }
+    ];
+
+    const selected = await vscode.window.showQuickPick(monitors, {
+        title: 'Select Monitor',
+        placeHolder: 'Choose which monitor to place the window on'
+    });
+
+    if (selected) {
+        await config.update('monitor', selected.value, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Monitor selection set to: ${selected.label}`);
+    }
 }
 
 export function deactivate() {

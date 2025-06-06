@@ -153,11 +153,18 @@
             const container = document.getElementById('game-container');
             container.classList.remove('loading');
             
-            // Create iframe with sandbox for security
+            // Create iframe without sandbox for Unity WebGL compatibility
             const iframe = document.createElement('iframe');
             iframe.src = gamePath;
-            iframe.sandbox = 'allow-scripts allow-same-origin';
-            iframe.allow = ''; // Explicitly no permissions
+            // Remove sandbox to allow Unity WebGL to work
+            // iframe.sandbox = 'allow-scripts allow-same-origin';
+            iframe.allow = 'autoplay'; // Allow audio autoplay for games
+            
+            // Add error handling
+            iframe.onerror = (error) => {
+                console.error('Iframe load error:', error);
+                container.innerHTML = '<div style="color: red; padding: 20px;">Failed to load game. Check console for details.</div>';
+            };
             
             // Clear container and add iframe
             container.innerHTML = '';
@@ -165,11 +172,14 @@
             
             // Update window title if possible
             iframe.onload = () => {
+                console.log('Iframe loaded successfully');
                 try {
                     const gameTitle = iframe.contentDocument?.title || 'Game';
                     document.querySelector('.window-title').textContent = `Ritalin - ${gameTitle}`;
+                    console.log('Game title updated to:', gameTitle);
                 } catch (e) {
                     // Cross-origin, can't access title
+                    console.log('Could not access iframe content (cross-origin)');
                 }
             };
         });
