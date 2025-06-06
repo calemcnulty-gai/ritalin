@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
 
 console.log('Main.js loaded successfully');
 console.log('Electron modules:', { 
@@ -40,6 +41,55 @@ app.commandLine.appendSwitch('enable-accelerated-2d-canvas');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 
+// Function to detect Cursor's window position on macOS
+function detectCursorWindowPosition() {
+  return new Promise((resolve) => {
+    if (process.platform !== 'darwin') {
+      console.log('Window detection only supported on macOS, falling back to cursor position');
+      resolve(null);
+      return;
+    }
+
+    // AppleScript to get Cursor window position and size
+    const script = `
+      tell application "System Events"
+        try
+          set cursorApp to first application process whose name contains "Cursor"
+          set cursorWindow to first window of cursorApp
+          set windowPosition to position of cursorWindow
+          set windowSize to size of cursorWindow
+          return (item 1 of windowPosition) & "," & (item 2 of windowPosition) & "," & (item 1 of windowSize) & "," & (item 2 of windowSize)
+        on error
+          return "error"
+        end try
+      end tell
+    `;
+
+    exec(`osascript -e '${script}'`, (error, stdout, stderr) => {
+      if (error || stderr || stdout.trim() === 'error') {
+        console.log('Could not detect Cursor window position:', error || stderr || 'Application not found');
+        resolve(null);
+        return;
+      }
+
+      const parts = stdout.trim().split(',');
+      if (parts.length === 4) {
+        const windowInfo = {
+          x: parseInt(parts[0]),
+          y: parseInt(parts[1]),
+          width: parseInt(parts[2]),
+          height: parseInt(parts[3])
+        };
+        console.log('Detected Cursor window:', windowInfo);
+        resolve(windowInfo);
+      } else {
+        console.log('Invalid window position data:', stdout);
+        resolve(null);
+      }
+    });
+  });
+}
+
 // Handle permission requests - deny all by default
 app.on('web-contents-created', (event, contents) => {
   contents.session.setPermissionRequestHandler((webContents, permission, callback) => {
@@ -54,18 +104,54 @@ function createWindow() {
   const displays = screen.getAllDisplays();
   console.log('Available displays:', displays.length);
   
-  // Convert displays to our monitor format and send to extension
-  const monitors = displays.map((display, index) => ({
-    id: index,
-    x: display.bounds.x,
-    y: display.bounds.y,
-    width: display.bounds.width,
-    height: display.bounds.height,
-    isPrimary: display === screen.getPrimaryDisplay()
-  }));
-  
-  // Send monitor info to extension (it will calculate position and send it back)
-  process.stdout.write(JSON.stringify({ type: 'monitors', monitors }) + '\n');
+  // Detect Cursor's actual window position
+  detectCursorWindowPosition().then((cursorWindow) => {
+    let cursorMonitor = null;
+    
+    if (cursorWindow) {
+      // Find which monitor contains the Cursor window
+      cursorMonitor = displays.find(display => {
+        const bounds = display.bounds;
+        return cursorWindow.x >= bounds.x && 
+               cursorWindow.x < bounds.x + bounds.width &&
+               cursorWindow.y >= bounds.y && 
+               cursorWindow.y < bounds.y + bounds.height;
+      });
+      
+      if (cursorMonitor) {
+        console.log('Found Cursor on monitor:', cursorMonitor.bounds);
+      } else {
+        console.log('Could not determine which monitor contains Cursor window');
+      }
+    }
+    
+    // If we couldn't detect Cursor's window, fall back to cursor position
+    if (!cursorMonitor) {
+      const cursorPoint = screen.getCursorScreenPoint();
+      cursorMonitor = screen.getDisplayNearestPoint(cursorPoint);
+      console.log('Falling back to cursor position method');
+      console.log('Cursor position:', cursorPoint);
+    }
+    
+    console.log('Selected monitor bounds:', cursorMonitor.bounds);
+    
+    // Convert displays to our monitor format and send to extension
+    const monitors = displays.map((display, index) => ({
+      id: index,
+      x: display.bounds.x,
+      y: display.bounds.y,
+      width: display.bounds.width,
+      height: display.bounds.height,
+      isPrimary: display === screen.getPrimaryDisplay(),
+      isActive: display === cursorMonitor, // Monitor where Cursor is running
+      cursorWindow: display === cursorMonitor ? cursorWindow : null
+    }));
+    
+    console.log('Monitor info:', monitors);
+    
+    // Send monitor info to extension (it will calculate position and send it back)
+    process.stdout.write(JSON.stringify({ type: 'monitors', monitors }) + '\n');
+  });
   
   // Use preferences for initial window setup
   mainWindow = new BrowserWindow({
@@ -223,12 +309,14 @@ function handleExtensionMessage(message) {
   
   switch (message.command) {
     case 'show':
+      console.log('Showing window');
       mainWindow.show();
       // Send acknowledgment
       process.stdout.write(JSON.stringify({ type: 'shown' }) + '\n');
       break;
       
     case 'hide':
+      console.log('Hiding window');
       mainWindow.hide();
       process.stdout.write(JSON.stringify({ type: 'hidden' }) + '\n');
       break;
@@ -240,13 +328,23 @@ function handleExtensionMessage(message) {
       
     case 'setPosition':
       if (message.x !== undefined && message.y !== undefined) {
+        console.log(`Setting window position to: ${message.x}, ${message.y}`);
         mainWindow.setPosition(message.x, message.y);
+        
+        // Verify the position was set correctly
+        const [actualX, actualY] = mainWindow.getPosition();
+        console.log(`Window position after setting: ${actualX}, ${actualY}`);
       }
       break;
       
     case 'setSize':
       if (message.width !== undefined && message.height !== undefined) {
+        console.log(`Setting window size to: ${message.width}x${message.height}`);
         mainWindow.setSize(message.width, message.height);
+        
+        // Verify the size was set correctly
+        const [actualWidth, actualHeight] = mainWindow.getSize();
+        console.log(`Window size after setting: ${actualWidth}x${actualHeight}`);
       }
       break;
       

@@ -23,6 +23,13 @@ export interface MonitorInfo {
     width: number;
     height: number;
     isPrimary: boolean;
+    isActive: boolean; // Monitor where Cursor is running
+    cursorWindow?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | null;
 }
 
 export class GameWindowManager {
@@ -57,8 +64,8 @@ export class GameWindowManager {
     }
     
     private calculateWindowPosition(preferences: WindowPreferences, monitors: MonitorInfo[]): { x: number, y: number } {
-        // Find the target monitor
-        let targetMonitor = monitors.find(m => m.isPrimary); // Default to primary
+        // Find the target monitor - prefer the active monitor (where Cursor likely is)
+        let targetMonitor = monitors.find(m => m.isActive) || monitors.find(m => m.isPrimary); // Prefer active, fallback to primary
         
         if (preferences.monitor === 'secondary') {
             const secondaryMonitor = monitors.find(m => !m.isPrimary);
@@ -70,39 +77,87 @@ export class GameWindowManager {
             targetMonitor = monitors.reduce((largest, current) => 
                 (current.width * current.height) > (largest.width * largest.height) ? current : largest
             );
+        } else if (preferences.monitor === 'primary') {
+            // Only override to primary if explicitly requested
+            targetMonitor = monitors.find(m => m.isPrimary) || targetMonitor;
         }
+        // For default case, we already prefer active monitor above
         
         if (!targetMonitor) {
             this.outputChannel.appendLine('[GameWindowManager] Warning: No target monitor found, using default positioning');
             return { x: 0, y: 0 };
         }
-        
+
+        this.outputChannel.appendLine(`[GameWindowManager] Using monitor: ${targetMonitor.id} (active: ${targetMonitor.isActive}, primary: ${targetMonitor.isPrimary})`);
+
         const monitor = targetMonitor;
         const { width: winWidth, height: winHeight } = preferences;
+        
+        // If we have Cursor's actual window position, use it for more precise positioning
+        const cursorWindow = targetMonitor.cursorWindow;
+        if (cursorWindow) {
+            this.outputChannel.appendLine(`[GameWindowManager] Cursor window detected at: ${cursorWindow.x}, ${cursorWindow.y} (${cursorWindow.width}x${cursorWindow.height})`);
+        }
+        
+        // For bottom-left positioning, we want to position relative to Cursor's window
+        // Since we can't directly get Cursor's position, we'll estimate it based on the active monitor
+        // and assume Cursor is likely taking up most of the screen
         
         // Calculate position based on preference
         switch (preferences.position) {
             case 'bottom-left':
+                // If we know Cursor's window position, position relative to it
+                if (cursorWindow) {
+                    return {
+                        x: cursorWindow.x + 20, // 20px right of Cursor's left edge
+                        y: cursorWindow.y + cursorWindow.height - winHeight - 20 // 20px up from Cursor's bottom
+                    };
+                }
+                // Otherwise position relative to monitor
                 return {
-                    x: monitor.x + 20,
-                    y: monitor.y + monitor.height - winHeight - 50
+                    x: monitor.x + 60, // More padding to avoid overlapping with typical sidebar
+                    y: monitor.y + monitor.height - winHeight - 100 // More padding from bottom for dock/taskbar
                 };
             case 'bottom-right':
+                if (cursorWindow) {
+                    return {
+                        x: cursorWindow.x + cursorWindow.width - winWidth - 20,
+                        y: cursorWindow.y + cursorWindow.height - winHeight - 20
+                    };
+                }
                 return {
                     x: monitor.x + monitor.width - winWidth - 20,
-                    y: monitor.y + monitor.height - winHeight - 50
+                    y: monitor.y + monitor.height - winHeight - 100
                 };
             case 'top-left':
+                if (cursorWindow) {
+                    return {
+                        x: cursorWindow.x + 20,
+                        y: cursorWindow.y + 20
+                    };
+                }
                 return {
-                    x: monitor.x + 20,
-                    y: monitor.y + 50
+                    x: monitor.x + 60,
+                    y: monitor.y + 80 // More padding for menu bar
                 };
             case 'top-right':
+                if (cursorWindow) {
+                    return {
+                        x: cursorWindow.x + cursorWindow.width - winWidth - 20,
+                        y: cursorWindow.y + 20
+                    };
+                }
                 return {
                     x: monitor.x + monitor.width - winWidth - 20,
-                    y: monitor.y + 50
+                    y: monitor.y + 80
                 };
             case 'center':
+                if (cursorWindow) {
+                    return {
+                        x: cursorWindow.x + (cursorWindow.width - winWidth) / 2,
+                        y: cursorWindow.y + (cursorWindow.height - winHeight) / 2
+                    };
+                }
                 return {
                     x: monitor.x + (monitor.width - winWidth) / 2,
                     y: monitor.y + (monitor.height - winHeight) / 2
@@ -113,9 +168,16 @@ export class GameWindowManager {
                     y: preferences.customY
                 };
             default:
+                // Default to bottom-left
+                if (cursorWindow) {
+                    return {
+                        x: cursorWindow.x + 20,
+                        y: cursorWindow.y + cursorWindow.height - winHeight - 20
+                    };
+                }
                 return {
-                    x: monitor.x + 20,
-                    y: monitor.y + monitor.height - winHeight - 50
+                    x: monitor.x + 60, // Bottom-left with better padding
+                    y: monitor.y + monitor.height - winHeight - 100
                 };
         }
     }
