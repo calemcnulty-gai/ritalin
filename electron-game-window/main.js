@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
 
 console.log('Main.js loaded successfully');
 console.log('Electron modules:', { 
@@ -41,53 +40,40 @@ app.commandLine.appendSwitch('enable-accelerated-2d-canvas');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 
-// Function to detect Cursor's window position on macOS
-function detectCursorWindowPosition() {
-  return new Promise((resolve) => {
-    if (process.platform !== 'darwin') {
-      console.log('Window detection only supported on macOS, falling back to cursor position');
-      resolve(null);
-      return;
+// Cross-platform function to find the best monitor for our game window
+function findBestMonitorForGameWindow() {
+  const displays = screen.getAllDisplays();
+  const cursorPoint = screen.getCursorScreenPoint();
+  
+  // Method 1: Find monitor containing cursor
+  const cursorDisplay = screen.getDisplayNearestPoint(cursorPoint);
+  
+  // Method 2: Try to detect which monitor likely has VS Code/Cursor
+  // We'll use some heuristics:
+  // 1. If we have VS Code window state, use that
+  // 2. Otherwise, prefer the monitor with the cursor
+  // 3. As a last resort, use the primary monitor
+  
+  let vsCodeWindow = null;
+  try {
+    if (process.env.RITALIN_VSCODE_WINDOW) {
+      vsCodeWindow = JSON.parse(process.env.RITALIN_VSCODE_WINDOW);
+      console.log('VS Code window state:', vsCodeWindow);
     }
-
-    // AppleScript to get Cursor window position and size
-    const script = `
-      tell application "System Events"
-        try
-          set cursorApp to first application process whose name contains "Cursor"
-          set cursorWindow to first window of cursorApp
-          set windowPosition to position of cursorWindow
-          set windowSize to size of cursorWindow
-          return (item 1 of windowPosition) & "," & (item 2 of windowPosition) & "," & (item 1 of windowSize) & "," & (item 2 of windowSize)
-        on error
-          return "error"
-        end try
-      end tell
-    `;
-
-    exec(`osascript -e '${script}'`, (error, stdout, stderr) => {
-      if (error || stderr || stdout.trim() === 'error') {
-        console.log('Could not detect Cursor window position:', error || stderr || 'Application not found');
-        resolve(null);
-        return;
-      }
-
-      const parts = stdout.trim().split(',');
-      if (parts.length === 4) {
-        const windowInfo = {
-          x: parseInt(parts[0]),
-          y: parseInt(parts[1]),
-          width: parseInt(parts[2]),
-          height: parseInt(parts[3])
-        };
-        console.log('Detected Cursor window:', windowInfo);
-        resolve(windowInfo);
-      } else {
-        console.log('Invalid window position data:', stdout);
-        resolve(null);
-      }
-    });
-  });
+  } catch (e) {
+    console.log('Could not parse VS Code window state');
+  }
+  
+  // For now, we'll use the cursor position as the best indicator
+  // This works well because users typically have their cursor in the window they're working in
+  console.log('Cursor at:', cursorPoint);
+  console.log('Cursor display:', cursorDisplay.bounds);
+  
+  return {
+    targetDisplay: cursorDisplay,
+    cursorPoint: cursorPoint,
+    displays: displays
+  };
 }
 
 // Handle permission requests - deny all by default
@@ -104,54 +90,27 @@ function createWindow() {
   const displays = screen.getAllDisplays();
   console.log('Available displays:', displays.length);
   
-  // Detect Cursor's actual window position
-  detectCursorWindowPosition().then((cursorWindow) => {
-    let cursorMonitor = null;
-    
-    if (cursorWindow) {
-      // Find which monitor contains the Cursor window
-      cursorMonitor = displays.find(display => {
-        const bounds = display.bounds;
-        return cursorWindow.x >= bounds.x && 
-               cursorWindow.x < bounds.x + bounds.width &&
-               cursorWindow.y >= bounds.y && 
-               cursorWindow.y < bounds.y + bounds.height;
-      });
-      
-      if (cursorMonitor) {
-        console.log('Found Cursor on monitor:', cursorMonitor.bounds);
-      } else {
-        console.log('Could not determine which monitor contains Cursor window');
-      }
-    }
-    
-    // If we couldn't detect Cursor's window, fall back to cursor position
-    if (!cursorMonitor) {
-      const cursorPoint = screen.getCursorScreenPoint();
-      cursorMonitor = screen.getDisplayNearestPoint(cursorPoint);
-      console.log('Falling back to cursor position method');
-      console.log('Cursor position:', cursorPoint);
-    }
-    
-    console.log('Selected monitor bounds:', cursorMonitor.bounds);
-    
-    // Convert displays to our monitor format and send to extension
-    const monitors = displays.map((display, index) => ({
-      id: index,
-      x: display.bounds.x,
-      y: display.bounds.y,
-      width: display.bounds.width,
-      height: display.bounds.height,
-      isPrimary: display === screen.getPrimaryDisplay(),
-      isActive: display === cursorMonitor, // Monitor where Cursor is running
-      cursorWindow: display === cursorMonitor ? cursorWindow : null
-    }));
-    
-    console.log('Monitor info:', monitors);
-    
-    // Send monitor info to extension (it will calculate position and send it back)
-    process.stdout.write(JSON.stringify({ type: 'monitors', monitors }) + '\n');
-  });
+  // Find the best monitor for our game window
+  const { targetDisplay, cursorPoint } = findBestMonitorForGameWindow();
+  
+  console.log('Selected display for game window:', targetDisplay.bounds);
+  
+  // Convert displays to our monitor format and send to extension
+  const monitors = displays.map((display, index) => ({
+    id: index,
+    x: display.bounds.x,
+    y: display.bounds.y,
+    width: display.bounds.width,
+    height: display.bounds.height,
+    isPrimary: display === screen.getPrimaryDisplay(),
+    isActive: display.id === targetDisplay.id,
+    cursorPoint: display.id === targetDisplay.id ? cursorPoint : null
+  }));
+  
+  console.log('Monitor info:', JSON.stringify(monitors, null, 2));
+  
+  // Send monitor info to extension (it will calculate position and send it back)
+  process.stdout.write(JSON.stringify({ type: 'monitors', monitors }) + '\n');
   
   // Use preferences for initial window setup
   mainWindow = new BrowserWindow({

@@ -24,11 +24,9 @@ export interface MonitorInfo {
     height: number;
     isPrimary: boolean;
     isActive: boolean; // Monitor where Cursor is running
-    cursorWindow?: {
+    cursorPoint?: {
         x: number;
         y: number;
-        width: number;
-        height: number;
     } | null;
 }
 
@@ -94,70 +92,35 @@ export class GameWindowManager {
         const { width: winWidth, height: winHeight } = preferences;
         
         // If we have Cursor's actual window position, use it for more precise positioning
-        const cursorWindow = targetMonitor.cursorWindow;
-        if (cursorWindow) {
-            this.outputChannel.appendLine(`[GameWindowManager] Cursor window detected at: ${cursorWindow.x}, ${cursorWindow.y} (${cursorWindow.width}x${cursorWindow.height})`);
+        const cursorPoint = targetMonitor.cursorPoint;
+        if (cursorPoint) {
+            this.outputChannel.appendLine(`[GameWindowManager] Cursor point detected at: ${cursorPoint.x}, ${cursorPoint.y}`);
         }
-        
-        // For bottom-left positioning, we want to position relative to Cursor's window
-        // Since we can't directly get Cursor's position, we'll estimate it based on the active monitor
-        // and assume Cursor is likely taking up most of the screen
         
         // Calculate position based on preference
         switch (preferences.position) {
             case 'bottom-left':
-                // If we know Cursor's window position, position relative to it
-                if (cursorWindow) {
-                    return {
-                        x: cursorWindow.x + 20, // 20px right of Cursor's left edge
-                        y: cursorWindow.y + cursorWindow.height - winHeight - 20 // 20px up from Cursor's bottom
-                    };
-                }
-                // Otherwise position relative to monitor
+                // Position at bottom-left of the monitor where cursor/VS Code likely is
                 return {
-                    x: monitor.x + 60, // More padding to avoid overlapping with typical sidebar
-                    y: monitor.y + monitor.height - winHeight - 100 // More padding from bottom for dock/taskbar
+                    x: monitor.x + 60, // Offset from left edge to avoid sidebars
+                    y: monitor.y + monitor.height - winHeight - 100 // Offset from bottom for taskbar/dock
                 };
             case 'bottom-right':
-                if (cursorWindow) {
-                    return {
-                        x: cursorWindow.x + cursorWindow.width - winWidth - 20,
-                        y: cursorWindow.y + cursorWindow.height - winHeight - 20
-                    };
-                }
                 return {
-                    x: monitor.x + monitor.width - winWidth - 20,
+                    x: monitor.x + monitor.width - winWidth - 60,
                     y: monitor.y + monitor.height - winHeight - 100
                 };
             case 'top-left':
-                if (cursorWindow) {
-                    return {
-                        x: cursorWindow.x + 20,
-                        y: cursorWindow.y + 20
-                    };
-                }
                 return {
                     x: monitor.x + 60,
-                    y: monitor.y + 80 // More padding for menu bar
+                    y: monitor.y + 80 // Offset for menu bar
                 };
             case 'top-right':
-                if (cursorWindow) {
-                    return {
-                        x: cursorWindow.x + cursorWindow.width - winWidth - 20,
-                        y: cursorWindow.y + 20
-                    };
-                }
                 return {
-                    x: monitor.x + monitor.width - winWidth - 20,
+                    x: monitor.x + monitor.width - winWidth - 60,
                     y: monitor.y + 80
                 };
             case 'center':
-                if (cursorWindow) {
-                    return {
-                        x: cursorWindow.x + (cursorWindow.width - winWidth) / 2,
-                        y: cursorWindow.y + (cursorWindow.height - winHeight) / 2
-                    };
-                }
                 return {
                     x: monitor.x + (monitor.width - winWidth) / 2,
                     y: monitor.y + (monitor.height - winHeight) / 2
@@ -169,17 +132,31 @@ export class GameWindowManager {
                 };
             default:
                 // Default to bottom-left
-                if (cursorWindow) {
-                    return {
-                        x: cursorWindow.x + 20,
-                        y: cursorWindow.y + cursorWindow.height - winHeight - 20
-                    };
-                }
                 return {
-                    x: monitor.x + 60, // Bottom-left with better padding
+                    x: monitor.x + 60,
                     y: monitor.y + monitor.height - winHeight - 100
                 };
         }
+    }
+    
+    private async getVSCodeWindowState(): Promise<any> {
+        // VS Code doesn't directly expose window position, but we can use some tricks
+        // We'll use the active text editor's visible ranges as a proxy for window focus
+        const activeEditor = vscode.window.activeTextEditor;
+        const workbenchConfig = vscode.workspace.getConfiguration('workbench');
+        
+        // Get some hints about the window state
+        const state = {
+            isFocused: vscode.window.state.focused,
+            activeEditorColumn: activeEditor?.viewColumn,
+            visibleEditors: vscode.window.visibleTextEditors.length,
+            // We can't get exact window position, but we can make educated guesses
+            // based on workspace configuration and active state
+            workspaceFolder: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+            timestamp: Date.now()
+        };
+        
+        return state;
     }
     
     private async checkElectronInstallation(): Promise<void> {
@@ -269,6 +246,10 @@ export class GameWindowManager {
         const preferences = this.getWindowPreferences();
         this.outputChannel.appendLine(`[GameWindowManager] Window preferences: ${JSON.stringify(preferences)}`);
         
+        // Get VS Code window state
+        const windowState = await this.getVSCodeWindowState();
+        this.outputChannel.appendLine(`[GameWindowManager] VS Code window state: ${JSON.stringify(windowState)}`);
+        
         const runnerPath = path.join(this.extensionPath, 'electron-game-window', 'run-electron.js');
         
         this.outputChannel.appendLine('[GameWindowManager] Starting Electron game window...');
@@ -283,7 +264,9 @@ export class GameWindowManager {
                 // Ensure we're not in Node mode
                 ELECTRON_RUN_AS_NODE: undefined,
                 // Pass window preferences as environment variables
-                RITALIN_WINDOW_PREFS: JSON.stringify(preferences)
+                RITALIN_WINDOW_PREFS: JSON.stringify(preferences),
+                // Pass VS Code window state
+                RITALIN_VSCODE_WINDOW: JSON.stringify(windowState)
             }
         });
 
