@@ -53,6 +53,12 @@
     - VS Code Activity Monitoring
       - Extension activation events
       - Editor state changes
+    - DOM Monitoring: Look for `.inline-chat-widget`, `.inline-chat-progress`
+    - Command Interception: `cursor.action.generateCode`, `cursor.action.chat`
+    - Document Change Patterns: Rapid, large edits without user input
+    - **Shadow Workspace Detection**: Hidden Electron windows spawned for AI iteration
+    - **Process Monitoring**: Detect Cursor-specific processes and hidden windows
+    - **Extension Host IPC**: Monitor message ports and gRPC communication
   - Game Integration Approaches
     - Iframe: For embedding external content (itch.io games)
       - CORS Challenge: Many sites block embedding, need Cross-Origin-Resource-Policy
@@ -143,6 +149,9 @@
   - **IPC Design**: JSON-RPC over stdin/stdout provides simple, reliable communication between extension and Electron window. No need for complex protocols - just line-delimited JSON messages.
   - **Window Positioning**: Electron's screen API allows precise window positioning. Bottom-left corner placement keeps games visible but unobtrusive during AI generation.
   - **Electron Module Loading Issue**: When spawning Electron as a child process from Node.js, `require('electron')` returns the executable path instead of API modules. This is because the electron npm package only exports the path, and Electron modules are only available within the Electron runtime. Solution: Use `stdio: 'inherit'` like the official wrapper, and implement file-based IPC when standard streams aren't available.
+  - **No Official Cursor API**: As of 2024, Cursor hasn't exposed APIs for detecting AI generation events, forcing creative workarounds
+  - **Shadow Workspace Feature**: Cursor uses hidden windows for AI to test code without affecting user experience - potential detection point
+  - **Community Demand**: Multiple developers requesting AI detection APIs, indicating this is a common need
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time

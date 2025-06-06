@@ -2,6 +2,15 @@
 
 ## 2024-12-30
 
+### Task 10: Cursor AI Detection Implementation - STARTED
+- Started on branch: feature/task-10-cursor-ai-detection
+- Focus: Implementing reliable detection of Cursor AI generation events
+- Goals:
+  - Research Cursor-specific DOM patterns and API calls
+  - Implement reliable AI generation detection
+  - Test auto-show/hide functionality with real AI requests
+  - Fine-tune timing and thresholds
+
 ### External Game Window Implementation - COMPLETED ✅
 - ✅ Successfully implemented Electron-based external game window
 - ✅ Created GameWindowManager class for process management
