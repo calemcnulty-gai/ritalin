@@ -38,9 +38,9 @@ export class GameWindowManager {
     private outputChannel: vscode.OutputChannel;
     private context: vscode.ExtensionContext;
 
-    constructor(context: vscode.ExtensionContext) {
+    constructor(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel) {
         this.extensionPath = context.extensionPath;
-        this.outputChannel = vscode.window.createOutputChannel('Ritalin Window');
+        this.outputChannel = outputChannel;
         this.outputChannel.appendLine('[GameWindowManager] Initialized');
         
         // Store context for later use
@@ -386,14 +386,29 @@ export class GameWindowManager {
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
+    public stop(): void {
+        if (this.electronProcess) {
+            this.outputChannel.appendLine('[GameWindowManager] Stopping Electron process...');
+            // Send a quit command for graceful shutdown
+            this.sendCommand({ command: 'quit' });
+            
+            // Give it a moment, then terminate if it hasn't already
+            setTimeout(() => {
+                if (this.electronProcess && !this.electronProcess.killed) {
+                    this.electronProcess.kill();
+                }
+            }, 500);
+        }
+    }
+
     public show(): void {
         this.outputChannel.appendLine('[GameWindowManager] Show command called');
         this.sendCommand({ command: 'show' });
     }
 
     public hide(): void {
-        this.outputChannel.appendLine('[GameWindowManager] Hide command called');
-        this.sendCommand({ command: 'hide' });
+        this.outputChannel.appendLine('[GameWindowManager] Hide command called, stopping process.');
+        this.stop();
     }
 
     public loadGame(game: GameInfo): void {
@@ -461,17 +476,8 @@ export class GameWindowManager {
     }
 
     public dispose(): void {
-        if (this.electronProcess) {
-            this.sendCommand({ command: 'quit' });
-            // Give it a moment to quit gracefully
-            setTimeout(() => {
-                if (this.electronProcess && !this.electronProcess.killed) {
-                    this.electronProcess.kill();
-                }
-                this.electronProcess = null;
-                this.isReady = false;
-            }, 1000);
-        }
+        this.outputChannel.appendLine('[GameWindowManager] Disposing...');
+        this.stop();
         this.outputChannel.dispose();
     }
 } 

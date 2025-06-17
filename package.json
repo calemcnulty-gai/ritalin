@@ -1,179 +1,151 @@
 {
   "name": "ritalin",
   "displayName": "Ritalin for Cursor",
-  "description": "Mini-games during AI generation to maintain developer focus",
+  "description": "Mini-games during AI generation for focus",
   "version": "0.1.0",
   "publisher": "ritalin-dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/ritalin.git"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
   ],
-  "keywords": [
-    "cursor",
-    "ai",
-    "focus",
-    "productivity",
-    "games"
-  ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:ritalin.showDashboard"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "ritalin.showGame",
+        "title": "Ritalin: Show Game"
+      },
+      {
+        "command": "ritalin.hideGame",
+        "title": "Ritalin: Hide Game"
+      },
+      {
+        "command": "ritalin.toggleGame",
+        "title": "Ritalin: Toggle Game Panel"
+      },
+      {
+        "command": "ritalin.searchGames",
+        "title": "Ritalin: Search itch.io Games"
+      },
+      {
+        "command": "ritalin.manageGames",
+        "title": "Ritalin: Manage Downloaded Games"
+      },
+      {
+        "command": "ritalin.openSettings",
+        "title": "Ritalin: Open Settings"
+      },
+      {
+        "command": "ritalin.preloadGame",
+        "title": "Ritalin: Preload Game (Debug)"
+      },
+      {
+        "command": "ritalin.testExternalWindow",
+        "title": "Ritalin: Test External Window"
+      },
+      {
+        "command": "ritalin.configureExternalWindow",
+        "title": "Ritalin: Configure External Window"
+      },
+      {
+        "command": "ritalin.showDashboard",
+        "title": "Ritalin: Show Detection Dashboard"
+      }
+    ],
     "viewsContainers": {
       "panel": [
         {
           "id": "ritalin",
           "title": "Ritalin",
-          "icon": "$(game)"
+          "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
       "ritalin": [
         {
-          "type": "webview",
           "id": "ritalin.gameView",
           "name": "Game",
-          "icon": "$(game)",
-          "visibility": "visible"
+          "type": "webview"
         }
       ]
     },
-    "commands": [
-      {
-        "command": "ritalin.preloadGame",
-        "title": "Preload Game (Debug)",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.showGame",
-        "title": "Show Game",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.hideGame",
-        "title": "Hide Game",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.toggleGame",
-        "title": "Toggle Game",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.searchGames",
-        "title": "Search itch.io Games",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.manageGames",
-        "title": "Manage Downloaded Games",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.openSettings",
-        "title": "Open Settings",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.testExternalWindow",
-        "title": "Test External Game Window",
-        "category": "Ritalin"
-      },
-      {
-        "command": "ritalin.configureExternalWindow",
-        "title": "Configure External Window",
-        "category": "Ritalin"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "ritalin.toggleGame",
-        "key": "ctrl+shift+g",
-        "mac": "cmd+shift+g"
-      }
-    ],
     "configuration": {
       "title": "Ritalin",
       "properties": {
-        "ritalin.selectedGame": {
-          "type": "string",
-          "default": "",
-          "description": "ID of the currently selected game"
-        },
-        "ritalin.showDelay": {
-          "type": "number",
-          "default": 2000,
-          "description": "Delay in milliseconds before showing game"
-        },
-        "ritalin.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable/disable the extension"
-        },
-        "ritalin.autoDownload": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically download games after search selection"
-        },
         "ritalin.showResizeTip": {
           "type": "boolean",
           "default": true,
-          "description": "Show tip about resizing the panel when opening games"
+          "description": "Show a one-time tip about resizing the game panel."
         },
         "ritalin.externalWindow.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Use external floating window instead of panel"
+          "description": "Enable the external game window instead of the panel."
         },
         "ritalin.externalWindow.position": {
           "type": "string",
-          "enum": ["bottom-left", "bottom-right", "top-left", "top-right", "center", "overlay", "custom"],
-          "default": "bottom-left",
-          "description": "Position of the external game window (overlay = on top of Cursor)"
+          "default": "bottom-right",
+          "enum": [
+            "bottom-left",
+            "bottom-right",
+            "top-left",
+            "top-right",
+            "center",
+            "overlay",
+            "custom"
+          ],
+          "description": "Position of the external game window."
         },
         "ritalin.externalWindow.customX": {
           "type": "number",
           "default": 0,
-          "description": "Custom X position (only used when position is 'custom')"
+          "description": "Custom X position for the window."
         },
         "ritalin.externalWindow.customY": {
           "type": "number",
           "default": 0,
-          "description": "Custom Y position (only used when position is 'custom')"
+          "description": "Custom Y position for the window."
         },
         "ritalin.externalWindow.width": {
           "type": "number",
           "default": 400,
-          "minimum": 200,
-          "maximum": 1200,
-          "description": "Width of the external game window"
+          "description": "Width of the external game window."
         },
         "ritalin.externalWindow.height": {
           "type": "number",
           "default": 300,
-          "minimum": 150,
-          "maximum": 800,
-          "description": "Height of the external game window"
+          "description": "Height of the external game window."
         },
         "ritalin.externalWindow.monitor": {
           "type": "string",
-          "enum": ["primary", "secondary", "auto"],
           "default": "primary",
-          "description": "Which monitor to place the window on"
+          "enum": [
+            "primary",
+            "secondary",
+            "auto"
+          ],
+          "description": "Which monitor to display the window on."
         },
         "ritalin.externalWindow.alwaysOnTop": {
           "type": "boolean",
           "default": true,
-          "description": "Keep the external window always on top"
+          "description": "Keep the game window always on top."
         },
         "ritalin.externalWindow.hideOnBlur": {
           "type": "boolean",
           "default": false,
-          "description": "Hide window when it loses focus"
+          "description": "Hide the game window when it loses focus."
         }
       }
     }
@@ -182,28 +154,24 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "package": "vsce package",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "package": "vsce package"
-  },
-  "dependencies": {
-    "electron": "^27.0.0"
+    "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
+    "@types/lodash": "^4.17.7",
+    "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
-    "@typescript-eslint/eslint-plugin": "^5.45.0",
-    "@typescript-eslint/parser": "^5.45.0",
-    "eslint": "^8.28.0",
-    "glob": "^8.0.3",
-    "mocha": "^10.1.0",
-    "typescript": "^4.9.4",
-    "@vscode/test-electron": "^2.2.0"
+    "@types/vscode": "^1.74.0",
+    "eslint": "^8.26.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.3",
+    "vsce": "^2.15.0",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/calemcnulty-gai/ritalin.git"
-  },
-  "license": "MIT"
-} 
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}

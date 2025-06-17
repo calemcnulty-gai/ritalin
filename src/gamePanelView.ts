@@ -11,9 +11,10 @@ export class GamePanelViewProvider implements vscode.WebviewViewProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private readonly _context: vscode.ExtensionContext
+        private readonly _context: vscode.ExtensionContext,
+        outputChannel: vscode.OutputChannel
     ) {
-        this._outputChannel = vscode.window.createOutputChannel('Ritalin Panel Debug');
+        this._outputChannel = outputChannel;
     }
 
     public resolveWebviewView(

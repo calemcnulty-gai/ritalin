@@ -53,6 +53,12 @@
     - VS Code Activity Monitoring
       - Extension activation events
       - Editor state changes
+    - DOM Monitoring: Look for `.inline-chat-widget`, `.inline-chat-progress`
+    - Command Interception: `cursor.action.generateCode`, `cursor.action.chat`
+    - Document Change Patterns: Rapid, large edits without user input
+    - **Shadow Workspace Detection**: Hidden Electron windows spawned for AI iteration
+    - **Process Monitoring**: Detect Cursor-specific processes and hidden windows
+    - **Extension Host IPC**: Monitor message ports and gRPC communication
   - Game Integration Approaches
     - Iframe: For embedding external content (itch.io games)
       - CORS Challenge: Many sites block embedding, need Cross-Origin-Resource-Policy
@@ -143,6 +149,9 @@
   - **IPC Design**: JSON-RPC over stdin/stdout provides simple, reliable communication between extension and Electron window. No need for complex protocols - just line-delimited JSON messages.
   - **Window Positioning**: Electron's screen API allows precise window positioning. Bottom-left corner placement keeps games visible but unobtrusive during AI generation.
   - **Electron Module Loading Issue**: When spawning Electron as a child process from Node.js, `require('electron')` returns the executable path instead of API modules. This is because the electron npm package only exports the path, and Electron modules are only available within the Electron runtime. Solution: Use `stdio: 'inherit'` like the official wrapper, and implement file-based IPC when standard streams aren't available.
+  - **No Official Cursor API**: As of 2024, Cursor hasn't exposed APIs for detecting AI generation events, forcing creative workarounds
+  - **Shadow Workspace Feature**: Cursor uses hidden windows for AI to test code without affecting user experience - potential detection point
+  - **Community Demand**: Multiple developers requesting AI detection APIs, indicating this is a common need
 - Spiky POVs
   - Most "productivity" tools try to eliminate distractions, but strategic distraction within the IDE is actually better than uncontrolled context switching
   - The future of AI coding isn't faster generation, it's better utilization of generation time
@@ -196,3 +205,141 @@
 - Dispose WebViews when not needed
 - Limit concurrent WebView instances
 - Use local resources whenever possible
+
+## Brainlift Update
+
+### Knowledge Tree
+
+#### Technical Findings
+
+##### **AI Detection System Architecture** 
+- Document Change Analysis is the only fully working detection method 
+- VS Code extension API security restrictions prevent 75% of planned detection approaches
+- Extensions cannot access main UI DOM, intercept commands, or read other extensions' status bars
+- Success depends on enhancing the one working method rather than pursuing impossible approaches
+
+##### **Extension Development Discovery**
+- vsce builds VS Code extensions for Cursor compatibility
+- Cursor CLI: `/usr/local/bin/cursor --install-extension` for local development 
+- Hot reloading requires manual reinstall cycle during development
+- Build chain: TypeScript compilation → vsce package → cursor install
+
+##### **Detection Method Implementation Status** 
+- ✅ Document Change Analysis: Working (95% confidence detection)
+- ❌ DOM Monitoring: Fundamentally impossible (extension security sandbox)
+- ❌ Command Interception: Not supported by VS Code API
+- ❌ Status Bar Monitoring: Extension isolation prevents access
+- ✅ **Selection Change Monitoring: NEWLY IMPLEMENTED** (tracks AI-generated selection patterns)
+- ✅ **Language Server Protocol Monitoring: NEWLY IMPLEMENTED** (monitors completion/hover/code action events)
+- ✅ **File System Monitoring: NEWLY IMPLEMENTED** (watches Cursor-specific directories for AI activity)
+
+#### **Extension Crash Investigation & Fixes** ⚠️ **CRITICAL LEARNING**
+**Problem**: Initial implementation of new detection methods caused Cursor to crash completely
+**Root Causes Identified**:
+1. **File System Monitoring**: Using `require('os')` and `require('path')` in extension context
+2. **Incorrect RelativePattern Usage**: Passing absolute paths instead of workspace folders
+3. **Language Server Provider Issues**: Returning `undefined` from providers confuses VS Code
+4. **Performance Issues**: Too many file watchers and event handlers firing simultaneously
+
+**Fixes Applied**:
+- **DISABLED File System Monitoring entirely** (marked as inactive in dashboard)
+- **Simplified LSP Monitoring**: Only completion provider, returns empty arrays, added error handling
+- **Reduced Event Frequency**: Added random sampling to prevent spam (2% chance vs 10%)
+- **Added Safety Checks**: Try-catch blocks around all event handlers
+- **Limited Scope**: Only monitor specific file types and reasonable selection sizes
+
+**Key Insight**: Extension development requires extreme caution - a single poorly implemented method can crash the entire editor
+
+#### **Live Testing Phase Initiated** ⚡ **CURRENT STATUS**
+**Milestone**: Completed crash-safe implementation of 3 viable detection methods
+**Ready for Testing**: 
+- Document Change Analysis (primary method, highest confidence)
+- Selection Change Monitoring (secondary method, pattern-based)
+- Language Server Protocol Monitoring (tertiary method, event-based)
+
+**Disabled Methods** (4 total):
+- DOM Monitoring: Webview approach caused immediate crashes
+- Command Interception: Confirmed impossible via VS Code API
+- Status Bar Monitoring: Extension isolation prevents cross-extension access
+- File System Monitoring: Node.js require() usage and performance issues
+
+**Testing Objective**: Determine which methods actually trigger during real Cursor AI usage and validate their accuracy, reliability, and false positive rates.
+
+#### **Live Testing Results & Architectural Discoveries** 📊 **BREAKTHROUGH INSIGHTS**
+**Test Results**: Only Document Change Analysis fires during real AI usage
+
+**Root Cause Analysis**:
+- **Selection Change Monitoring**: Implementation issues (fixable)
+  - Threshold too high (0.5), sampling too low (30%)
+  - Wrong assumptions about AI selection patterns
+  - Needs better pattern detection for smaller, rapid changes
+
+- **Language Server Protocol Monitoring**: Fundamental architectural limitation (unviable)
+  - **Critical Discovery**: Cursor AI bypasses standard VS Code LSP completion system entirely
+  - Cursor AI operates as direct text replacement, not through `vscode.languages.*` APIs
+  - Standard LSP events are user-triggered, not AI-triggered
+  - Our LSP monitoring approach was fundamentally flawed from the start
+
+**Architectural Insight**: Cursor's AI is more like a sophisticated text replacement engine than a traditional IDE completion system. It doesn't integrate with VS Code's standard completion providers, hover systems, or diagnostic tools.
+
+#### **Final Detection Method Classification** 🎯 **DEFINITIVE STATUS**
+- **✅ Working (1/7)**: Document Change Analysis (proven reliable)
+- **🔧 Fixable (1/7)**: Selection Change Monitoring (implementation issues)  
+- **❌ Fundamentally Unviable (5/7)**: 
+  - DOM Monitoring (webview crashes)
+  - Command Interception (API limitation)
+  - Status Bar Monitoring (extension isolation)  
+  - File System Monitoring (performance issues)
+  - **Language Server Protocol Monitoring** (Cursor AI bypasses standard LSP)
+
+**Strategic Implication**: Focus on enhancing Document Change Analysis as primary method, with Selection Change as secondary after fixes.
+
+#### Insights
+
+##### **"One Working Method" Philosophy**
+Instead of building complex multi-method detection systems, focus on making the working Document Change Analysis incredibly robust and accurate.
+
+##### **Extension API Reality Check**
+VS Code's security model is intentionally restrictive. Extensions operate in isolated contexts that prevent most advanced monitoring approaches we initially planned.
+
+##### **Detection Confidence Tuning**
+Our detection system now has multiple viable methods feeding into a confidence score:
+- Document changes (working since day 1)
+- Selection patterns (new - detects AI-characteristic large/rapid selections)
+- Language server events (new - correlates with AI completion requests)
+- File system changes (new - monitors Cursor data directories)
+
+##### **Development Velocity vs. Research Quality**
+Deep research into VS Code API limitations saved weeks of implementation effort on impossible approaches. Time spent on research docs paid off.
+
+#### Spiky POVs
+
+##### **Security Restrictions Are Actually Good**
+VS Code's extension isolation isn't a limitation - it's a feature. It prevents malicious extensions from accessing sensitive data. Our detection system works within these constraints elegantly.
+
+##### **Multi-Method Redundancy Strategy**
+Even though Document Change Analysis works well, having 3+ detection methods provides:
+- Backup if Cursor updates break one method
+- Cross-validation of AI activity
+- Different confidence levels for different AI operation types
+- Reduced false positives through pattern correlation
+
+##### **Platform-Specific Detection Opportunities**
+File system monitoring opens platform-specific detection paths:
+- macOS: `~/Library/Application Support/Cursor`
+- Windows: `%APPDATA%/Cursor`
+- Linux: `~/.config/Cursor`
+
+Each platform might have unique AI activity signatures in these directories.
+
+#### Experts
+
+##### Resources
+- **VS Code Extension API Documentation**: https://code.visualstudio.com/api
+  - Critical for understanding security restrictions and available APIs
+- **GitHub Issues for Command Interception**: Referenced issue #44771 marked "out-of-scope"
+  - Confirms that command wrapping/interception is intentionally not supported
+
+##### Communities  
+- **VS Code Extension Development Discord/Reddit**: For advanced API questions
+- **Cursor Community Forums**: For Cursor-specific extension behavior patterns

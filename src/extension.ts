@@ -3,20 +3,31 @@ import { GamePanelViewProvider } from './gamePanelView';
 import { CursorDetector } from './cursorDetector';
 import { GameManager, GameInfo } from './gameManager';
 import { GameWindowManager } from './GameWindowManager';
+// StatusBarManager removed - using game window show/hide as primary indicator
 
 let gamePanelViewProvider: GamePanelViewProvider | undefined;
 let cursorDetector: CursorDetector | undefined;
 let gameManager: GameManager | undefined;
 let gameWindowManager: GameWindowManager | undefined;
+// Status bar manager removed
+let outputChannel: vscode.OutputChannel;
 
 export function activate(context: vscode.ExtensionContext) {
+    outputChannel = vscode.window.createOutputChannel('Ritalin');
+    outputChannel.appendLine('[Extension] Activating Ritalin...');
+
     console.log('[Ritalin] Extension is now activating!');
     console.log('[Ritalin] Extension URI:', context.extensionUri.toString());
     console.log('[Ritalin] Global Storage Path:', context.globalStorageUri?.fsPath);
 
+    // Initialize AI self-reporting files
+    initializeAISelfReporting().catch(error => {
+        outputChannel.appendLine(`[Extension] Failed to initialize AI self-reporting: ${error}`);
+    });
+
     // Initialize the WebviewView provider for bottom panel
     console.log('[Ritalin] Initializing GamePanelViewProvider...');
-    gamePanelViewProvider = new GamePanelViewProvider(context.extensionUri, context);
+    gamePanelViewProvider = new GamePanelViewProvider(context.extensionUri, context, outputChannel);
     
     // Register the webview view provider
     context.subscriptions.push(
@@ -28,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Initialize the cursor detector
     console.log('[Ritalin] Initializing CursorDetector...');
-    cursorDetector = new CursorDetector();
+    cursorDetector = new CursorDetector(outputChannel);
 
     // Initialize the game manager
     console.log('[Ritalin] Initializing GameManager...');
@@ -36,7 +47,17 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize the game window manager
     console.log('[Ritalin] Initializing GameWindowManager...');
-    gameWindowManager = new GameWindowManager(context);
+    gameWindowManager = new GameWindowManager(context, outputChannel);
+    
+    // Start the game window manager (but keep it hidden initially)
+    outputChannel.appendLine('[Extension] Starting game window manager...');
+    gameWindowManager.start().then(() => {
+        outputChannel.appendLine('[Extension] ✅ Game window manager started successfully');
+        console.log('[Ritalin] Game window manager ready for show/hide commands');
+    }).catch(error => {
+        outputChannel.appendLine(`[Extension] ❌ Failed to start game window manager: ${error}`);
+        console.error('[Ritalin] Game window manager startup failed:', error);
+    });
 
     // Initialize GameManager (download default game if needed)
     gameManager.initialize().then(() => {
@@ -113,65 +134,18 @@ export function activate(context: vscode.ExtensionContext) {
     // Register commands
     console.log('[Ritalin] Registering commands...');
     
-    // Add explicit preload command for debugging
-    const preloadGameCommand = vscode.commands.registerCommand('ritalin.preloadGame', async () => {
-        console.log('[Ritalin] Preload game command triggered');
-        
-        if (!gameManager) {
-            console.error('[Ritalin] GameManager is undefined!');
-            vscode.window.showErrorMessage('GameManager not initialized. Please wait for extension activation to complete.');
-            return;
-        }
-        
-        // Show debug information
-        const downloadedGames = gameManager.getDownloadedGames();
-        const selectedGame = gameManager.getSelectedGame();
-        
-        console.log('[Ritalin] === PRELOAD DEBUG INFO ===');
-        console.log('[Ritalin] Downloaded games:', downloadedGames.length);
-        console.log('[Ritalin] Selected game:', selectedGame?.title || 'None');
-        console.log('[Ritalin] Panel ready:', !!gamePanelViewProvider);
-        console.log('[Ritalin] GameManager exists:', !!gameManager);
-        
-        // Show status in notification
-        const statusMessage = `
-Debug Status:
-- Panel type: WebviewView (Bottom Panel)
-- Downloaded games: ${downloadedGames.length}
-- Selected game: ${selectedGame?.title || 'None'}
-- Panel ready: ${!!gamePanelViewProvider}
-- Manager ready: ${!!gameManager}
-        `.trim();
-        
-        vscode.window.showInformationMessage(statusMessage, { modal: false });
-        
-        // If we have a selected game, preload it
-        if (selectedGame) {
-            console.log('[Ritalin] Preloading selected game:', selectedGame.title);
-            console.log('[Ritalin] Game entry point:', selectedGame.entryPoint);
-            console.log('[Ritalin] Game is downloaded:', selectedGame.isDownloaded);
-            
-            if (gamePanelViewProvider) {
-                gamePanelViewProvider.loadGame(selectedGame);
-                vscode.window.showInformationMessage(`Preloaded in panel: ${selectedGame.title}`);
-            }
-        } else if (!selectedGame) {
-            console.log('[Ritalin] No game selected for preload');
-            vscode.window.showWarningMessage('No game selected. Use "Search itch.io Games" to download a game first.');
-        } else {
-            console.log('[Ritalin] Cannot preload - Panel not available');
-            vscode.window.showErrorMessage('Panel not available. Extension may not be fully initialized.');
-        }
-    });
+    // Commands for core functionality
     
     const showGameCommand = vscode.commands.registerCommand('ritalin.showGame', () => {
-        console.log('[Ritalin] Show game command triggered');
-        showGame();
+        if (gameWindowManager) {
+            gameWindowManager.show();
+        }
     });
 
     const hideGameCommand = vscode.commands.registerCommand('ritalin.hideGame', () => {
-        console.log('[Ritalin] Hide game command triggered');
-        hideGame();
+        if (gameWindowManager) {
+            gameWindowManager.hide();
+        }
     });
 
     const toggleGameCommand = vscode.commands.registerCommand('ritalin.toggleGame', () => {
@@ -232,9 +206,15 @@ Debug Status:
         await showExternalWindowConfigDialog();
     });
 
+    // Dashboard disabled - focusing on core game show/hide functionality
+    const showDashboardCommand = vscode.commands.registerCommand('ritalin.showDashboard', () => {
+        vscode.window.showInformationMessage('Dashboard disabled. AI detection is running and will show/hide games automatically.');
+    });
+
+    // Debug commands removed - focusing on core functionality
+
     // Add to subscriptions for cleanup
     context.subscriptions.push(
-        preloadGameCommand,
         showGameCommand,
         hideGameCommand,
         toggleGameCommand,
@@ -242,7 +222,8 @@ Debug Status:
         manageGamesCommand,
         openSettingsCommand,
         testExternalWindowCommand,
-        configureExternalWindowCommand
+        configureExternalWindowCommand,
+        showDashboardCommand
     );
 
     console.log('[Ritalin] Commands registered successfully');
@@ -250,29 +231,45 @@ Debug Status:
     // Set up cursor detection event handlers
     if (cursorDetector) {
         console.log('[Ritalin] Setting up cursor detection handlers...');
+        outputChannel.appendLine('[Extension] Setting up AI detection → game show/hide handlers');
+        
         cursorDetector.onAiGenerationStart(() => {
-            console.log('[Ritalin] AI generation detected - checking config...');
-            const config = vscode.workspace.getConfiguration('ritalin');
-            const enabled = config.get<boolean>('enabled', true);
-            const delay = config.get<number>('showDelay', 2000);
-
-            console.log('[Ritalin] Config - enabled:', enabled, 'delay:', delay);
-
-            if (enabled) {
-                console.log('[Ritalin] Showing game after delay...');
-                setTimeout(() => {
-                    showGame();
-                }, delay);
+            outputChannel.appendLine('[Extension] 🎮 AI GENERATION STARTED - SHOWING GAME');
+            console.log('[Ritalin] AI Generation Started - Showing Game');
+            
+            if (gameWindowManager) {
+                try {
+                    gameWindowManager.show();
+                    outputChannel.appendLine('[Extension] ✅ Game window shown successfully');
+                } catch (error) {
+                    outputChannel.appendLine(`[Extension] ❌ Error showing game window: ${error}`);
+                }
+            } else {
+                outputChannel.appendLine('[Extension] ❌ Game window manager not available');
             }
         });
 
         cursorDetector.onAiGenerationEnd(() => {
-            console.log('[Ritalin] AI generation ended - hiding game');
-            hideGame();
+            outputChannel.appendLine('[Extension] 🛑 AI GENERATION ENDED - HIDING GAME');
+            console.log('[Ritalin] AI Generation Ended - Hiding Game');
+            
+            if (gameWindowManager) {
+                try {
+                    gameWindowManager.hide();
+                    outputChannel.appendLine('[Extension] ✅ Game window hidden successfully');
+                } catch (error) {
+                    outputChannel.appendLine(`[Extension] ❌ Error hiding game window: ${error}`);
+                }
+            } else {
+                outputChannel.appendLine('[Extension] ❌ Game window manager not available');
+            }
         });
+        
+        outputChannel.appendLine('[Extension] ✅ AI detection → game handlers configured successfully');
     }
 
     console.log('[Ritalin] Extension activation complete!');
+    outputChannel.appendLine('[Extension] Ritalin activated successfully.');
 }
 
 async function showGameSearchDialog(loadGameIntoPanel: (game: GameInfo) => void): Promise<void> {
@@ -653,15 +650,154 @@ async function configureMonitor(): Promise<void> {
     }
 }
 
+async function initializeAISelfReporting(): Promise<void> {
+    try {
+        outputChannel.appendLine('[Extension] Initializing AI self-reporting system...');
+        
+        // Get workspace folder
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) {
+            outputChannel.appendLine('[Extension] No workspace folder found - skipping AI self-reporting setup');
+            return;
+        }
+
+        // Create .cursor directory if it doesn't exist
+        const cursorDir = vscode.Uri.joinPath(workspaceFolder.uri, '.cursor');
+        try {
+            await vscode.workspace.fs.stat(cursorDir);
+        } catch {
+            // Directory doesn't exist, create it
+            await vscode.workspace.fs.createDirectory(cursorDir);
+            outputChannel.appendLine('[Extension] Created .cursor directory');
+        }
+
+        // Create rules directory if it doesn't exist
+        const rulesDir = vscode.Uri.joinPath(cursorDir, 'rules');
+        try {
+            await vscode.workspace.fs.stat(rulesDir);
+        } catch {
+            // Directory doesn't exist, create it
+            await vscode.workspace.fs.createDirectory(rulesDir);
+            outputChannel.appendLine('[Extension] Created .cursor/rules directory');
+        }
+
+        // Create the AI activity reporting rule (.mdc file)
+        const ruleFile = vscode.Uri.joinPath(rulesDir, 'ai-activity-reporting.mdc');
+        const ruleContent = `---
+description: AI Activity Self-Reporting for Ritalin Extension
+globs: 
+alwaysApply: true
+---
+# AI Activity Self-Reporting Rule
+
+## Core Instruction
+
+**CRITICAL**: You MUST follow this rule for ALL interactions to enable the Ritalin extension to detect your activity and show games during AI generation.
+
+### When Starting ANY Task or Response
+
+Before you begin thinking, working on, or responding to any user prompt, you MUST first edit the file \`.cursor/.is_working\` to contain exactly:
+
+\`\`\`
+true
+\`\`\`
+
+### When Waiting for ANY User Input
+
+Set \`.cursor/.is_working\` to \`false\` in these situations:
+- **After completing your response** and waiting for the next user input
+- **When waiting for user approval** to run a terminal command
+- **When asking for clarification** or additional information
+- **When prompting user to choose** between options
+- **Any time you are paused** waiting for human interaction
+
+## Implementation Details
+
+- **File Location**: \`.cursor/.is_working\` (relative to workspace root)
+- **Content Format**: 
+  - Working/Thinking: \`true\` (no quotes, no extra text)
+  - Waiting/Idle: \`false\` (no quotes, no extra text)
+- **Timing**: 
+  - Set to \`true\` BEFORE you start any thinking or generation
+  - Set to \`false\` IMMEDIATELY when waiting for user input
+- **Always Required**: This applies to ALL interactions, regardless of complexity
+
+## Examples
+
+**When starting any task:**
+1. First action: Edit \`.cursor/.is_working\` → \`true\`
+2. Then: Begin your normal thinking and response process
+
+**When waiting for terminal command approval:**
+1. Complete your response with the terminal command proposal
+2. Immediately: Edit \`.cursor/.is_working\` → \`false\`
+3. Wait for user approval
+
+**When asking for clarification:**
+1. Complete your clarifying question
+2. Immediately: Edit \`.cursor/.is_working\` → \`false\`
+3. Wait for user response
+
+## Purpose
+
+This enables the Ritalin extension to:
+- Detect AI activity reliably 
+- Show games during AI generation periods
+- Hide games when waiting for user input
+- Provide seamless integration between AI work and user break time
+
+## Critical Notes
+
+- **Never skip this step** - even for simple responses
+- **File must contain only the boolean value** - no extra formatting
+- **Use exact text**: \`true\` or \`false\` (lowercase, no quotes)
+- **Edit the file, don't just reference it** - the extension watches for file changes
+- **Always set to false when waiting** - don't leave it as true during user wait periods`;
+
+        // Always overwrite the rule file to ensure correct frontmatter (alwaysApply: true)
+        await vscode.workspace.fs.writeFile(ruleFile, Buffer.from(ruleContent, 'utf8'));
+        outputChannel.appendLine('[Extension] Created/updated AI activity reporting rule (.mdc) with alwaysApply: true');
+
+        // Create .is_working file with initial "false" state
+        const isWorkingFile = vscode.Uri.joinPath(cursorDir, '.is_working');
+        try {
+            // Check if file already exists
+            await vscode.workspace.fs.stat(isWorkingFile);
+            outputChannel.appendLine('[Extension] .is_working file already exists');
+        } catch {
+            // File doesn't exist, create it with "false"
+            await vscode.workspace.fs.writeFile(isWorkingFile, Buffer.from('false', 'utf8'));
+            outputChannel.appendLine('[Extension] Created .is_working file with initial state: false');
+        }
+
+        outputChannel.appendLine('[Extension] AI self-reporting system initialized successfully');
+
+    } catch (error) {
+        outputChannel.appendLine(`[Extension] Error initializing AI self-reporting: ${error}`);
+        console.error('[Ritalin] Failed to initialize AI self-reporting:', error);
+    }
+}
+
 export function deactivate() {
-    // GamePanelViewProvider doesn't need explicit disposal
-    // It's handled by VS Code when the view is unregistered
-    gamePanelViewProvider = undefined;
+    outputChannel.appendLine('[Extension] Deactivating Ritalin...');
+    if (gamePanelViewProvider) {
+        // No explicit dispose needed for WebviewViewProvider
+    }
     
     if (cursorDetector) {
         cursorDetector.dispose();
-        cursorDetector = undefined;
     }
 
-    gameManager = undefined;
-} 
+    if (gameManager) {
+        // gameManager might have disposables in the future
+    }
+
+    if(gameWindowManager) {
+        gameWindowManager.stop();
+    }
+
+    // Status bar manager removed
+    outputChannel.dispose();
+}
+
+// Dashboard functions removed - focusing on core game functionality 

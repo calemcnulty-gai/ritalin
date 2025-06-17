@@ -1,27 +1,36 @@
-.vscode/**
-.vscode-test/**
-src/**
-.gitignore
-.yarnrc
-vsc-extension-quickstart.md
-**/tsconfig.json
-**/.eslintrc.json
-**/*.map
-**/*.ts
-.nyc_output
-coverage/
-node_modules/
-.DS_Store
-*.vsix
+# Exclude large electron files and unnecessary content
+electron-game-window/node_modules/**
+electron-game-window/dist/**
+electron-game-window/*.app/**
+node_modules/electron/**
+venv/**
 
-# Project specific excludes
-games/**
-tests/**
+# Development files
+.vscode/**
+.git
+.gitignore
+
+# Documentation and development files  
 docs/**
-.cursor/**
-PRD.md
+*.md
+!README.md
+!EXTENSION_README.md
+
+# Test files
+test-*.js
+chat-detection-*.js
+
+# TypeScript source files (only include compiled .js)
+src/**/*.ts
+!src/**/*.js
+tsconfig.json
+
+# Development dependencies
+.cursor/changelog.md
+.cursor/project_plan.md
 brainlift.md
 example_brainlift.md
 global_cursor_rules.md
-EXTENSION_README.md
-electron-game-window/node_modules/** 
+PRD.md
+
+# Only include essential files for the extension to work 
