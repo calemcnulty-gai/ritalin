@@ -1,0 +1,132 @@
+/* media/style.css */
+body {
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-font-family);
+    padding: 20px;
+}
+
+h1, h2 {
+    border-bottom: 1px solid var(--vscode-editor-foreground);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+a {
+    color: var(--vscode-textLink-foreground);
+}
+
+.search-container {
+    background-color: var(--vscode-side-bar-background);
+    border: 1px solid var(--vscode-side-bar-border);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.game-card {
+    background-color: var(--vscode-side-bar-background);
+    border: 1px solid var(--vscode-side-bar-border);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.game-thumbnail {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.game-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.game-title {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.game-author {
+    margin: 0 0 10px;
+    font-size: 0.9em;
+    opacity: 0.8;
+    flex-grow: 1;
+}
+
+button.download-btn {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    margin-top: auto;
+}
+
+button.download-btn:hover {
+    background-color: var(--vscode-button-hover-background);
+}
+
+button.download-btn:disabled {
+    background-color: var(--vscode-button-secondary-background);
+    color: var(--vscode-button-secondary-foreground);
+    cursor: not-allowed;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+#search-results {
+    margin-top: 15px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--vscode-editor-widget-border);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item .details {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-result-item .title {
+    font-weight: bold;
+}
+
+.search-result-item .author {
+    font-size: 0.9em;
+    opacity: 0.8;
+} 

@@ -133,11 +133,21 @@ Options to explore:
     - [x] Remove the `ritalin.gameView` from `contributes.views`.
     - [x] Remove the `ritalin.showResizeTip` configuration from `contributes.configuration`.
 
-#### Task 12: User Experience Enhancements
-- [ ] Add configuration options and settings UI
-- [ ] Implement game selection interface
-- [ ] Create onboarding and help documentation
-- [ ] Add keyboard shortcuts and accessibility features
+#### Task 12: Post-Install & Configuration Experience
+**Status: Done** ✅
+- **Objective**: Create a seamless and intuitive post-install and configuration experience.
+- **Action Items**:
+  - [x] On first install, automatically open a custom configuration page in a new editor tab.
+  - [x] Design and implement the configuration page as a webview.
+  - [x] The configuration page should provide a clear "getting started" guide.
+  - [x] Display curated popular turn-based games from itch.io with real thumbnails.
+  - [x] Implement a game search bar directly on the configuration page.
+  - [x] The game search should have live typeahead functionality, showing results as the user types.
+  - [x] Add smart button states: Download → Select → ✓ Selected
+  - [x] Fix game download functionality with proper Python script integration
+  - [x] Package real game images from itch.io in the extension
+  - [x] Add proper configuration registration for selectedGame setting
+  - [x] Implement game selection functionality with UI feedback
 
 #### Task 13: Extension Distribution
 - [ ] Prepare extension for Cursor marketplace (if available)
