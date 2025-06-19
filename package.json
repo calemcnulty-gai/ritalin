@@ -9,14 +9,13 @@
     "url": "https://github.com/your-repo/ritalin.git"
   },
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.75.0"
   },
   "categories": [
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:ritalin.showDashboard"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -28,10 +27,6 @@
       {
         "command": "ritalin.hideGame",
         "title": "Ritalin: Hide Game"
-      },
-      {
-        "command": "ritalin.toggleGame",
-        "title": "Ritalin: Toggle Game Panel"
       },
       {
         "command": "ritalin.searchGames",
@@ -60,34 +55,17 @@
       {
         "command": "ritalin.showDashboard",
         "title": "Ritalin: Show Detection Dashboard"
+      },
+      {
+        "command": "ritalin.runSetup",
+        "title": "Ritalin: Run First-Time Setup"
       }
     ],
-    "viewsContainers": {
-      "panel": [
-        {
-          "id": "ritalin",
-          "title": "Ritalin",
-          "icon": "media/icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "ritalin": [
-        {
-          "id": "ritalin.gameView",
-          "name": "Game",
-          "type": "webview"
-        }
-      ]
-    },
+    "viewsContainers": {},
+    "views": {},
     "configuration": {
       "title": "Ritalin",
       "properties": {
-        "ritalin.showResizeTip": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show a one-time tip about resizing the game panel."
-        },
         "ritalin.externalWindow.enabled": {
           "type": "boolean",
           "default": false,

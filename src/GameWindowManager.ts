@@ -57,8 +57,8 @@ export class GameWindowManager {
             position: config.get<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'center' | 'overlay' | 'custom'>('position', 'bottom-left'),
             customX: config.get<number>('customX', 0),
             customY: config.get<number>('customY', 0),
-            width: config.get<number>('width', 400),
-            height: config.get<number>('height', 300),
+            width: config.get<number>('width', 600),
+            height: config.get<number>('height', 450),
             monitor: config.get<'primary' | 'secondary' | 'auto'>('monitor', 'primary'),
             alwaysOnTop: config.get<boolean>('alwaysOnTop', true),
             hideOnBlur: config.get<boolean>('hideOnBlur', false)
@@ -389,26 +389,72 @@ export class GameWindowManager {
     public stop(): void {
         if (this.electronProcess) {
             this.outputChannel.appendLine('[GameWindowManager] Stopping Electron process...');
-            // Send a quit command for graceful shutdown
-            this.sendCommand({ command: 'quit' });
             
-            // Give it a moment, then terminate if it hasn't already
+            // Try graceful shutdown first
+            try {
+                this.sendCommand({ command: 'quit' });
+            } catch (error) {
+                this.outputChannel.appendLine(`[GameWindowManager] Failed to send quit command: ${error}`);
+            }
+            
+            // Give it a short moment, then terminate if it hasn't already
             setTimeout(() => {
                 if (this.electronProcess && !this.electronProcess.killed) {
-                    this.electronProcess.kill();
+                    this.outputChannel.appendLine('[GameWindowManager] Force killing Electron process with SIGTERM...');
+                    try {
+                        this.electronProcess.kill('SIGTERM');
+                    } catch (error) {
+                        this.outputChannel.appendLine(`[GameWindowManager] SIGTERM failed: ${error}`);
+                    }
+                    
+                    // If SIGTERM doesn't work, use SIGKILL after a shorter delay
+                    setTimeout(() => {
+                        if (this.electronProcess && !this.electronProcess.killed) {
+                            this.outputChannel.appendLine('[GameWindowManager] Force killing with SIGKILL...');
+                            try {
+                                this.electronProcess.kill('SIGKILL');
+                            } catch (error) {
+                                this.outputChannel.appendLine(`[GameWindowManager] SIGKILL failed: ${error}`);
+                            }
+                        }
+                        // Clean up reference regardless
+                        this.electronProcess = null;
+                        this.isReady = false;
+                    }, 1000); // Reduced from 2000ms to 1000ms
                 }
-            }, 500);
+            }, 500); // Reduced from 1000ms to 500ms
         }
     }
 
     public show(): void {
         this.outputChannel.appendLine('[GameWindowManager] Show command called');
-        this.sendCommand({ command: 'show' });
+        
+        // If the process isn't running, start it first
+        if (!this.electronProcess) {
+            this.outputChannel.appendLine('[GameWindowManager] Electron process not running, starting it...');
+            this.start().then(() => {
+                this.sendCommand({ command: 'show' });
+            }).catch(error => {
+                this.outputChannel.appendLine(`[GameWindowManager] Failed to start Electron process: ${error}`);
+            });
+        } else {
+            this.sendCommand({ command: 'show' });
+        }
     }
 
     public hide(): void {
-        this.outputChannel.appendLine('[GameWindowManager] Hide command called, stopping process.');
+        this.outputChannel.appendLine('[GameWindowManager] Hide command called - hiding window (keeping process alive)');
+        this.sendCommand({ command: 'hide' });
+    }
+
+    public restart(): void {
+        this.outputChannel.appendLine('[GameWindowManager] Restart command called');
         this.stop();
+        setTimeout(() => {
+            this.start().catch(error => {
+                this.outputChannel.appendLine(`[GameWindowManager] Failed to restart: ${error}`);
+            });
+        }, 2000); // Increased delay to ensure cleanup
     }
 
     public loadGame(game: GameInfo): void {
@@ -450,8 +496,8 @@ export class GameWindowManager {
     }
 
     private sendCommand(message: any): void {
-        if (!this.electronProcess) {
-            this.outputChannel.appendLine('[GameWindowManager] Cannot send command - Electron process not running');
+        if (!this.electronProcess || this.electronProcess.killed) {
+            this.outputChannel.appendLine('[GameWindowManager] Cannot send command - Electron process not running or killed');
             return;
         }
 
@@ -461,10 +507,19 @@ export class GameWindowManager {
             return;
         }
 
-        if (this.electronProcess.stdin) {
+        if (this.electronProcess.stdin && !this.electronProcess.stdin.destroyed) {
             const jsonMessage = JSON.stringify(message) + '\n';
             this.outputChannel.appendLine(`[GameWindowManager] Sending command to Electron: ${jsonMessage.trim()}`);
-            this.electronProcess.stdin.write(jsonMessage);
+            try {
+                this.electronProcess.stdin.write(jsonMessage);
+            } catch (error) {
+                this.outputChannel.appendLine(`[GameWindowManager] Failed to send command: ${error}`);
+                // Process might be dead, mark as not ready
+                this.isReady = false;
+                this.electronProcess = null;
+            }
+        } else {
+            this.outputChannel.appendLine('[GameWindowManager] Cannot send command - stdin not available or destroyed');
         }
     }
 
@@ -478,6 +533,11 @@ export class GameWindowManager {
     public dispose(): void {
         this.outputChannel.appendLine('[GameWindowManager] Disposing...');
         this.stop();
-        this.outputChannel.dispose();
+        
+        // Clear any queued messages
+        this.messageQueue = [];
+        this.isReady = false;
+        
+        // Don't dispose output channel here - let extension handle it
     }
 } 

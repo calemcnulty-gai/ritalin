@@ -717,3 +717,12 @@ Successfully implemented a fully-featured external game window system using Elec
 - Enhanced CursorDetector class with modular detection methods
 - Improved detection accuracy using multiple detection sources
 - Added proper cleanup for all detection methods
+
+### v0.1.0 (Task 11.5) - 2024-08-01
+- **Task 11.5**: Pruned all deprecated code related to the WebView panel view. The extension now exclusively uses the external Electron window for displaying games, which simplifies the codebase and removes the problematic WebView implementation.
+  - Deleted `src/gamePanelView.ts`.
+  - Refactored `src/extension.ts` to remove panel logic.
+  - Cleaned up `package.json` to remove panel-related commands and view contributions.
+
+## Architectural Decisions
+- The external Electron window is now the sole method for displaying games. This was decided due to insurmountable security and compatibility issues with the VS Code WebView.

@@ -37,6 +37,9 @@ export class CursorDetector {
     private lastDetectionTime: number = 0;
     private readonly DETECTION_THRESHOLD = 0.5; // 50% confidence required (lowered for testing)
     private readonly DETECTION_TIMEOUT = 5000; // 5 seconds timeout
+    private readonly STARTUP_SUPPRESSION_TIME = 10000; // 10 seconds after startup to ignore other methods
+    private startupTime: number = Date.now();
+    private lastSelfReportState: boolean = false; // Track the last known AI state
     private stats = {
         totalDetections: 0,
         falsePositives: 0,
@@ -53,22 +56,26 @@ export class CursorDetector {
 
     constructor(outputChannel: vscode.OutputChannel) {
         this.outputChannel = outputChannel;
-        this.outputChannel.appendLine('[CursorDetector] Initializing...');
         console.log('[CursorDetector] Constructor called');
+        
+        // Add back minimal essential logging
+        this.outputChannel.appendLine('[CursorDetector] AI Detection System Starting...');
 
         // Debounce the end generation function to only fire after 500ms of inactivity
         this.debouncedEndGeneration = debounce(() => {
-            this.outputChannel.appendLine('[CursorDetector] Debounced end generation triggered');
             this.endGeneration();
         }, 500);
 
         this.initializeDetectionMethods();
         this.setupEventListeners();
         
-        // Start periodic logging to show detector is alive
-        setInterval(() => {
-            this.logDetectorStatus();
-        }, 30000); // Every 30 seconds
+        // Add completion message
+        this.outputChannel.appendLine('[CursorDetector] AI Detection System Ready');
+        
+        // Disable periodic logging to reduce output clutter
+        // setInterval(() => {
+        //     this.logDetectorStatus();
+        // }, 120000); // Every 2 minutes - DISABLED
     }
 
     private initializeDetectionMethods(): void {
@@ -115,7 +122,7 @@ export class CursorDetector {
 
         // NEW: AI Self-Reporting via File Watching
         this.detectionMethods.set('selfReport', {
-            name: 'AI Self-Reporting (.is_working)',
+            name: 'AI Self-Reporting (is_working)',
             tier: 1, // Tier 1 - this is the most reliable method
             isActive: () => true,
             getConfidence: () => this.methodStatus['selfReport']?.confidence ?? 0,
@@ -142,18 +149,16 @@ export class CursorDetector {
             method.start();
             method.onDetection(this.handleDetectionEvent.bind(this));
         });
-
-        this.outputChannel.appendLine('[CursorDetector] Now monitoring for AI activity.');
     }
 
     // Disabled detection methods removed for cleaner codebase
 
     private handleDetectionEvent(event: DetectionEvent): void {
-        this.outputChannel.appendLine(`[CursorDetector] === DETECTION EVENT ===`);
-        this.outputChannel.appendLine(`  Method: ${event.method}`);
-        this.outputChannel.appendLine(`  Source: ${event.source}`);
-        this.outputChannel.appendLine(`  Confidence: ${(event.confidence * 100).toFixed(1)}%`);
-        this.outputChannel.appendLine(`  Data: ${JSON.stringify(event.data)}`);
+        // Log essential state changes only
+        if (event.method === 'selfReport') {
+            // Simple state notification
+            this.outputChannel.appendLine(`[CursorDetector] AI Status: ${event.data.isWorking ? '⚡ Working' : '💤 Idle'}`);
+        }
         
         this.detectionEvents.push(event);
         this.lastDetectionTime = event.timestamp;
@@ -166,9 +171,6 @@ export class CursorDetector {
             this.methodStatus[event.method].firing = true;
             this.methodStatus[event.method].lastEvent = event;
             this.methodStatus[event.method].error = null;
-            this.outputChannel.appendLine(`  Updated method status for: ${event.method}`);
-        } else {
-            this.outputChannel.appendLine(`  WARNING: Unknown method: ${event.method}`);
         }
         
         // Reset firing state for other methods
@@ -180,27 +182,14 @@ export class CursorDetector {
 
         // Calculate aggregate confidence
         const confidence = this.calculateAggregateConfidence();
-        this.outputChannel.appendLine(`  Aggregate confidence: ${(confidence * 100).toFixed(1)}%`);
-        this.outputChannel.appendLine(`  Threshold: ${(this.DETECTION_THRESHOLD * 100).toFixed(1)}%`);
-        this.outputChannel.appendLine(`  Currently generating: ${this._isGenerating}`);
         
         if (confidence >= this.DETECTION_THRESHOLD && !this._isGenerating) {
-            this.outputChannel.appendLine(`  🟢 TRIGGERING AI GENERATION START`);
+            this.outputChannel.appendLine('[CursorDetector] 🚀 Showing Game');
             this.startGeneration();
         } else if (confidence < this.DETECTION_THRESHOLD && this._isGenerating) {
-            this.outputChannel.appendLine(`  🟡 SCHEDULING AI GENERATION END (debounced)`);
+            this.outputChannel.appendLine('[CursorDetector] 🛑 Hiding Game');
             this.debouncedEndGeneration();
-        } else {
-            this.outputChannel.appendLine(`  🔴 NO ACTION TAKEN`);
-            if (confidence < this.DETECTION_THRESHOLD) {
-                this.outputChannel.appendLine(`    Reason: Confidence too low (${(confidence * 100).toFixed(1)}% < ${(this.DETECTION_THRESHOLD * 100).toFixed(1)}%)`);
-            }
-            if (this._isGenerating && confidence >= this.DETECTION_THRESHOLD) {
-                this.outputChannel.appendLine(`    Reason: Already generating`);
-            }
         }
-        
-        this.outputChannel.appendLine(`[CursorDetector] === END DETECTION EVENT ===`);
     }
 
     private calculateAggregateConfidence(): number {
@@ -210,8 +199,50 @@ export class CursorDetector {
             event => Date.now() - event.timestamp < this.DETECTION_TIMEOUT
         );
 
-        if (recentEvents.length === 0) return 0;
+        if (recentEvents.length === 0) {
+            // If no recent events but we have a known self-report state of "not working", enforce it
+            if (this.lastSelfReportState === false) {
+                // Remove verbose logging - AI said not working
+                return 0.01; // INVIOLABLE: AI said it's not working
+            }
+            return 0;
+        }
 
+        // Check if we have a recent self-report event - this should be authoritative
+        const recentSelfReport = recentEvents.find(event => event.method === 'selfReport');
+        if (recentSelfReport) {
+            // Store the last known state from self-report
+            this.lastSelfReportState = recentSelfReport.data.isWorking;
+            
+            // INVIOLABLE RULE: If AI explicitly says it's not working, override ANY other detection
+            if (!recentSelfReport.data.isWorking) {
+                // Remove verbose logging - AI says idle
+                return 0.01; // Very low confidence when AI says it's idle - this CANNOT be overridden
+            }
+            
+            // If AI says it's working, use high confidence
+            return recentSelfReport.confidence;
+        }
+
+        // INVIOLABLE RULE: Even without recent self-report, if last known state was "not working", enforce it
+        if (this.lastSelfReportState === false) {
+            // Remove verbose logging - respecting last known idle state
+            return 0.01; // AI previously said it's not working - respect that until told otherwise
+        }
+
+        // During startup suppression time, ignore other methods unless we have self-report
+        const timeSinceStartup = Date.now() - this.startupTime;
+        if (timeSinceStartup < this.STARTUP_SUPPRESSION_TIME) {
+            // Use last known self-report state if available
+            if (this.lastSelfReportState) {
+                return 0.8; // High confidence if AI was working
+            } else {
+                return 0.01; // Low confidence if AI was idle or unknown
+            }
+        }
+
+        // Normal aggregation for other methods when startup suppression is over
+        // BUT only if we don't have a negative self-report state
         const totalConfidence = recentEvents.reduce(
             (sum, event) => sum + event.confidence,
             0
@@ -224,16 +255,14 @@ export class CursorDetector {
 
     private handleTextDocumentChange(event: vscode.TextDocumentChangeEvent): void {
         if (event.document.uri.scheme !== 'file') {
-            // Don't spam the log for non-file changes (output panels, etc.)
             return;
         }
 
         if (event.contentChanges.length === 0) {
-            // Don't log empty changes
             return;
         }
 
-        // Analyze the changes for AI patterns
+        // Analyze the changes for AI patterns (removed verbose logging)
         let totalChanges = 0;
         let largeChanges = 0;
         let rapidChanges = 0;
@@ -247,13 +276,6 @@ export class CursorDetector {
                 rapidChanges++;
             }
         }
-
-        this.outputChannel.appendLine(`[CursorDetector] Document change detected:`);
-        this.outputChannel.appendLine(`  - File: ${event.document.fileName}`);
-        this.outputChannel.appendLine(`  - Changes: ${event.contentChanges.length}`);
-        this.outputChannel.appendLine(`  - Total chars: ${totalChanges}`);
-        this.outputChannel.appendLine(`  - Large changes (>50 chars): ${largeChanges}`);
-        this.outputChannel.appendLine(`  - Rapid changes (>200 chars): ${rapidChanges}`);
 
         // Calculate confidence based on change patterns
         let confidence = 0.3; // Base confidence for any change
@@ -272,9 +294,11 @@ export class CursorDetector {
 
         confidence = Math.min(confidence, 0.95); // Cap at 95%
 
-        this.outputChannel.appendLine(`  - Calculated confidence: ${(confidence * 100).toFixed(1)}%`);
+        // Reset self-report timeout on any document change (keeps detection alive during editing)
+        this.resetSelfReportTimeout();
+        // Remove verbose timeout reset logging
 
-        // Add document changes as a detection event
+        // Add document changes as a detection event (removed verbose logging)
         this.handleDetectionEvent({
             method: 'document',
             timestamp: Date.now(),
@@ -292,14 +316,14 @@ export class CursorDetector {
 
     private startGeneration(): void {
         this._isGenerating = true;
-        this.outputChannel.appendLine('[CursorDetector] AI Generation started.');
+        this.outputChannel.appendLine('[CursorDetector] 🎮 AI Working - Game Shown');
         this._onAiGenerationStart.fire();
     }
 
     private endGeneration(): void {
         if (this._isGenerating) {
             this._isGenerating = false;
-            this.outputChannel.appendLine('[CursorDetector] AI Generation ended.');
+            this.outputChannel.appendLine('[CursorDetector] ⏸️  AI Idle - Game Hidden');
             this._onAiGenerationEnd.fire();
         }
     }
@@ -307,7 +331,6 @@ export class CursorDetector {
     // Callback methods for disabled detection removed
 
     public dispose(): void {
-        this.outputChannel.appendLine('[CursorDetector] Disposing...');
         this.detectionMethods.forEach(method => method.stop());
         this.disposables.forEach(d => d.dispose());
     }
@@ -356,26 +379,16 @@ export class CursorDetector {
     }
 
     private logDetectorStatus(): void {
+        // Only log critical errors, not routine status - removed frequent logging
         const confidence = this.calculateAggregateConfidence();
-        const recentEvents = this.detectionEvents.filter(
-            event => Date.now() - event.timestamp < this.DETECTION_TIMEOUT
-        );
         
-        this.outputChannel.appendLine(`[CursorDetector] Status Check:`);
-        this.outputChannel.appendLine(`  - Is Generating: ${this._isGenerating}`);
-        this.outputChannel.appendLine(`  - Total Detection Events: ${this.detectionEvents.length}`);
-        this.outputChannel.appendLine(`  - Recent Events (5s): ${recentEvents.length}`);
-        this.outputChannel.appendLine(`  - Current Confidence: ${(confidence * 100).toFixed(1)}%`);
-        this.outputChannel.appendLine(`  - Detection Threshold: ${(this.DETECTION_THRESHOLD * 100).toFixed(1)}%`);
+        // Only log critical mismatches that might indicate problems
+        if (!this._isGenerating && confidence > 0.8) {
+            this.outputChannel.appendLine(`[CursorDetector] Warning: High confidence but not generating`);
+        }
         
-        // Log method status
-        Object.entries(this.methodStatus).forEach(([method, status]) => {
-            const lastTime = status.lastDetection ? `${Math.round((Date.now() - status.lastDetection) / 1000)}s ago` : 'Never';
-            const firing = status.firing ? '🟢' : '🔴';
-            this.outputChannel.appendLine(`  - ${method}: ${firing} Confidence: ${(status.confidence * 100).toFixed(1)}% Last: ${lastTime}`);
-        });
-        
-        console.log(`[CursorDetector] Status: Generating=${this._isGenerating}, Confidence=${(confidence * 100).toFixed(1)}%, Events=${recentEvents.length}`);
+        // Silent console logging for debugging only
+        // console.log(`[CursorDetector] Status: Generating=${this._isGenerating}, Confidence=${(confidence * 100).toFixed(1)}%`);
     }
 
     public clearStats(): void {
@@ -389,8 +402,7 @@ export class CursorDetector {
 
     // NEW: Selection Change Monitoring methods
     private setupSelectionMonitoring(): void {
-        this.outputChannel.appendLine('[CursorDetector] Setting up selection change monitoring...');
-        
+        // Reduced setup logging
         try {
             // Track selection changes in all editors
             const selectionDisposable = vscode.window.onDidChangeTextEditorSelection(this.handleSelectionChange, this);
@@ -398,11 +410,10 @@ export class CursorDetector {
             
             // Also track when active editor changes
             const activeEditorDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
-                this.outputChannel.appendLine('[CursorDetector] Active editor changed - resetting selection tracking');
+                // Removed verbose logging
             });
             this.disposables.push(activeEditorDisposable);
             
-            this.outputChannel.appendLine('[CursorDetector] Selection change monitoring setup complete');
         } catch (error) {
             this.outputChannel.appendLine(`[CursorDetector] Failed to setup selection monitoring: ${error}`);
             this.methodStatus['selection'].error = `Setup failed: ${error}`;
@@ -431,11 +442,11 @@ export class CursorDetector {
                 
                 // Lower thresholds for AI detection
                 if (selectionSize > 20) {
-                    confidence += 0.2; // Medium selection (lowered from 100)
+                    confidence += 0.2; // Medium selection
                 }
                 
                 if (selectionSize > 100) {
-                    confidence += 0.2; // Large selection (still detect these)
+                    confidence += 0.2; // Large selection
                 }
                 
                 // Detect rapid small selections (AI often makes precise selections)
@@ -458,22 +469,14 @@ export class CursorDetector {
                 confidence += 0.05; // Mouse selection (less likely AI)
             }
             
-            // FIXED: Lower threshold (0.3 instead of 0.5) and remove random sampling
+            // Only trigger detection for significant selections (removed verbose logging)
             if (confidence >= 0.3) {
-                this.outputChannel.appendLine(`[CursorDetector] 🎯 SELECTION CHANGE DETECTED:`);
-                this.outputChannel.appendLine(`  - Selections: ${selections.length}`);
-                this.outputChannel.appendLine(`  - Kind: ${kind}`);
-                this.outputChannel.appendLine(`  - Confidence: ${(confidence * 100).toFixed(1)}%`);
-                this.outputChannel.appendLine(`  - First selection size: ${selections.length > 0 ? Math.abs(selections[0].end.line - selections[0].start.line) + Math.abs(selections[0].end.character - selections[0].start.character) : 0}`);
-                
                 this.handleDetectionEvent({
                     method: 'selection',
                     timestamp: Date.now(),
                     confidence: confidence,
                     data: { 
                         selectionCount: selections.length,
-                        kind: kind,
-                        // Store detailed selection data for analysis
                         firstSelectionSize: selections.length > 0 ? 
                             Math.abs(selections[0].end.line - selections[0].start.line) + 
                             Math.abs(selections[0].end.character - selections[0].start.character) : 0,
@@ -484,11 +487,6 @@ export class CursorDetector {
                     },
                     source: 'selection-change'
                 });
-            } else {
-                // Log all selection events occasionally for debugging patterns
-                if (Math.random() < 0.02) { // 2% chance for pattern analysis
-                    this.outputChannel.appendLine(`[CursorDetector] Selection (low confidence ${(confidence * 100).toFixed(1)}%): ${selections.length} selections, kind: ${kind}`);
-                }
             }
         } catch (error) {
             // Silently handle errors to prevent crashes
@@ -498,20 +496,17 @@ export class CursorDetector {
 
     private cleanupSelectionMonitoring(): void {
         // Selection monitoring disposables are handled by the main disposables array
-        this.outputChannel.appendLine('[CursorDetector] Selection monitoring cleaned up');
     }
 
     private onSelectionChange(callback: (event: DetectionEvent) => void): void {
         // Selection changes are handled directly in handleSelectionChange
-        this.outputChannel.appendLine('[CursorDetector] Selection change callback registered');
     }
 
     // LSP and File System monitoring methods removed (were disabled)
 
     // NEW: Chat/Focus Change Detection methods
     private setupChatDetection(): void {
-        this.outputChannel.appendLine('[CursorDetector] Setting up chat/focus change detection...');
-        
+        // Reduced setup logging
         try {
             // Monitor when focus leaves the active text editor (might indicate chat usage)
             const activeEditorDisposable = vscode.window.onDidChangeActiveTextEditor(this.handleEditorFocusChange, this);
@@ -524,7 +519,6 @@ export class CursorDetector {
             // List all available commands to find chat-related ones
             this.discoverChatCommands();
             
-            this.outputChannel.appendLine('[CursorDetector] Chat/focus change detection setup complete');
         } catch (error) {
             this.outputChannel.appendLine(`[CursorDetector] Failed to setup chat detection: ${error}`);
             this.methodStatus['chat'].error = `Setup failed: ${error}`;
@@ -535,8 +529,6 @@ export class CursorDetector {
         try {
             if (!editor) {
                 // Focus moved away from editor - could be chat interaction
-                this.outputChannel.appendLine('[CursorDetector] 💬 FOCUS LEFT EDITOR - Possible chat interaction');
-                
                 this.handleDetectionEvent({
                     method: 'chat',
                     timestamp: Date.now(),
@@ -549,9 +541,6 @@ export class CursorDetector {
                 });
             } else {
                 // Focus returned to editor - chat interaction might be ending
-                this.outputChannel.appendLine('[CursorDetector] Focus returned to editor');
-                
-                // Lower confidence event for focus return
                 this.handleDetectionEvent({
                     method: 'chat',
                     timestamp: Date.now(),
@@ -570,8 +559,6 @@ export class CursorDetector {
 
     private handleWindowStateChange(state: vscode.WindowState): void {
         try {
-            this.outputChannel.appendLine(`[CursorDetector] Window state changed - focused: ${state.focused}`);
-            
             if (!state.focused) {
                 // Window lost focus - user might be in external chat or other app
                 this.handleDetectionEvent({
@@ -591,8 +578,6 @@ export class CursorDetector {
 
     private async discoverChatCommands(): Promise<void> {
         try {
-            this.outputChannel.appendLine('[CursorDetector] Discovering available chat commands...');
-            
             const allCommands = await vscode.commands.getCommands();
             const chatRelatedCommands = allCommands.filter(cmd => 
                 cmd.includes('chat') || 
@@ -601,11 +586,6 @@ export class CursorDetector {
                 cmd.includes('cursor') ||
                 cmd.includes('completion')
             );
-            
-            this.outputChannel.appendLine(`[CursorDetector] Found ${chatRelatedCommands.length} potentially chat-related commands:`);
-            chatRelatedCommands.forEach(cmd => {
-                this.outputChannel.appendLine(`  - ${cmd}`);
-            });
             
             // Try to register listeners for promising commands
             this.setupChatCommandListeners(chatRelatedCommands);
@@ -625,25 +605,15 @@ export class CursorDetector {
             cmd.includes('workbench.action.chat')
         );
         
-        if (highPriorityChatCommands.length > 0) {
-            this.outputChannel.appendLine(`[CursorDetector] High-priority chat commands found: ${highPriorityChatCommands.join(', ')}`);
-            
-            // Note: We can't actually intercept these due to VS Code API limitations,
-            // but we can log them for research purposes
-            this.outputChannel.appendLine('[CursorDetector] Note: Command interception not possible due to VS Code API limitations');
-        } else {
-            this.outputChannel.appendLine('[CursorDetector] No high-priority chat commands found');
-        }
+        // Note: We can't actually intercept these due to VS Code API limitations
     }
 
     private cleanupChatDetection(): void {
         // Chat detection disposables are handled by the main disposables array
-        this.outputChannel.appendLine('[CursorDetector] Chat/focus change detection cleaned up');
     }
 
     private onChatActivity(callback: (event: DetectionEvent) => void): void {
         // Chat activity is handled directly in focus change handlers
-        this.outputChannel.appendLine('[CursorDetector] Chat activity callback registered');
     }
 
     // NEW: AI Self-Reporting Detection methods
@@ -651,8 +621,8 @@ export class CursorDetector {
     private readonly SELF_REPORT_TIMEOUT_MS = 60000; // 60 seconds
 
     private setupSelfReportDetection(): void {
-        this.outputChannel.appendLine('[CursorDetector] Setting up AI self-reporting detection...');
-        
+        // Minimal setup logging
+        this.outputChannel.appendLine('[CursorDetector] Setting up AI self-report detection...');
         try {
             // Get workspace folder
             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -660,28 +630,60 @@ export class CursorDetector {
                 throw new Error('No workspace folder found');
             }
             
-            // Create file watcher for .cursor/.is_working
-            const isWorkingPath = vscode.Uri.joinPath(workspaceFolder.uri, '.cursor', '.is_working');
-            const pattern = new vscode.RelativePattern(workspaceFolder, '.cursor/.is_working');
+            // Create file watcher for .cursor/is_working
+            const isWorkingPath = vscode.Uri.joinPath(workspaceFolder.uri, '.cursor', 'is_working');
+            const pattern = new vscode.RelativePattern(workspaceFolder, '.cursor/is_working');
             
-            this.outputChannel.appendLine(`[CursorDetector] Watching file: ${isWorkingPath.fsPath}`);
-            
-            // Create file watcher
+            // Create file watcher - reduced logging
             const fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
             
-            // Handle file changes
-            fileWatcher.onDidChange(this.handleIsWorkingFileChange, this);
-            fileWatcher.onDidCreate(this.handleIsWorkingFileChange, this);
+            // Handle file changes with minimal logging
+            fileWatcher.onDidChange((uri) => {
+                this.handleIsWorkingFileChange(uri);
+            });
+            
+            fileWatcher.onDidCreate((uri) => {
+                this.handleIsWorkingFileChange(uri);
+            });
+            
+            fileWatcher.onDidDelete((uri) => {
+                // File deleted - AI is idle
+                this.handleDetectionEvent({
+                    method: 'selfReport',
+                    timestamp: Date.now(),
+                    confidence: 0.01, // AI is idle if file is deleted
+                    data: { 
+                        isWorking: false,
+                        fileContent: null,
+                        fileDeleted: true,
+                        filePath: uri.fsPath
+                    },
+                    source: 'ai-self-report-deleted'
+                });
+            });
             
             this.disposables.push(fileWatcher);
             
             // Read initial state
             this.readIsWorkingFile(isWorkingPath);
             
+            // Set up periodic polling as backup (every 2 seconds)
+            const pollingInterval = setInterval(() => {
+                this.readIsWorkingFile(isWorkingPath);
+            }, 2000);
+            
+            // Store interval for cleanup
+            this.disposables.push({
+                dispose: () => {
+                    clearInterval(pollingInterval);
+                }
+            });
+            
             // Start timeout monitoring
             this.startSelfReportTimeout();
             
-            this.outputChannel.appendLine('[CursorDetector] AI self-reporting detection setup complete with 60s timeout');
+            this.outputChannel.appendLine('[CursorDetector] ✅ AI Self-Report Detection Active');
+            
         } catch (error) {
             this.outputChannel.appendLine(`[CursorDetector] Failed to setup self-report detection: ${error}`);
             this.methodStatus['selfReport'].error = `Setup failed: ${error}`;
@@ -690,14 +692,15 @@ export class CursorDetector {
 
     private async handleIsWorkingFileChange(uri: vscode.Uri): Promise<void> {
         try {
-            this.outputChannel.appendLine(`[CursorDetector] 🤖 AI STATUS FILE CHANGED: ${uri.fsPath}`);
-            
             // Reset timeout on any file change
             this.resetSelfReportTimeout();
             
+            // Small delay to ensure file write is complete
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             await this.readIsWorkingFile(uri);
         } catch (error) {
-            this.outputChannel.appendLine(`[CursorDetector] Error handling .is_working file change: ${error}`);
+            this.outputChannel.appendLine(`[CursorDetector] Error handling is_working file change: ${error}`);
         }
     }
 
@@ -707,18 +710,15 @@ export class CursorDetector {
             const fileContents = await vscode.workspace.fs.readFile(uri);
             const content = Buffer.from(fileContents).toString('utf8').trim();
             
-            this.outputChannel.appendLine(`[CursorDetector] .is_working file content: "${content}"`);
-            
             // Parse boolean status
             const isWorking = content.toLowerCase() === 'true';
-            
-            this.outputChannel.appendLine(`[CursorDetector] 🤖 AI SELF-REPORT: ${isWorking ? 'WORKING' : 'IDLE'}`);
+            const confidence = isWorking ? 0.99 : 0.01;
             
             // Create detection event with high confidence (this is direct from AI)
             this.handleDetectionEvent({
                 method: 'selfReport',
                 timestamp: Date.now(),
-                confidence: isWorking ? 0.99 : 0.01, // Very high confidence when working, very low when idle
+                confidence: confidence, // Very high confidence when working, very low when idle
                 data: { 
                     isWorking,
                     fileContent: content,
@@ -728,9 +728,7 @@ export class CursorDetector {
             });
             
         } catch (error) {
-            this.outputChannel.appendLine(`[CursorDetector] Error reading .is_working file: ${error}`);
-            
-            // If file doesn't exist, assume AI is idle
+            // Silent error handling - just assume AI is idle
             this.handleDetectionEvent({
                 method: 'selfReport',
                 timestamp: Date.now(),
@@ -749,8 +747,6 @@ export class CursorDetector {
         this.clearSelfReportTimeout(); // Clear any existing timeout
         
         this.selfReportTimeout = setTimeout(() => {
-            this.outputChannel.appendLine('[CursorDetector] ⏰ AI SELF-REPORT TIMEOUT (60s) - Assuming AI is idle');
-            
             // Create timeout detection event - assume AI is idle
             this.handleDetectionEvent({
                 method: 'selfReport',
@@ -767,12 +763,9 @@ export class CursorDetector {
             
             this.selfReportTimeout = null;
         }, this.SELF_REPORT_TIMEOUT_MS);
-        
-        this.outputChannel.appendLine(`[CursorDetector] Started AI self-report timeout (${this.SELF_REPORT_TIMEOUT_MS}ms)`);
     }
 
     private resetSelfReportTimeout(): void {
-        this.outputChannel.appendLine('[CursorDetector] Resetting AI self-report timeout due to file change');
         this.startSelfReportTimeout(); // Restart the timeout
     }
 
@@ -780,7 +773,6 @@ export class CursorDetector {
         if (this.selfReportTimeout) {
             clearTimeout(this.selfReportTimeout);
             this.selfReportTimeout = null;
-            this.outputChannel.appendLine('[CursorDetector] Cleared AI self-report timeout');
         }
     }
 
@@ -789,11 +781,9 @@ export class CursorDetector {
         this.clearSelfReportTimeout();
         
         // File watcher disposables are handled by the main disposables array
-        this.outputChannel.appendLine('[CursorDetector] AI self-reporting detection cleaned up');
     }
 
     private onSelfReportChange(callback: (event: DetectionEvent) => void): void {
         // Self-report changes are handled directly in file change handlers
-        this.outputChannel.appendLine('[CursorDetector] AI self-report callback registered');
     }
 } 
