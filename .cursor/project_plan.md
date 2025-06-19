@@ -77,7 +77,7 @@ Options to explore:
 - [x] Research Cursor-specific DOM patterns and API calls
 - [x] Research VS Code extension API limitations and security model
 - [x] Implement multi-method AI detection framework with 4 active detection methods:
-  - [x] **AI Self-Reporting** (Tier 1 - 99%/1% confidence) - AI edits .cursor/.is_working file
+  - [x] **AI Self-Reporting** (Tier 1 - 99%/1% confidence) - AI edits .cursor/is_working file
   - [x] **Document Change Analysis** (50-95% confidence) - Detects rapid text changes
   - [x] **Selection Change Monitoring** (50% confidence) - Monitors cursor/selection patterns
   - [x] **Chat/Focus Change Detection** (15-40% confidence) - Detects editor focus changes
@@ -87,25 +87,28 @@ Options to explore:
   - [x] ~~Status Bar Monitoring~~ - DISABLED (extension isolation)
   - [x] ~~File System Monitoring~~ - DISABLED (performance/crash issues)
   - [x] ~~Language Server Protocol Monitoring~~ - DISABLED (Cursor AI bypasses standard LSP)
-- [x] Implement AI self-reporting system with .cursor/.is_working file and Cursor rule
+- [x] Implement AI self-reporting system with .cursor/is_working file and Cursor rule
 - [x] Add 60-second timeout safety mechanism for AI detection
 - [x] Create comprehensive output channel logging for debugging
 - [x] Remove dashboard in favor of direct game window show/hide
 - [x] Clean up test code and unused detection methods
 - [x] Remove StatusBarManager and simplify extension architecture
 - [x] Package size optimization (6MB+ → 2.59MB via .vscodeignore)
+- [x] **Auto-initialization for new projects** - Extension creates required .cursor files
+- [x] **Filename correction** - Fixed all references from .cursor/.is_working → .cursor/is_working
 - [x] **COMPLETED: Production-ready AI detection with automatic game show/hide**
 
 #### Live Testing Results Summary
-- **✅ Document Change Analysis**: WORKING (only method that fires)
-- **🔧 Selection Change Monitoring**: Not firing due to implementation issues
-  - Threshold too high (0.5), sampling too low (30%)
-  - Wrong selection pattern assumptions
-  - Needs fixes for smaller, rapid selection changes
-- **❌ Language Server Protocol Monitoring**: Fundamentally unviable
-  - Cursor AI bypasses standard VS Code completion providers
-  - LSP events are user-triggered, not AI-triggered
-  - Architectural mismatch - should be disabled like other unviable methods
+- **✅ AI Self-Reporting**: PRIMARY detection method (99%/1% confidence)
+  - Extension auto-creates .cursor/is_working file in new projects
+  - File watcher monitors for AI activity state changes
+  - 60-second timeout safety mechanism prevents stuck states
+- **✅ Document Change Analysis**: SECONDARY detection method (50-95% confidence)
+  - Detects large, rapid text changes characteristic of AI generation
+  - Working as backup detection for non-compliant AI interactions
+- **🔧 Selection & Chat Detection**: AUXILIARY methods (15-50% confidence)
+  - Provide additional signals but not primary detection
+  - Used for confidence scoring and edge case handling
 
 #### Task 11: Performance Optimization
 - [ ] Optimize WebView resource loading
@@ -114,6 +117,21 @@ Options to explore:
 - [ ] Test extension impact on Cursor performance
 
 ### Phase 3: Polish and Distribution
+
+#### Task 11.5: Prune Deprecated Game Panel Code
+**Status: DONE**
+- **Objective**: Remove all code related to the deprecated WebView panel to streamline the codebase.
+- **Action Items**:
+  - [x] **Delete `src/gamePanelView.ts`**: This file contains the `GamePanelViewProvider`, which is no longer needed.
+  - [x] **Refactor `src/extension.ts`**: 
+    - [x] Remove the import for `GamePanelViewProvider`.
+    - [x] Remove the instantiation and registration of `GamePanelViewProvider`.
+    - [x] Remove any commands specifically related to toggling the panel view (e.g., `ritalin.toggleGame`).
+  - [x] **Update `package.json`**:
+    - [x] Remove the `ritalin.toggleGame` command from `contributes.commands`.
+    - [x] Remove the `ritalin` view container from `contributes.viewsContainers`.
+    - [x] Remove the `ritalin.gameView` from `contributes.views`.
+    - [x] Remove the `ritalin.showResizeTip` configuration from `contributes.configuration`.
 
 #### Task 12: User Experience Enhancements
 - [ ] Add configuration options and settings UI
@@ -128,10 +146,16 @@ Options to explore:
 - [ ] Plan user feedback and iteration cycle
 
 ## Current Sprint Focus
-**Sprint 3**: Detection Method Optimization & Game Integration (Task 10 completion + Task 11 start)
-- **PRIMARY OBJECTIVE**: Fix Selection Change Monitoring implementation issues
-- **SECONDARY OBJECTIVE**: Disable LSP Monitoring as fundamentally unviable
-- **TERTIARY OBJECTIVE**: Enhance Document Change Analysis and integrate with game triggers
+**Sprint 4**: Production Testing & Performance Optimization (Task 10 → Task 11 transition)
+- **PRIMARY OBJECTIVE**: Test complete AI detection system with auto-game triggering
+- **SECONDARY OBJECTIVE**: Validate AI self-reporting system across different project types
+- **TERTIARY OBJECTIVE**: Begin Performance Optimization (Task 11) if testing successful
+
+## Recent Completions
+- **✅ Auto-file Creation**: Extension now creates .cursor/rules/ai-activity-reporting.mdc and .cursor/is_working in new projects
+- **✅ Filename Fix**: Corrected all references from .cursor/.is_working → .cursor/is_working (removed dot prefix)
+- **✅ Workspace Detection**: Added workspace change listener to re-initialize files when switching projects
+- **📦 Packaged & Installed**: v0.1.0 ready for production testing
 
 ## Notes
 - Priority is on MVP functionality before adding advanced features

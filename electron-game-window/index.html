@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: file:; media-src 'none'; microphone 'none'; camera 'none'; geolocation 'none';">
-    <title>Ritalin Game Window</title>
+    <title>Cursor</title>
     <style>
         * {
             margin: 0;
@@ -119,6 +119,23 @@
             color: rgba(255, 255, 255, 0.6);
             font-size: 12px;
         }
+        
+        /* Resize handle */
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(-45deg, transparent 0%, transparent 30%, rgba(255,255,255,0.1) 30%, rgba(255,255,255,0.1) 35%, transparent 35%, transparent 65%, rgba(255,255,255,0.1) 65%, rgba(255,255,255,0.1) 70%, transparent 70%);
+            cursor: nw-resize;
+            z-index: 1001;
+            -webkit-app-region: no-drag;
+        }
+        
+        .resize-handle:hover {
+            background: linear-gradient(-45deg, transparent 0%, transparent 30%, rgba(255,255,255,0.2) 30%, rgba(255,255,255,0.2) 35%, transparent 35%, transparent 65%, rgba(255,255,255,0.2) 65%, rgba(255,255,255,0.2) 70%, transparent 70%);
+        }
     </style>
 </head>
 <body>
@@ -127,7 +144,7 @@
             <button class="window-control minimize" onclick="minimizeWindow()"></button>
             <button class="window-control close" onclick="closeWindow()"></button>
         </div>
-        <div class="window-title">Ritalin Game</div>
+        <div class="window-title">Cursor</div>
     </div>
     
     <div id="game-container" class="loading">
@@ -136,6 +153,8 @@
             <div class="loading-text">Loading game...</div>
         </div>
     </div>
+    
+    <div class="resize-handle"></div>
     
     <script>
         // Window control functions
@@ -175,7 +194,7 @@
                 console.log('Iframe loaded successfully');
                 try {
                     const gameTitle = iframe.contentDocument?.title || 'Game';
-                    document.querySelector('.window-title').textContent = `Ritalin - ${gameTitle}`;
+                    document.querySelector('.window-title').textContent = 'Cursor';
                     console.log('Game title updated to:', gameTitle);
                 } catch (e) {
                     // Cross-origin, can't access title
