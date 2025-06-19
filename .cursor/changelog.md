@@ -1,5 +1,28 @@
 # Ritalin for Cursor - Changelog
 
+## 2024-12-30
+
+### Task 12: Post-Install & Configuration Experience - COMPLETED ✅
+- **Branch**: `feature/task-12-post-install-ux`
+- **Completed**: Full post-install configuration experience with smart game management
+- **Key Features Delivered**:
+  - Auto-opening configuration page on first install with version tracking
+  - Beautiful webview interface displaying 12 curated turn-based games from itch.io
+  - Real game thumbnails packaged directly in extension (432KB of images)
+  - Live search functionality with itch.io integration and typeahead
+  - Smart button states: Download → Select → ✓ Selected with proper UX feedback
+  - Fixed Python script integration for reliable game downloads with ANSI color stripping
+  - Proper VS Code configuration registration for selectedGame setting
+  - Real-time button state synchronization across all game interfaces
+- **Technical Implementation**:
+  - Created `ConfigPanel.ts` with comprehensive webview management
+  - Enhanced `search_games.py` to scrape live itch.io data with fallback to curated games
+  - Fixed `gameManager.ts` download functionality with separate script handlers
+  - Added `selectGame` command and proper configuration management
+  - Updated `media/main.js` with sophisticated button state logic
+- **Files Added**: `src/ConfigPanel.ts`, `src/types.ts`, 12 game images in `media/game-images/`
+- **Ready**: Production-ready configuration experience with seamless game management
+
 ## 2024-12-30 - COMPLETION
 
 ### Task 10: Cursor AI Detection Implementation - COMPLETED ✅

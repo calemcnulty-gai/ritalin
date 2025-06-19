@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
-import { GameManager, GameInfo } from './gameManager';
+import { GameManager } from './gameManager';
+import { GameInfo } from './types';
 import { GameWindowManager } from './GameWindowManager';
 import { CursorDetector } from './cursorDetector';
+import { ConfigPanel } from './ConfigPanel';
 
 let gameManager: GameManager;
 let gameWindowManager: GameWindowManager;
@@ -12,9 +14,16 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('Ritalin');
     outputChannel.appendLine('[Ritalin] Extension activating...');
 
-    gameManager = new GameManager(context);
+    gameManager = new GameManager(context, outputChannel);
     gameWindowManager = new GameWindowManager(context, outputChannel);
     cursorDetector = new CursorDetector(outputChannel);
+
+    // Show welcome page on first install/update
+    if (context.globalState.get('ritalin.hasShownWelcomePageV1') === undefined) {
+        outputChannel.appendLine('[Ritalin] First install detected, showing welcome page');
+        ConfigPanel.createOrShow(context.extensionUri, gameManager, outputChannel);
+        context.globalState.update('ritalin.hasShownWelcomePageV1', true);
+    }
 
     // Initialize managers
     gameManager.initialize().catch(error => {
@@ -39,6 +48,10 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('ritalin.configureExternalWindow', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', 'ritalin.externalWindow');
+        }),
+        vscode.commands.registerCommand('ritalin.showConfig', () => {
+            outputChannel.appendLine('[Ritalin] showConfig command called');
+            ConfigPanel.createOrShow(context.extensionUri, gameManager, outputChannel);
         })
     );
     
@@ -48,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
         cursorDetector?.dispose();
         gameWindowManager?.dispose();
 
-        gameManager = new GameManager(context);
+        gameManager = new GameManager(context, outputChannel);
         gameWindowManager = new GameWindowManager(context, outputChannel);
         cursorDetector = new CursorDetector(outputChannel);
     });

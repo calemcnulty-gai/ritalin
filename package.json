@@ -59,6 +59,10 @@
       {
         "command": "ritalin.runSetup",
         "title": "Ritalin: Run First-Time Setup"
+      },
+      {
+        "command": "ritalin.showConfig",
+        "title": "Ritalin: Show Configuration Page"
       }
     ],
     "viewsContainers": {},
@@ -124,6 +128,11 @@
           "type": "boolean",
           "default": false,
           "description": "Hide the game window when it loses focus."
+        },
+        "ritalin.selectedGame": {
+          "type": "string",
+          "default": null,
+          "description": "ID of the currently selected game."
         }
       }
     }
