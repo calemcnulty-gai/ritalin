@@ -19,6 +19,9 @@ docs/**
 # Test files
 test-*.js
 chat-detection-*.js
+src/test/**
+*.test.ts
+*.spec.ts
 
 # TypeScript source files (only include compiled .js)
 src/**/*.ts
@@ -28,9 +31,19 @@ tsconfig.json
 # Development dependencies
 .cursor/changelog.md
 .cursor/project_plan.md
+.cursor/rules/**
+.cursor/is_working
 brainlift.md
 example_brainlift.md
 global_cursor_rules.md
 PRD.md
+
+# Python cache files
+scripts/__pycache__/**
+*.pyc
+
+# Build artifacts
+out/test/**
+*.map
 
 # Only include essential files for the extension to work 

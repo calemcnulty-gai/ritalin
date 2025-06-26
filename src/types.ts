@@ -13,4 +13,7 @@ export interface GameInfo {
     entryPoint?: string;
     rating?: string;
     isDefault?: boolean;
+    engine?: string; // unity, pico8, other
+    width?: number; // game iframe width
+    height?: number; // game iframe height
 } 

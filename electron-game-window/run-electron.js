@@ -17,16 +17,26 @@ function findElectron() {
             path.join(providedPath, 'dist', 'Electron.app', 'Contents', 'MacOS', 'Electron'), // macOS
             path.join(providedPath, 'dist', 'electron.exe'), // Windows
             path.join(providedPath, 'dist', 'electron'), // Linux
-            require(path.join(providedPath, 'index.js')) // Fallback to require
         ];
         
         for (const electronPath of possiblePaths) {
-            if (typeof electronPath === 'string' && fs.existsSync(electronPath)) {
+            if (fs.existsSync(electronPath)) {
                 console.log('Found Electron executable at:', electronPath);
                 return electronPath;
-            } else if (typeof electronPath === 'string' && electronPath !== require(path.join(providedPath, 'index.js'))) {
-                // Not a string, must be the require result
-                return electronPath;
+            }
+        }
+        
+        // Try to use the index.js approach as fallback
+        const indexPath = path.join(providedPath, 'index.js');
+        if (fs.existsSync(indexPath)) {
+            try {
+                const electronFromIndex = require(indexPath);
+                if (electronFromIndex && fs.existsSync(electronFromIndex)) {
+                    console.log('Found Electron via index.js:', electronFromIndex);
+                    return electronFromIndex;
+                }
+            } catch (e) {
+                console.log('Failed to require index.js:', e.message);
             }
         }
     }

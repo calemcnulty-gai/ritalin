@@ -150,10 +150,56 @@ Options to explore:
   - [x] Implement game selection functionality with UI feedback
 
 #### Task 13: Extension Distribution
-- [ ] Prepare extension for Cursor marketplace (if available)
+- [ ] Research Cursor extension distribution and marketplace options
+  - [ ] **Investigation Complete**: Research shows Cursor uses VS Code marketplace but with restrictions
+    - [ ] Cursor redirects to VS Code marketplace for most extensions
+    - [ ] Microsoft is enforcing stricter licensing on their extensions (Pylance, C/C++, etc.)
+    - [ ] Extensions can be installed via .vsix files by dragging to Extensions tab
+    - [ ] No dedicated Cursor marketplace exists as of 2024
+    - [ ] Extensions can access Cursor-specific features through VS Code API compatibility
+  - [ ] **Distribution Strategy**: 
+    - [ ] **Primary**: Direct .vsix distribution via GitHub releases
+    - [ ] **Secondary**: VS Code marketplace (if extension passes review)
+    - [ ] **Tertiary**: Manual installation instructions for developers
+  - [ ] **Publishing Requirements**:
+    - [ ] Package extension as .vsix using `vsce package`
+    - [ ] Create GitHub release with .vsix attachment
+    - [ ] Provide clear installation instructions (drag-and-drop method)
+    - [ ] Consider VS Code marketplace submission (may require Cursor compatibility disclaimers)
+    - [ ] Document any Cursor-specific features that may not work in regular VS Code
 - [ ] Create installation and setup documentation
+  - [ ] Write step-by-step installation guide
+  - [ ] Document system requirements (Python, Electron dependencies)
+  - [ ] Create troubleshooting guide for common issues
+  - [ ] Add platform-specific instructions (macOS code signing, Windows security)
 - [ ] Set up automated builds and releases
+  - [ ] Create GitHub Actions workflow for automated packaging
+  - [ ] Set up automated testing in CI/CD pipeline
+  - [ ] Configure automatic .vsix generation on tag/release
+  - [ ] Add version bumping automation
 - [ ] Plan user feedback and iteration cycle
+  - [ ] Create GitHub issue templates for bug reports and feature requests
+  - [ ] Set up telemetry/analytics for usage patterns (privacy-compliant)
+  - [ ] Plan beta testing program with early adopters
+  - [ ] Design feedback collection mechanism within extension
+
+### Phase 4: Code Cleanup and Refactoring
+
+#### Task 14: Code Cleanup
+**Status: completed** ✅
+- **Objective**: Refactor the codebase to remove redundant, obsolete, and unnecessarily complex code as identified in the [code cleanup report](docs/code_cleanup.md).
+- **Action Items**:
+  - [x] **Simplify `cursorDetector.ts`**: Rewrite the class to only use the file-watching mechanism and remove all other heuristic-based detection logic.
+  - [x] **Simplify Electron IPC**: Remove the redundant `stdin` handler in `main.js` and investigate removing the `run-electron.js` wrapper.
+  - [x] **Consolidate Game Lists**: Modify `search_games.py` to read from `curated_games.json` instead of using a hardcoded list.
+  - [x] **Remove Unused Files**: Delete `electron-game-window/test-simple.js`.
+  - [x] **Remove Debug/Obsolete Commands**: Clean up package.json and extension.ts to remove all debug and redundant commands as documented in `docs/development_command_cleanup.md`.
+  - [x] **Fix Window Spawn Delay**: Remove the hardcoded 2-second delay in `GameWindowManager.start()` as documented in `docs/ai_detection_and_window_spawning.md`.
+  - [x] **Fix Race Condition**: Add `isStarting` flag to prevent multiple window spawning as documented in `docs/ai_detection_and_window_spawning.md`.
+  - [x] **Remove Debug Logging**: Clean up verbose console.log statements and debug code throughout the codebase.
+  - [x] **Fix Python Script Issues**: Rewrite `grab_itch_game.py` to properly parse Unity config and handle multiple game engines as documented in `docs/game_download.md`.
+  - [x] **Clean Up Unused Imports**: Remove unused imports and dead code across all TypeScript files.
+  - [x] **Update .vscodeignore**: Ensure all unnecessary files are excluded from the extension package.
 
 ## Current Sprint Focus
 **Sprint 4**: Production Testing & Performance Optimization (Task 10 → Task 11 transition)
@@ -165,7 +211,12 @@ Options to explore:
 - **✅ Auto-file Creation**: Extension now creates .cursor/rules/ai-activity-reporting.mdc and .cursor/is_working in new projects
 - **✅ Filename Fix**: Corrected all references from .cursor/.is_working → .cursor/is_working (removed dot prefix)
 - **✅ Workspace Detection**: Added workspace change listener to re-initialize files when switching projects
-- **📦 Packaged & Installed**: v0.1.0 ready for production testing
+- **🔧 CRITICAL FIX**: Connected AI detection events to game window management
+  - **Issue**: AI detection was working but game window never appeared
+  - **Root Cause**: Missing event listeners connecting CursorDetector.onAiGenerationStart/End to GameWindowManager.show/hide
+  - **Solution**: Added proper event listeners in extension.ts activation and workspace change handlers
+  - **Status**: ✅ Fixed and tested - game window now shows/hides properly on AI detection
+- **📦 Packaged & Installed**: v0.1.0 ready for production testing with all critical fixes
 
 ## Notes
 - Priority is on MVP functionality before adding advanced features

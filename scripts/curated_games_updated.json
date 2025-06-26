@@ -1,0 +1,198 @@
+{
+  "default_game": "die-in-the-dungeon",
+  "games": [
+    {
+      "id": "die-in-the-dungeon",
+      "title": "Die in the Dungeon",
+      "author": "Alarts",
+      "url": "https://alarts.itch.io/die-in-the-dungeon",
+      "description": "Die in the Dungeon is adeck-building, turn-based roguelitewhere you dont use cards, butdice! Try to find the best combination to conquer the2X-floor dungeon, but be careful, a frog like you can only get so far before encountering a prey too big to swallow...\u00e2\u0080\u00a2 \u00e2\u0080\u00a2 \u00e2\u0080\u00a2The full release of Die in the Dungeon is on Steam! Play\u00a0it\u00a0here:https://store.steampowered.com/widget/2026820/\u00e2\u0080\u00a2 \u00e2\u0080\u00a2 \u00e2\u0080\u00a2Here is ourDiscord server!Also, you can follow uson Twitter!\u00e2\u0080\u00a2 \u00e2\u0080\u00a2 \u00e2\u0080\u00a2Codeby@jaungardenerand@yomellamoyorchA...",
+      "tags": [
+        "turn-based",
+        "dungeon-crawler",
+        "cards",
+        "strategy"
+      ],
+      "cover_image": "game-images/die-in-the-dungeon.png",
+      "rating": "excellent",
+      "isDefault": true,
+      "engine": "unity",
+      "width": 960,
+      "height": 540,
+      "file_size": "41 MB"
+    },
+    {
+      "id": "dungeon-deck",
+      "title": "Dungeon Deck",
+      "author": "Incinious",
+      "url": "https://incinious.itch.io/dungeon-deck",
+      "cover_image": "game-images/dungeon-deck.png",
+      "engine": "unity",
+      "width": 960,
+      "height": 540,
+      "description": "A unique take on the roguelike dungeon crawler!Explore a procedural dungeon, in the form of a deck of cards. Collect unique and powerful weapons, and defeat cute enemies by Creating your own Deck!A game that is different every time you play, try different combinations of cards and abilities, and create the most powerful Deck possible!Feedback or suggestions for future updates is welcome! Leave your comments down below!To stay up to date or give suggestions, be one of the first to join the Discor...",
+      "asset_links": [
+        "https://www.youtube.com/embed/aGMlXY4c_KY"
+      ],
+      "file_size": "18 MB",
+      "tags": []
+    },
+    {
+      "id": "folder-dungeon",
+      "title": "Folder Dungeon",
+      "author": "Ravernt",
+      "url": "https://ravernt.itch.io/folder-dungeon",
+      "cover_image": "game-images/folder-dungeon.png",
+      "engine": "unity",
+      "width": 800,
+      "height": 600,
+      "description": "Folder Dungeon is dungeon crawler roguelike inside computer folder! Make difficult decisions, fight enemies, collect powerful relics!Play in full screen or download the game for best experience!Content:6 floors20 relics6 enemiesMade in 7 days for Brackeys Game Jam 2023.2Update:Full game is already in the works! If you want to keep up with the game's progress, you can join discord:Wishlist full game:https://store.steampowered.com/app/2853830/Folder_Dungeon/",
+      "file_size": "43 MB",
+      "tags": []
+    },
+    {
+      "id": "slipways",
+      "title": "Slipways Classic",
+      "author": "Jakub Wasilewski",
+      "url": "https://krajzeg.itch.io/slipways",
+      "cover_image": "game-images/slipways-classic.png",
+      "engine": "pico8",
+      "width": 512,
+      "height": 512,
+      "description": "The PC version is now available!Check it out here onitch.io!This is the original PICO-8 edition of a larger game. It'spay-what-you-want- all\u00a0money earned here goes towards development of my other games.The PC version adds a council of five races with varying technology and philosophical outlook, a replayable campaign mode, revamped procedurally-generated graphics,\u00a0and many other features - while still keeping the swift gameplay of this preview.\u00a0If you'd like to stay up-to-date with the progress,...",
+      "asset_links": [
+        "https://html-classic.itch.zone/html/3076366/index.html?v=1732313795"
+      ],
+      "file_size": "49 kB",
+      "tags": []
+    },
+    {
+      "id": "shogunshowdown",
+      "title": "Shogun Showdown - Alpha",
+      "author": "Roboatino",
+      "url": "https://roboatino.itch.io/shogunshowdown",
+      "cover_image": "game-images/shogun-showdown.png",
+      "engine": "unity",
+      "width": 960,
+      "height": 540,
+      "description": "Shogun Showdown is a\u00a0turn-based combat game with rogue-like and deck-building elements.This is theAlpha-versionof the game. Check out thefull release on Steam!https://store.steampowered.com/widget/2084000/?t=A%20turn-based%20combat%20game%20with%20rogue-like%20and%20deck-building%20elements.%0AJoin the Discord:https://discord.gg/sz6yPfWC63",
+      "file_size": "34 MB",
+      "tags": []
+    },
+    {
+      "id": "average-routine",
+      "title": "Average Routine",
+      "author": "ColorlessWing_Studio",
+      "url": "https://colorlesswing-studio.itch.io/average-routine",
+      "cover_image": "game-images/average-routine.png",
+      "engine": "unity",
+      "width": 800,
+      "height": 600,
+      "description": "Average Routine, an anime theme turn based RPG- Invite and Collect more than 30 characters- Upgrade and Level up your characters- Build your best team and defeat enemy- Tons of Reward to collect and earn- Chat with characters and know their short about- Different Gamemode and Event to play withGameplay Showcase:",
+      "asset_links": [
+        "https://www.youtube.com/embed/2he-mfZ7chM"
+      ],
+      "file_size": "100 MB",
+      "tags": []
+    },
+    {
+      "id": "into-ruins",
+      "title": "Into Ruins",
+      "author": "SPARSE//GameDev",
+      "url": "https://sparsegamedev.itch.io/into-ruins",
+      "cover_image": "game-images/into-ruins.png",
+      "engine": "unity",
+      "width": 960,
+      "height": 540,
+      "description": "Reach depth 16 and retrieve the Wings of YendorControls: Turn: Step forward / Attack /\u00a0Interact: Open inventory/Z/C : Wait 1 turnInto Ruinsis a\u00a0roguelike for\u00a0thePICO-8Fantasy Console.There are no stairs. Jump downholesin the ground to make your way to the bottom. You will encounternatural cave formations, crumbling dungeon rooms, andterrifying creatureson your way.There are no doors.Tread carefully or the creature in the next room might spot you.Lighthelps you explore more easily, but also revea...",
+      "asset_links": [
+        "https://html-classic.itch.zone/html/10369074/index.html?v=1732313577"
+      ],
+      "file_size": "1,019 kB",
+      "tags": []
+    },
+    {
+      "id": "persona-4-gb-demo",
+      "title": "Persona 4 GB [DEMO]",
+      "author": "SeanSS",
+      "url": "https://seanss.itch.io/persona-4-gb-demo",
+      "cover_image": "game-images/persona-4-gb.png",
+      "engine": "other",
+      "width": 640,
+      "height": 576,
+      "description": "CONTROLSGameboy | PCSTART | ENTER -Start the gameA\u00a0 | J\u00a0 - InteractB | K - Back/RunDPAD | WASD - Movement/Menu controls[IF PLAYING ON EMULATOR, CONTROLS MAY VARY]EXPERIENCE THE HIT CLASSIC JRPG SERIES NOW ON THE GAMEBOY!Ever wonder what Persona 4 would look like if it was released on the gameboy? Well now you don't need to,\u00a0as a reimagining of what a gameboy Persona 4 might be like comes to reality and onactual hardwarewith the rom file attached below.This project was made with the GB Studio eng...",
+      "download_links": [
+        "javascript:void(0);"
+      ],
+      "asset_links": [
+        "https://www.youtube.com/embed/V2NKNT7W3tY"
+      ],
+      "file_size": "71 kB",
+      "tags": []
+    },
+    {
+      "id": "backpack-hero",
+      "title": "Backpack Hero",
+      "author": "Thejaspel",
+      "url": "https://thejaspel.itch.io/backpack-hero",
+      "cover_image": "game-images/backpack-hero.png",
+      "engine": "unity",
+      "width": 800,
+      "height": 600,
+      "description": "Add us to your wishlist on Steam!https://store.steampowered.com/widget/1970580/Backpack Hero is the inventory management roguelike! Collect rare items, organize your bag, and vanquish your foes!Backpack Hero----=[ ]=----Delve into the dungeon with your magic backpack!--=--Use the mouse!Right-click/arrow-keys to rotate items while holding them.Get as far into the Dungeon as  you can!Join ourDiscord Server!We want to expand this game further and we need your feedback! If you are interested in furt...",
+      "asset_links": [
+        "https://www.youtube.com/embed/5Xdo0OJYVw4"
+      ],
+      "file_size": "188 MB",
+      "tags": []
+    },
+    {
+      "id": "solitomb",
+      "title": "Solitomb",
+      "author": "Jakub Wasilewski",
+      "url": "https://krajzeg.itch.io/solitomb",
+      "cover_image": "game-images/solitomb.png",
+      "engine": "pico8",
+      "width": 512,
+      "height": 512,
+      "description": "You are an adventurer who entered into a pact with ademon. That comes with wealth, power and other usual perks, but the contract does stipulate ateeny, tinyfavor: could you maybe clear this slightly monster-infested dungeon first? Thedemonis kind of sealed inside and it would really appreciate you punching a hole in  its supposedly-eternal jail. That'sdefinitelya safe thing to do with no far-reaching consequences whatsoever.Use your solitaire skills to assemble powerful combos and defeat the dun...",
+      "asset_links": [
+        "https://html-classic.itch.zone/html/12290587/index.html",
+        "https://www.youtube.com/embed/0iyhPjo59rQ"
+      ],
+      "file_size": "166 kB",
+      "tags": []
+    },
+    {
+      "id": "porklike",
+      "title": "Porklike",
+      "author": "Krystman",
+      "url": "https://krystman.itch.io/porklike",
+      "cover_image": "game-images/porklike.png",
+      "engine": "pico8",
+      "width": 512,
+      "height": 512,
+      "description": "Wurst Comes to\u00a0WorstPorklike is a classic, turn-based Roguelike with minimalist lo-fi aesthetic. Enter the tower of Wurstlord. Can you make it to the top and steal his legendary Kielbasa? 9 floors of dangerous traps and enemies await you. Only if you move carefully and master your character's abilities will you become the champion of Porklike.The game is controlled with a Keyboard. On mobile devices an on-screen controller will show up.X/M/V - Inventory / ConfirmZ/N/C - CancelEnter -MenuMaking O...",
+      "asset_links": [
+        "https://html-classic.itch.zone/html/2038683/index.html?v=1591302235"
+      ],
+      "tags": []
+    },
+    {
+      "id": "hungry-horrors",
+      "title": "Hungry Horrors (demo)",
+      "author": "Clumsy Bear Studio",
+      "url": "https://clumsy-bear-studio.itch.io/hungry-horrors",
+      "cover_image": "game-images/hungry-horrors.png",
+      "engine": "unity",
+      "width": 960,
+      "height": 540,
+      "description": "HUNGRY HORRORSA Deckbuilder Steeped in FolkloreInHungry Horrors, you don\u00e2\u0080\u0099t slay monsters\u2014youfeed them. But be careful what\u00e2\u0080\u0099s on the menu. Inspired byBritish and Irish folklore, this pixel-art deckbuilder challenges you toappease creatures from legendwith traditional regional dishes.Thisprototypeis just the beginning\u2014we\u00e2\u0080\u0099ll be posting updates here, and you can help shape the game by playing and sharing your thoughts.Wishlist on Steamto support development!FEATURES:\u00f0\u009f\u008d\u00bd\u00ef\u00b8\u008fFEED, DON\u00e2\u0080\u0099T FIGHT\u00e2...",
+      "asset_links": [
+        "https://www.youtube.com/embed/IXAxVYFUPyI"
+      ],
+      "file_size": "221 MB",
+      "tags": []
+    }
+  ]
+}

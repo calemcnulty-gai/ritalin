@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, session } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, session, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -83,7 +83,8 @@ safeLog('Electron modules:', {
   BrowserWindow: !!BrowserWindow, 
   ipcMain: !!ipcMain, 
   screen: !!screen,
-  globalShortcut: !!globalShortcut
+  globalShortcut: !!globalShortcut,
+  protocol: !!protocol
 });
 
 // Store parent process ID for monitoring
@@ -103,7 +104,7 @@ if (parentPid) {
       // Force quit immediately without waiting for graceful shutdown
       process.exit(0);
     }
-  }, 1000); // Check every 1 second (faster detection)
+  }, 500); // Check every 500ms for faster detection during development
   
   // Clean up interval on app quit
   app.on('before-quit', () => {
@@ -126,17 +127,34 @@ process.stdin.on('error', (err) => {
   process.exit(0);
 });
 
-// Exit after 10 seconds of no communication (fallback cleanup)
+// Monitor stdout/stderr for EPIPE errors (indicates parent died)
+process.stdout.on('error', (err) => {
+  if (err.code === 'EPIPE' || err.errno === -32) {
+    parentProcessDead = true;
+    safeLog('stdout EPIPE error, parent died - exiting...');
+    process.exit(0);
+  }
+});
+
+process.stderr.on('error', (err) => {
+  if (err.code === 'EPIPE' || err.errno === -32) {
+    parentProcessDead = true;
+    safeLog('stderr EPIPE error, parent died - exiting...');
+    process.exit(0);
+  }
+});
+
+// Exit after 5 seconds of no communication (more aggressive for development)
 let lastCommunication = Date.now();
 const communicationTimeout = setInterval(() => {
   const timeSinceLastComm = Date.now() - lastCommunication;
-  if (timeSinceLastComm > 10000) { // 10 seconds (more aggressive)
+  if (timeSinceLastComm > 5000) { // 5 seconds (more aggressive for development)
     parentProcessDead = true; // Mark parent as dead
-    safeLog('No communication for 10 seconds, assuming parent died - exiting...');
+    safeLog('No communication for 5 seconds, assuming parent died - exiting...');
     // Force exit immediately to prevent hanging
     process.exit(0);
   }
-}, 2000); // Check every 2 seconds (more frequent)
+}, 1000); // Check every 1 second (more frequent)
 
 app.on('before-quit', () => {
   clearInterval(communicationTimeout);
@@ -148,8 +166,8 @@ let windowPreferences = {
   position: 'bottom-left',
   customX: 0,
   customY: 0,
-  width: 400,
-  height: 300,
+  width: 800,  // Reasonable default when not specified
+  height: 600, // Reasonable default when not specified
   monitor: 'primary',
   alwaysOnTop: true,
   hideOnBlur: false
@@ -165,7 +183,6 @@ try {
   safeError('Failed to parse window preferences:', e);
 }
 
-// Enable WebGL and GPU features for Unity games
 app.commandLine.appendSwitch('enable-webgl');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-accelerated-2d-canvas');
@@ -382,8 +399,8 @@ function createWindow() {
   
   // Use preferences for initial window setup
   mainWindow = new BrowserWindow({
-    width: windowPreferences.width,
-    height: windowPreferences.height,
+    width: windowPreferences.width || 800,   // Ensure we always have a valid width
+    height: windowPreferences.height || 600, // Ensure we always have a valid height
     minWidth: 200,  // Minimum size so it doesn't become unusable
     minHeight: 150,
     maxWidth: 1200, // Maximum size to prevent it from becoming too large
@@ -402,8 +419,8 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      // Additional security settings to prevent permission requests
-      webSecurity: false, // Allow loading local files
+      // Allow local files for Unity WebGL compatibility while maintaining security
+      webSecurity: false, // Allow loading local files for Unity WebGL
       allowRunningInsecureContent: false,
       experimentalFeatures: false,
       enableBlinkFeatures: '', // Disable all blink features
@@ -414,6 +431,48 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+  
+  // Set proper MIME types for Unity WebGL files
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    // Add headers to ensure proper MIME type handling
+    details.requestHeaders['Accept'] = '*/*';
+    callback({ requestHeaders: details.requestHeaders });
+  });
+  
+  // Handle MIME type responses for Unity WebGL files
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    const url = details.url;
+    if (url.endsWith('.wasm')) {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Type': ['application/wasm']
+        }
+      });
+    } else if (url.endsWith('.data') || url.endsWith('.unity3d') || url.endsWith('.framework') || url.endsWith('.loader')) {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Type': ['application/octet-stream']
+        }
+      });
+    } else {
+      callback({ responseHeaders: details.responseHeaders });
+    }
+  });
+  
+  // Block unnecessary permission requests
+  mainWindow.webContents.on('permission-request', (event, webContents, permission, callback) => {
+    safeLog('Permission requested:', permission, '- DENIED');
+    // Deny all permission requests - games don't need them
+    callback(false);
+  });
+  
+  // Block permission requests for specific features
+  mainWindow.webContents.on('permission-request-handler', (event, webContents, permission, callback) => {
+    safeLog('Permission handler requested:', permission, '- DENIED');
+    callback(false);
+  });
   
   // Restore game state when the window loads
   mainWindow.webContents.on('did-finish-load', () => {
@@ -481,9 +540,6 @@ function createWindow() {
   });
 }
 
-// Handle stdin for IPC from extension
-let buffer = '';
-
 function setupIPC() {
   // IPC handlers for renderer process
   ipcMain.on('window-control', (event, action) => {
@@ -549,26 +605,9 @@ function setupIPC() {
       }
     });
   } else {
-    // Use stdin for IPC (when run directly)
-    process.stdin.on('data', (data) => {
-      // Update communication timestamp
-      lastCommunication = Date.now();
-      
-      buffer += data.toString();
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      
-      lines.forEach(line => {
-        if (!line.trim()) return;
-        
-        try {
-          const message = JSON.parse(line);
-          handleExtensionMessage(message);
-        } catch (e) {
-          safeError('Failed to parse IPC message:', e, 'Line:', line);
-        }
-      });
-    });
+    // When not using file-based IPC, no stdin handler is needed
+    // because the wrapper script handles all communication
+    safeLog('No IPC path provided, expecting no direct stdin communication');
   }
   
   // Handle IPC messages from parent process (if using stdio: 'ipc')
@@ -595,6 +634,11 @@ function handleExtensionMessage(message) {
   }
   
   switch (message.command) {
+    case 'ping':
+      // This command's purpose is to reset the communication timeout.
+      // We can send a 'pong' back for debugging or future use.
+      safeStdout(JSON.stringify({ type: 'pong', timestamp: Date.now() }) + '\n');
+      break;
     case 'show':
       safeLog('Showing window');
       mainWindow.show();
@@ -680,6 +724,45 @@ function handleExtensionMessage(message) {
 
 // Send ready signal when app is ready
 app.whenReady().then(() => {
+  // Register custom protocol for serving game files with proper MIME types
+  protocol.registerFileProtocol('game', (request, callback) => {
+    const url = request.url.replace('game://', '');
+    const filePath = decodeURIComponent(url);
+    
+    // Set proper MIME types for Unity WebGL files
+    const mimeTypes = {
+      '.wasm': 'application/wasm',
+      '.data': 'application/octet-stream',
+      '.unity3d': 'application/octet-stream',
+      '.framework': 'application/octet-stream',
+      '.loader': 'application/octet-stream',
+      '.js': 'application/javascript',
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf',
+      '.eot': 'application/vnd.ms-fontobject',
+      '.otf': 'font/otf'
+    };
+    
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeType = mimeTypes[ext] || 'application/octet-stream';
+    
+    callback({
+      path: filePath,
+      headers: {
+        'Content-Type': mimeType
+      }
+    });
+  });
+
   createWindow();
   setupIPC();
   
