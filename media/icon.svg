@@ -1,0 +1,7 @@
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="20" fill="#1e1e1e"/>
+  <text x="64" y="85" font-family="monospace" font-size="72" font-weight="bold" 
+        text-anchor="middle" fill="#00ff00">R</text>
+  <text x="64" y="105" font-family="monospace" font-size="16" 
+        text-anchor="middle" fill="#00ff00">focus</text>
+</svg> 

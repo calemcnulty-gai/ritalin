@@ -6,6 +6,17 @@ on:
       - 'v*'
       - 'v*-alpha*'
       - 'v*-beta*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - alpha
+          - patch
+          - minor
+          - major
 
 jobs:
   build:
@@ -29,22 +40,33 @@ jobs:
       - name: Install vsce
         run: npm install -g @vscode/vsce
         
-      - name: Package Extension
-        run: vsce package
+      - name: Increment build number
+        run: npm run version:build
         
-      - name: Get version from package.json
+      - name: Package Extension
+        run: |
+          if [[ "${{ github.ref }}" == *"alpha"* ]] || [[ "${{ github.event.inputs.release_type }}" == "alpha" ]]; then
+            npm run package:alpha
+          else
+            npm run package
+          fi
+        
+      - name: Get version and build info
         id: version
-        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        run: |
+          echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          echo "BUILD_NUMBER=$(node -p "require('./package.json').buildMetadata?.buildNumber || 0")" >> $GITHUB_OUTPUT
         
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release v${{ steps.version.outputs.VERSION }}
+          name: Release v${{ steps.version.outputs.VERSION }} (Build ${{ steps.version.outputs.BUILD_NUMBER }})
           files: '*.vsix'
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || github.event.inputs.release_type == 'alpha' }}
           generate_release_notes: true
           body: |
             ## Ritalin for Cursor - v${{ steps.version.outputs.VERSION }}
+            **Build Number**: ${{ steps.version.outputs.BUILD_NUMBER }}
             
             ### Installation Instructions
             
@@ -57,8 +79,15 @@ jobs:
             
             ### What's New
             
-            This is an **alpha release** - expect bugs and incomplete features!
+            ${{ contains(github.ref, 'alpha') || github.event.inputs.release_type == 'alpha' && 'This is an **alpha release** - expect bugs and incomplete features!' || 'See the changelog for details.' }}
             
             Please report any issues on our [GitHub Issues](https://github.com/ritalin-dev/ritalin/issues) page.
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Publish to VS Code Marketplace
+        if: ${{ !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && github.event.inputs.release_type != 'alpha' && env.VSCE_PAT != '' }}
+        run: vsce publish -p ${{ secrets.VSCE_PAT }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        continue-on-error: true  # Don't fail the workflow if marketplace publish fails 

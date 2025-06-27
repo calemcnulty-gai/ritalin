@@ -2,17 +2,38 @@
   "name": "ritalin",
   "displayName": "Ritalin for Cursor",
   "description": "Mini-games during AI generation for focus",
-  "version": "0.1.0-alpha.1",
-  "publisher": "ritalin-dev",
+  "version": "0.1.2",
+  "publisher": "CaleMcNulty",
   "repository": {
     "type": "git",
     "url": "https://github.com/ritalin-dev/ritalin.git"
+  },
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
   },
   "engines": {
     "vscode": "^1.75.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "cursor",
+    "ai",
+    "productivity",
+    "games",
+    "focus",
+    "mini-games",
+    "ai-coding"
+  ],
+  "badges": [
+    {
+      "url": "https://img.shields.io/badge/Alpha-v0.1.0-yellow",
+      "href": "https://github.com/ritalin-dev/ritalin/releases",
+      "description": "Alpha Release"
+    }
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -103,7 +124,19 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package",
+    "package": "npm run version:build && vsce package --out builds/",
+    "package:alpha": "npm run version:build && vsce package --pre-release --out builds/",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version",
+    "version:build": "node scripts/increment-build.js",
+    "version:bump": "node scripts/version-manager.js bump",
+    "version:prepare-release": "node scripts/version-manager.js prepare-release",
+    "version:info": "node scripts/version-manager.js info",
+    "release:alpha": "npm run version:bump patch -- --pre-release && npm run package:alpha",
+    "release:patch": "npm run version:bump patch && npm run package",
+    "release:minor": "npm run version:bump minor && npm run package",
+    "release:major": "npm run version:bump major && npm run package",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
   },
@@ -123,5 +156,9 @@
   },
   "dependencies": {
     "lodash": "^4.17.21"
+  },
+  "buildMetadata": {
+    "buildNumber": 7,
+    "timestamp": "2025-06-27T22:20:39.667Z"
   }
 }

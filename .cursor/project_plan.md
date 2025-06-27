@@ -228,6 +228,7 @@ Options to explore:
 - Creating comprehensive distribution strategy for Ritalin extension
 - Setting up automated builds and release pipeline
 - Preparing documentation for end users
+- **ALPHA RELEASED**: v0.1.0-alpha.1 published to GitHub Releases!
 
 ## Recent Completions
 - **✅ Task 15: Fix Chess Game Asset Downloading**: Enhanced downloader to handle ES6 modules and SVG assets

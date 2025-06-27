@@ -5,6 +5,7 @@ games/
 
 # VS Code extension artifacts
 *.vsix
+builds/
 out/
 node_modules/
 

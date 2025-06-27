@@ -26,6 +26,21 @@
   - Marketing and discovery recommendations
   - Risk mitigation strategies
 
+### 2025-01-14 - Alpha v0.1.0-alpha.1 Released! 🎉
+- **Milestone**: First public alpha release
+- **Version**: v0.1.0-alpha.1
+- **Distribution**: GitHub Releases with .vsix file
+- **Features**:
+  - AI detection with automatic game show/hide
+  - External Electron game window
+  - itch.io game downloading and management
+  - Beautiful configuration UI
+  - Multi-engine game support (Unity, PICO-8, HTML5)
+- **Automation**: 
+  - Created GitHub Actions release workflow
+  - Automated .vsix packaging on tag push
+  - Pre-release support for alpha/beta versions
+
 ### 2025-01-14 - Disable Developer Tools by Default
 - Disabled automatic opening of developer tools in Electron game window
 - Developer tools can still be toggled using Cmd+Shift+I (macOS) or Ctrl+Shift+I (Windows/Linux)
@@ -994,3 +1009,19 @@ Successfully implemented a fully-featured external game window system using Elec
 
 ## Architectural Decisions
 - The external Electron window is now the sole method for displaying games. This was decided due to insurmountable security and compatibility issues with the VS Code WebView.
+
+## Task 13: Extension Distribution (In Progress)
+
+### Version 0.1.0 - Marketplace Preparation
+- Fixed version format to comply with VS Code marketplace requirements (removed `-alpha.1`)
+- Implemented auto-incrementing build number system
+- Created comprehensive version management scripts:
+  - `increment-build.js` - Increments build numbers on each package
+  - `version-manager.js` - Handles version bumping and release preparation
+- Added npm scripts for easy version management:
+  - `npm run version:info` - Show current version and build info
+  - `npm run release:alpha` - Create alpha release
+  - `npm run release:patch/minor/major` - Create production releases
+- Created placeholder PNG icon (marketplace requires PNG, not SVG)
+- Updated GitHub Actions workflow to support build numbers and manual releases
+- Added versioning documentation to `docs/extension_distribution.md`

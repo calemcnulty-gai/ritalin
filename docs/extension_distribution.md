@@ -278,7 +278,48 @@ async function checkForUpdates() {
 - GitHub stars/issues
 - Community engagement
 
-## Recommended Action Plan
+## Versioning and Build System
+
+### Version Format
+- **Production releases**: Semantic versioning (e.g., `0.1.0`, `1.0.0`)
+- **Pre-releases**: Use GitHub release tags with `-alpha` suffix (e.g., `v0.1.0-alpha`)
+- **Build numbers**: Auto-incremented on each build, stored in metadata
+
+### Version Management Commands
+
+```bash
+# View current version info
+npm run version:info
+
+# Bump version (patch/minor/major)
+npm run version:bump patch
+npm run version:bump minor -- --pre-release
+npm run version:bump major
+
+# Quick release commands
+npm run release:alpha    # Bumps patch version and creates alpha package
+npm run release:patch    # Bumps patch version and creates release package
+npm run release:minor    # Bumps minor version and creates release package
+npm run release:major    # Bumps major version and creates release package
+
+# Manual packaging
+npm run package         # Creates .vsix for marketplace
+npm run package:alpha   # Creates .vsix marked as pre-release
+```
+
+### Build Metadata
+- Build numbers are auto-incremented on each package build
+- Stored in `.cursor/build-metadata.json`
+- Added to package.json as `buildMetadata` field
+- Displayed in GitHub releases
+
+### VS Code Marketplace Requirements
+- Version must be pure semantic versioning (no pre-release identifiers)
+- Icon must be PNG format (not SVG)
+- Publisher ID must be registered and verified
+- Extension ID should be lowercase with hyphens
+
+## Implementation Plan
 
 ### Phase 1: Foundation (Week 1)
 1. Set up GitHub Actions for automated builds
