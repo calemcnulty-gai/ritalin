@@ -1,6 +1,227 @@
 # Ritalin for Cursor - Changelog
 
+## [Unreleased]
+
+### 2025-01-14 - Disable Developer Tools by Default
+- Disabled automatic opening of developer tools in Electron game window
+- Developer tools can still be toggled using Cmd+Shift+I (macOS) or Ctrl+Shift+I (Windows/Linux)
+- Improves user experience by removing unnecessary debug interface
+
+### 2025-06-26 - Fix Game Downloader for ES6 Module Dependencies
+- Fixed critical issue where ES6 module imports weren't being downloaded
+- Downloader now pre-scans JavaScript files to find all imports (chess.js, htm.js, etc.)
+- Added detection for service worker files (sw.js)
+- Improved import pattern matching to handle various ES6 import syntaxes
+- JavaScript dependencies are now downloaded before asset scanning
+- Rebuilt and reinstalled extension with fixed downloader
+
+### 2025-06-26 - Extension Build & Installation
+- Successfully built extension package (1.01MB, 1100 files)
+- Installed updated extension with chess game support
+- AI Chess game now available in curated games list
+- Ready for testing chess game downloads with enhanced SVG asset support
+
+### 2025-06-26 - Fix Chess Game Asset Downloading
+- Enhanced generic game downloader to capture dynamically-loaded SVG assets
+- Added pattern matching for SVG files referenced in JavaScript code
+- Implemented chess-specific asset detection (pieces/light/wk.svg, pieces/dark/bk.svg, etc.)
+- Added support for multiple chess piece naming conventions and directory structures
+- Fixed ES6 module import issues - converts `import` statements to regular script tags
+- Added detection for absolute URLs and extraction of relative paths
+- Improved error handling with retry logic for failed asset downloads
+- Chess games now properly download all piece SVG files for offline play
+- Added AI Chess game to curated games list for testing
+
+### 2025-06-26 - Remove GameMaker Support
+- Removed Dungeon Deck from supported games list
+- GameMaker games require complete asset downloads which the current downloader doesn't handle properly
+- Removed dungeon-deck.png cover image
+- Removed downloaded Dungeon Deck game files from global storage
+
+### 2025-01-14 - Remove Average Routine
+- Removed Average Routine from supported games list in curated_games.json
+- Deleted average-routine.png cover image
+- Game was causing download issues
+
+### 2025-01-14 - Fix Game Selection Button State Bug
+- Fixed issue where selecting a new game didn't update the previously selected game's button
+- Updated `updateButtonsAfterSelection` to check `gameData.isDownloaded` instead of button state
+- Updated all download completion handlers to mark games as downloaded in button dataset
+- Ensures proper button state management across all downloaded games
+
+### 2025-01-14 - Fix Unity WebGL WASM Content-Type Warning
+- Fixed "Content-Type" warning for .wasm.gz files in Shogun Showdown
+- Updated getMimeType function to properly handle compressed files (.gz)
+- Now correctly serves .wasm.gz files as application/wasm WITHOUT Content-Encoding header
+- Unity WebGL expects to handle decompression itself, so we serve .gz files as-is
+- Also handles .js.gz files properly for compressed JavaScript
+
+### 2025-01-14 - Remove Persona 4 GB
+- Removed Persona 4 GB from supported games list in curated_games.json
+- Deleted persona-4-gb.png cover image
+- Game was incompatible - GB Studio games require ROM files that the downloader doesn't handle
+
+### 2025-01-14 - Remove Into Ruins
+- Removed Into Ruins from supported games list in curated_games.json
+- Deleted into-ruins.png cover image
+- Game was incompatible - PICO-8 game missing intoruins.js file that the downloader doesn't fetch
+- Issue: Download script only grabs HTML wrapper but not the separate .js file containing game code
+
+### 2025-01-14 - Remove Hungry Horrors
+- Removed Hungry Horrors from supported games list in curated_games.json
+- Deleted hungry-horrors.png cover image
+- Game was incompatible - Unity WebGL game missing critical files (index.pck, webcontroller.css)
+- Issue: Download script failed to fetch the game package file
+
+### 2025-01-14 - Attempted to Add e4e5 Chess (Failed)
+- Tried adding e4e5 chess but had to remove it
+- Issue: Missing dependencies (chess.js, htm.js) not downloaded by script
+- Download script only grabbed app.js and styles.css, missing critical imports
+- Another example of download script limitations with HTML5 games
+
+### Added
+- Game Download System Consolidation (Task 12.5)
+  - Consolidated 3 duplicate JSON files (curated_games_enhanced.json, curated_games_updated.json) into single enhanced curated_games.json
+  - Merged enhanced_game_fetcher.py and update_curated_games.py functionality into grab_itch_game.py
+  - Added support for downloadable ZIP games in addition to embedded browser games
+  - Enhanced multi-engine support: Unity WebGL, PICO-8, Construct, GameMaker, Godot, Phaser
+  - Improved Unity config parsing to handle actual filenames instead of generic patterns
+  - Added download progress tracking for large files
+  - Integrated curated_games.json metadata for enhanced download processing
+  - Added fallback from embedded game download to ZIP download
+  - Enhanced asset discovery and dependency downloading
+
+### Fixed
+- Game download failures for Die in the Dungeon, Dungeon Deck, Average Routine, and Into Ruins
+- Unity WebGL asset detection now properly parses config objects
+- PICO-8 game detection and JavaScript asset downloading
+- Progress indicators now work correctly for compressed files
+- Engine detection now works with iframe URLs from metadata
+
+### Changed
+- scripts/grab_itch_game.py completely rewritten with enhanced functionality
+- scripts/README.md updated to reflect consolidated functionality
+- Removed duplicate Python scripts and JSON files
+- Simplified game download workflow
+
+### Removed
+- scripts/curated_games_enhanced.json (consolidated into curated_games.json)
+- scripts/curated_games_updated.json (consolidated into curated_games.json)
+- scripts/enhanced_game_fetcher.py (functionality merged into grab_itch_game.py)
+- scripts/update_curated_games.py (functionality merged into grab_itch_game.py)
+
+## [0.1.0] - 2024-06-26
+
+### Added
+- Production-ready AI detection system with automatic game show/hide
+- AI self-reporting system using .cursor/is_working file (primary detection method)
+- Document change analysis for backup AI detection
+- External Electron game window with Unity WebGL support
+- Automatic file creation for new projects (.cursor/is_working, .cursor/rules/)
+- Game configuration UI with curated game selection
+- Multi-monitor support for game window positioning
+- Game state persistence between sessions
+- Comprehensive output channel logging for debugging
+- 60-second timeout safety mechanism for AI detection
+
+### Fixed
+- Critical fix: Connected AI detection events to game window management
+- Fixed all references from .cursor/.is_working to .cursor/is_working
+- Removed hardcoded 2-second delay in game window spawning
+- Added race condition prevention for multiple window spawning
+- Fixed WebGL context issues for Unity games in external window
+
+### Changed
+- Simplified extension architecture by removing deprecated WebView panel
+- Optimized package size from 6MB+ to 2.59MB via .vscodeignore
+- Removed StatusBarManager and dashboard in favor of direct game window control
+- Cleaned up debug commands and obsolete functionality
+
+### Removed
+- Deprecated WebView panel code (gamePanelView.ts)
+- Debug and test commands from package.json
+- Unused detection methods (DOM monitoring, LSP monitoring, etc.)
+- Verbose debug logging and test code
+
+## [0.0.1] - 2024-06-20
+
+### Added
+- Initial extension structure with VS Code API integration
+- Basic game panel WebView implementation
+- Cursor AI detection framework with multiple detection methods
+- External Electron window for game hosting
+- Unity WebGL game integration
+- Game download scripts for itch.io games
+- Configuration system for game preferences
+
+### Known Issues
+- Unity WebGL games incompatible with VS Code WebView security model (resolved with external window)
+- AI detection methods needed refinement (resolved with file-watching approach)
+
+## 2025-01-14
+
+### Fixed Missing Python Scripts in Extension Package
+- **Issue**: Game downloads failed with "No such file or directory" error for `grab_itch_game.py`
+- **Root Cause**: `.vscodeignore` was excluding all Python scripts (`scripts/*.py`) from the extension package
+- **Fix**: Removed Python script exclusion from `.vscodeignore`, keeping only cache file exclusions
+- **Impact**: Extension package now includes required Python scripts for game downloading functionality
+- **Package Size**: Reduced to 1.15MB (from 2.59MB) while including necessary scripts
+
+## 2024-12-31
+
+### Task 14: Code Cleanup - Major Refactoring COMPLETED ✅
+- **Simplified CursorDetector**: Reduced from 894 lines to ~130 lines by removing all heuristic detection methods
+  - Kept only the file-watching mechanism for `.cursor/is_working`
+  - Removed complex confidence scoring, detection events, and aggregation logic
+  - Removed disabled methods: document analysis, selection monitoring, chat detection
+- **Cleaned up Electron IPC**: Removed redundant stdin handler in `main.js`
+- **Consolidated Game Lists**: Modified `search_games.py` to read from `curated_games.json` instead of hardcoded list
+- **Removed Unused Files**: Deleted `electron-game-window/test-simple.js`
+- **Cleaned Up Logging**: Removed debug console.log statements
+- **Updated .vscodeignore**: Added more exclusions for cleaner package (Python files, build artifacts, etc.)
+- **Rewritten Python Script**: Complete rewrite of `grab_itch_game.py`
+  - Added proper Unity config parsing to extract actual asset filenames
+  - Added support for multiple game engines: Unity, PICO-8, Construct, GameMaker, Godot, Phaser
+  - Improved error handling and asset discovery
+  - Better URL handling with urllib.parse.urljoin
+  - Added generic HTML5 game downloader for unknown engines
+  - Script version 2.0 with improved reliability
+- **Added MIT License**: Replaced humorous license with standard MIT license
+- **Code Quality**: All changes tested and TypeScript compilation verified
+
+### Final Build & Installation
+- **Package Size**: 3.02 MB (2278 files)
+- **Installation**: Successfully installed in Cursor via `cursor --install-extension`
+- **Version**: 0.1.0 ready for production use
+
+### Impact
+- **Code Reduction**: ~750+ lines of unnecessary code removed
+- **Maintainability**: Significantly simplified architecture
+- **Performance**: Reduced overhead from unused detection methods
+- **Package Size**: Further optimized through better .vscodeignore rules
+- **Reliability**: Python script now properly handles all game engines in curated list
+
 ## 2024-12-30
+
+### Game Configuration Enhancement
+- **Added Default Iframe Dimensions**: Enhanced `scripts/curated_games.json` with default `width` and `height` properties for all 12 games
+- **Engine-Specific Sizing**: 
+  - **PICO-8 games** (3): 512x512 pixels (4x native resolution scaling)
+  - **Unity games** (9): Mixed 960x540 (16:9) and 800x600 (4:3) based on game type
+  - **Other engines** (1): 640x576 pixels for retro Game Boy aesthetic
+- **itch.io Compliance**: All dimensions follow itch.io best practices (under 1200px width, mostly under 600px height)
+- **Implementation**: Added width/height properties to each game object for use in iframe rendering
+
+### Launcher Integration for Game Dimensions
+- **Enhanced GameWindowManager**: Updated to use game-specific dimensions from curated_games.json as defaults
+- **Smart Dimension Logic**: 
+  - Uses game-specific width/height when user has default window settings (400x300)  
+  - Respects user's custom dimensions when manually configured
+  - Validates dimensions are within reasonable bounds (200-1200px width, 150-800px height)
+- **Type System Update**: Added `width` and `height` properties to `GameInfo` interface
+- **Automatic Resizing**: Game window automatically resizes to optimal dimensions when loading each game
+- **User Override**: Manual window size settings always take precedence over game defaults
+- **Logging**: Comprehensive logging shows which dimensions are being used and why
 
 ### Task 12: Post-Install & Configuration Experience - COMPLETED ✅
 - **Branch**: `feature/task-12-post-install-ux`

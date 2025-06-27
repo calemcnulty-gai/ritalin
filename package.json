@@ -21,44 +21,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "ritalin.showGame",
-        "title": "Ritalin: Show Game"
-      },
-      {
-        "command": "ritalin.hideGame",
-        "title": "Ritalin: Hide Game"
-      },
-      {
-        "command": "ritalin.searchGames",
-        "title": "Ritalin: Search itch.io Games"
-      },
-      {
         "command": "ritalin.manageGames",
         "title": "Ritalin: Manage Downloaded Games"
-      },
-      {
-        "command": "ritalin.openSettings",
-        "title": "Ritalin: Open Settings"
-      },
-      {
-        "command": "ritalin.preloadGame",
-        "title": "Ritalin: Preload Game (Debug)"
-      },
-      {
-        "command": "ritalin.testExternalWindow",
-        "title": "Ritalin: Test External Window"
-      },
-      {
-        "command": "ritalin.configureExternalWindow",
-        "title": "Ritalin: Configure External Window"
-      },
-      {
-        "command": "ritalin.showDashboard",
-        "title": "Ritalin: Show Detection Dashboard"
-      },
-      {
-        "command": "ritalin.runSetup",
-        "title": "Ritalin: Run First-Time Setup"
       },
       {
         "command": "ritalin.showConfig",
@@ -101,12 +65,10 @@
         },
         "ritalin.externalWindow.width": {
           "type": "number",
-          "default": 400,
           "description": "Width of the external game window."
         },
         "ritalin.externalWindow.height": {
           "type": "number",
-          "default": 300,
           "description": "Height of the external game window."
         },
         "ritalin.externalWindow.monitor": {
@@ -150,13 +112,14 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
     "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
+    "electron": "^27.0.0",
     "eslint": "^8.26.0",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
     "typescript": "^5.3.3",
-    "vsce": "^2.15.0",
-    "@typescript-eslint/eslint-plugin": "^6.9.0",
-    "@typescript-eslint/parser": "^6.9.0"
+    "vsce": "^2.15.0"
   },
   "dependencies": {
     "lodash": "^4.17.21"

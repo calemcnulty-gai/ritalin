@@ -1,0 +1,341 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:900');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+:root {
+  --main-bg-color: #ffffff;
+  --main-grey-color: #e0e0e0;
+  --main-fg-color: #222222;
+  --chessboard-white: #ffffff;
+  --chessboard-border: #ffffff;
+  --chessboard-black: #e0e0e0;
+  --accent-selected: #448aff;
+  --accent-hint: #83b9ff;
+  --accent-opponent: #ff4081;
+  --accent-menu: #448aff;
+}
+
+[data-theme="dark"] {
+  --main-bg-color: #222222;
+  --main-grey-color: #616161;
+  --main-fg-color: #cccccc;
+  --chessboard-white: #333;
+  --chessboard-border: #222222;
+  --chessboard-black: #222222;
+  --accent-selected: #216bde;
+  --accent-opponent: #ff4081;
+  --accent-hint: #143870;
+  --accent-menu: #ff4081;
+}
+
+body {
+  font-family: sans-serif;
+  font-weight: 700;
+  font-size: 3vmin;
+  background-color: var(--main-bg-color);
+}
+h1 {
+  font-family: 'Montserrat';
+  font-weight: 900;
+  font-size: 7vh;
+  line-height: 1.25;
+  color: var(--main-fg-color);
+}
+a {
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  color: var(--main-fg-color);
+}
+a:hover,
+a:active,
+a.underline {
+  box-shadow: inset 0 -1vmin 0 var(--accent-menu);
+}
+small {
+  font-size: 4vmin;
+  color: var(--main-grey-color);
+}
+
+.container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100%;
+}
+
+.hamburger {
+  z-index: 2;
+  position: fixed;
+  width: 15vmin;
+  height: 15vmin;
+  max-width: 96px;
+  max-height: 96px;
+  cursor: pointer;
+}
+.hamburger div {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  transition: transform 0.2s ease;
+}
+.hamburger div:before {
+  content: '';
+  width: 50%;
+  height: 12.5%;
+  background: var(--main-fg-color);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+}
+.hamburger .line-1 {
+  transform: translateY(-12.5%);
+}
+.hamburger .line-2 {
+  transform: translateY(12.5%);
+}
+.hamburger.open div:before {
+  outline: 0 solid transparent;
+}
+.hamburger.open .line-1 {
+  transform: rotate(225deg);
+}
+.hamburger.open .line-2 {
+  transform: rotate(-225deg);
+}
+
+.board-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.board {
+  max-width: 768px;
+  max-height: 768px;
+  width: 100vmin;
+  height: 100vmin;
+}
+
+@media (max-aspect-ratio: 125/100) and (min-aspect-ratio: 8/10) {
+  .board {
+    width: 80vmin;
+    height: 80vmin;
+  }
+}
+.board.flipped,
+.board.flipped .square {
+  transform: rotate(180deg);
+}
+
+.board .square {
+  position: relative;
+  width: 12.5%;
+  height: 12.5%;
+  float: left;
+  background-color: var(--chessboard-white);
+}
+.board .black {
+  background-color: var(--chessboard-black);
+}
+.board .square img {
+  position: absolute;
+  width: 100%;
+  height: auto;
+}
+.board .square .highlight {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.board .square .dot {
+  position: absolute;
+  margin: 30%;
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  border: 0.6vmin solid var(--chessboard-border);
+}
+.color-selected {
+  background-color: var(--accent-selected);
+}
+.color-opponent {
+  background-color: var(--accent-opponent);
+}
+.color-hint {
+  background-color: var(--accent-hint);
+}
+.color-menu {
+  background-color: var(--accent-menu);
+}
+
+.menu {
+  pointer-events: all;
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 1;
+  transition: opacity 0.1s ease;
+  z-index: 1;
+  background-color: var(--main-bg-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.menu.hidden {
+  pointer-events: none;
+  opacity: 0;
+}
+.menu a img {
+  padding: 1vh;
+  width: 8vh;
+  height: auto;
+}
+.menu .dark-mode-switch {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 15vmin;
+  height: 15vmin;
+  max-width: 96px;
+  max-height: 96px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch {
+  position: relative;
+  background: transparent;
+  border: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.switch .mode {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.45s ease;
+  border-radius: 50%;
+  background: #1a202c;   
+}
+
+.switch .mode::before {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  border-radius: 50%;
+  background: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: box-shadow 0.4s 0s ease;
+}
+
+.switch .mode::after {
+  content: "";
+  position: absolute;
+  width: 90%;
+  height: 90%;
+
+  top: -20%;
+  left: 30%;
+
+  border-radius: 50%;
+  background: white;
+
+  transition: transform 0.45s ease;
+}
+
+.dark .switch .mode {
+  transform: scale(0.5);
+  background: white;
+}
+
+.dark .switch .mode::before {
+  opacity: 1;
+
+  box-shadow: 0 -20px 0 0 white, 0 20px 0 0 white, -20px 0 0 0 white,
+  20px 0 0 0 white, 15px 15px 0 0 white, 15px -15px 0 0 white,
+  -15px 15px 0 0 white, -15px -15px 0 0 white;
+}
+
+.dark .switch .mode::after {
+  opacity: 0;
+  transition: background 0.45s ease;
+  transform: translateX(50%) translateY(-50%);
+}
+
+
+.dialog {
+  pointer-events: all;
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2rem;
+  opacity: 1;
+  transition: opacity 0.1s ease;
+  z-index: 1000;
+  background-color: var(--main-bg-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.dialog.hidden {
+  pointer-events: none;
+  opacity: 0;
+}
+.dialog .dialog-content {
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'message message message' 'action-1 . action-2';
+}
+@media (max-width: 480px) {
+  .dialog .dialog-content {
+    grid-template-areas: 'message message message' 'action-1 . .' 'action-2 . .';
+  }
+}
+.dialog-content h1 {
+  grid-area: message;
+}
+.dialog-content a {
+  box-shadow: inset 0 -1vmin 0 var(--accent-menu);
+}
+.dialog-content a:nth-child(1) {
+  grid-area: action-1;
+}
+.dialog-content a:nth-child(2) {
+  grid-area: action-2;
+}

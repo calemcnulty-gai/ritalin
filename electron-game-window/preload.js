@@ -18,6 +18,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 contextBridge.exposeInMainWorld('gameStateAPI', {
   // Override IndexedDB to add persistence hooks
   setupPersistence: () => {
+    // Only run in the main window, not in iframes
+    if (window.parent !== window) {
+      console.log('Skipping persistence setup in iframe');
+      return;
+    }
+    
     console.log('Setting up game state persistence...');
     
     // Hook into IndexedDB operations
@@ -53,5 +59,8 @@ contextBridge.exposeInMainWorld('gameStateAPI', {
 
 // Auto-setup persistence when the page loads
 window.addEventListener('DOMContentLoaded', () => {
-  window.gameStateAPI.setupPersistence();
+  // Check if gameStateAPI exists before calling setupPersistence
+  if (window.gameStateAPI && window.gameStateAPI.setupPersistence) {
+    window.gameStateAPI.setupPersistence();
+  }
 }); 

@@ -11,6 +11,7 @@ import sys
 import json
 import requests
 from bs4 import BeautifulSoup
+import os
 
 def scrape_itch_page(url, limit=10):
     """Scrapes a given itch.io game list page."""
@@ -76,106 +77,28 @@ def scrape_itch_page(url, limit=10):
     
     return games
 
-def get_hardcoded_popular_games():
-    """Returns hardcoded popular games from itch.io turn-based category."""
-    return [
-        {
-            'id': 'dungeon-deck',
-            'title': 'Dungeon Deck',
-            'author': 'Incinious',
-            'url': 'https://incinious.itch.io/dungeon-deck',
-            'cover_image': 'game-images/dungeon-deck.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'folder-dungeon',
-            'title': 'Folder Dungeon',
-            'author': 'Ravernt',
-            'url': 'https://ravernt.itch.io/folder-dungeon',
-            'cover_image': 'game-images/folder-dungeon.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'slipways',
-            'title': 'Slipways Classic',
-            'author': 'Jakub Wasilewski',
-            'url': 'https://krajzeg.itch.io/slipways',
-            'cover_image': 'game-images/slipways-classic.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'shogunshowdown',
-            'title': 'Shogun Showdown - Alpha',
-            'author': 'Roboatino',
-            'url': 'https://roboatino.itch.io/shogunshowdown',
-            'cover_image': 'game-images/shogun-showdown.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'average-routine',
-            'title': 'Average Routine',
-            'author': 'ColorlessWing_Studio',
-            'url': 'https://colorlesswing-studio.itch.io/average-routine',
-            'cover_image': 'game-images/average-routine.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'frasier-fantasy',
-            'title': 'Frasier Fantasy: The Director\'s Cut',
-            'author': 'Edward La Barbera',
-            'url': 'https://edward-la-barbera.itch.io/frasier-fantasy',
-            'cover_image': 'game-images/frasier-fantasy.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'into-ruins',
-            'title': 'Into Ruins',
-            'author': 'SPARSE//GameDev',
-            'url': 'https://sparsegamedev.itch.io/into-ruins',
-            'cover_image': 'game-images/into-ruins.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'persona-4-gb-demo',
-            'title': 'Persona 4 GB [DEMO]',
-            'author': 'SeanSS',
-            'url': 'https://seanss.itch.io/persona-4-gb-demo',
-            'cover_image': 'game-images/persona-4-gb.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'backpack-hero',
-            'title': 'Backpack Hero',
-            'author': 'Thejaspel',
-            'url': 'https://thejaspel.itch.io/backpack-hero',
-            'cover_image': 'game-images/backpack-hero.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'hungry-horrors',
-            'title': 'Hungry Horrors (demo)',
-            'author': 'Clumsy Bear Studio',
-            'url': 'https://clumsy-bear-studio.itch.io/hungry-horrors',
-            'cover_image': 'game-images/hungry-horrors.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'porklike',
-            'title': 'Porklike',
-            'author': 'Krystman',
-            'url': 'https://krystman.itch.io/porklike',
-            'cover_image': 'game-images/porklike.png',
-            'isDownloaded': False
-        },
-        {
-            'id': 'solitomb',
-            'title': 'Solitomb',
-            'author': 'Jakub Wasilewski',
-            'url': 'https://krajzeg.itch.io/solitomb',
-            'cover_image': 'game-images/solitomb.png',
-            'isDownloaded': False
-        }
-    ]
+def get_curated_games():
+    """Returns curated games from curated_games.json."""
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    curated_games_path = os.path.join(script_dir, 'curated_games.json')
+    
+    try:
+        with open(curated_games_path, 'r') as f:
+            data = json.load(f)
+            games = data.get('games', [])
+            # Transform to match expected format
+            return [{
+                'id': game['id'],
+                'title': game['title'],
+                'author': game['author'],
+                'url': game['url'],
+                'cover_image': game.get('cover_image', ''),
+                'isDownloaded': False
+            } for game in games]
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error reading curated_games.json: {e}", file=sys.stderr)
+        return []
 
 def main():
     """Main execution function."""
@@ -187,9 +110,9 @@ def main():
         search_url = f"{base_search_url}q/{query}"
         games_list = scrape_itch_page(search_url)
     else:
-        # No query, return hardcoded popular turn-based games
-        print("[DEBUG] Using hardcoded popular games", file=sys.stderr)
-        games_list = get_hardcoded_popular_games()
+        # No query, return curated games from JSON file
+        print("[DEBUG] Using curated games from JSON file", file=sys.stderr)
+        games_list = get_curated_games()
 
     result = {
         'games': games_list,

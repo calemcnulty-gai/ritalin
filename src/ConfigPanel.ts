@@ -159,13 +159,6 @@ export class ConfigPanel {
                 <h1>Welcome to Ritalin!</h1>
                 <p>Your companion for staying focused during AI generation. Let's get you set up.</p>
                 
-                <h2>Search for Games</h2>
-                <p>Search for games on itch.io to add to your collection.</p>
-                <div class="search-container">
-                    <input type="text" id="game-search-input" placeholder="Search for games (e.g., 'puzzle', 'deckbuilder')...">
-                    <div id="search-results"></div>
-                </div>
-
                 <h2>Popular Turn-Based Games</h2>
                 <p>Here are some popular games from <a href="https://itch.io/games/platform-web/tag-turn-based">itch.io's turn-based category</a>. Data is scraped live.</p>
                 <div id="popular-games-list" class="game-grid">

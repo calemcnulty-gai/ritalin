@@ -1,35 +1,53 @@
 # Ritalin Game Grabber Script
 
-This script automatically downloads Unity WebGL games from itch.io and prepares them for local hosting in the Ritalin extension.
+This script automatically downloads Unity WebGL games, PICO-8 games, and other HTML5 games from itch.io and prepares them for local hosting in the Ritalin extension.
 
 ## Script
 
 ### `grab_itch_game.py`
-Python script with robust HTML parsing and simplified Unity file handling.
+Enhanced Python script with robust HTML parsing, multi-engine support, and both embedded game and downloadable ZIP file handling.
 
 **Requirements:**
 ```bash
-pip install beautifulsoup4
+pip install beautifulsoup4 requests
 ```
 
 **Usage:**
 ```bash
-python3 scripts/grab_itch_game.py <itch_game_url> [game_name]
+python3 scripts/grab_itch_game.py <itch_game_url> <game_name> <output_dir> [engine_type]
 ```
 
 **Example:**
 ```bash
-python3 scripts/grab_itch_game.py https://game-dev.itch.io/die-in-the-dungeon die-in-the-dungeon
+python3 scripts/grab_itch_game.py https://alarts.itch.io/die-in-the-dungeon die-in-the-dungeon ./games unity
 ```
 
 ## What the Script Does
 
-1. **Download Detection**: Automatically finds the download link on the itch.io game page
-2. **File Extraction**: Downloads and extracts the game files (handles zip archives)
-3. **Filename Fixing**: Converts URL-encoded filenames to proper names
-4. **Simplified Files**: Creates simplified Unity filenames (loader.js, framework.js, data, wasm) for better WebView compatibility
-5. **Standalone Creation**: Removes itch.io dependencies and updates references to use simplified filenames
-6. **Extension-Ready Files**: Creates optimized files for VS Code extension integration
+1. **Game Metadata Loading**: Automatically loads game metadata from `curated_games.json` for enhanced processing
+2. **Multi-Source Download**: Attempts embedded game download first, falls back to ZIP file downloads
+3. **Engine Detection**: Automatically detects game engines (Unity WebGL, PICO-8, Construct, GameMaker, Godot, Phaser)
+4. **Asset Discovery**: Finds and downloads all required game assets with improved parsing
+5. **Progress Tracking**: Shows download progress for large files
+6. **Standalone Creation**: Removes itch.io dependencies and creates clean standalone versions
+7. **Extension Integration**: Creates optimized files for VS Code extension integration
+
+## Supported Game Types
+
+### Browser-Playable Games (Embedded)
+- ✅ Unity WebGL games with proper config parsing
+- ✅ PICO-8 games with JavaScript asset detection
+- ✅ Construct 2/3 games
+- ✅ GameMaker Studio games
+- ✅ Godot HTML5 exports
+- ✅ Phaser.js games
+- ✅ Generic HTML5 games
+
+### Downloadable Games (ZIP Files)
+- ✅ Unity standalone builds
+- ✅ Game Boy ROM files
+- ✅ Any ZIP-distributed HTML5 games
+- ✅ Executable games (for reference)
 
 ## Output Structure
 
@@ -38,61 +56,67 @@ Each game is organized in `games/<game_name>/` with:
 ```
 games/die-in-the-dungeon/
 ├── index.html              # Original game HTML
-├── standalone.html         # Clean version without itch.io deps + simplified file refs
+├── standalone.html         # Clean version without itch.io deps
 ├── launcher.html          # Extension-optimized wrapper
 ├── game_info.json         # Metadata about the game
-├── test_server.py         # Local testing server
-└── Build/                 # Unity WebGL build files
-    ├── Die in the Dungeon 1.6.2f [WEB].data.gz    # Original files
-    ├── Die in the Dungeon 1.6.2f [WEB].framework.js.gz
-    ├── Die in the Dungeon 1.6.2f [WEB].loader.js
-    ├── Die in the Dungeon 1.6.2f [WEB].wasm.gz
-    ├── data.gz             # Simplified copies for WebView
-    ├── framework.js.gz
-    ├── loader.js
-    └── wasm.gz
+└── Build/                 # Unity WebGL build files (or other engine assets)
+    ├── [GameName].loader.js
+    ├── [GameName].data.gz
+    ├── [GameName].framework.js.gz
+    └── [GameName].wasm.gz
 ```
+
+## Game Metadata Integration
+
+The script integrates with `curated_games.json` to:
+- Use pre-configured iframe URLs for faster downloads
+- Apply correct engine hints automatically
+- Handle game-specific download requirements
+- Provide enhanced metadata for the extension
 
 ## Testing Downloaded Games
 
-Each game comes with a test server:
-
-```bash
-cd games/<game_name>
-python3 test_server.py
-```
-
-This opens the game in your browser at `http://localhost:8080/launcher.html`
+Each game comes with a launcher that can be tested directly in a browser or used within the VS Code extension.
 
 ## Integration with VS Code Extension
 
-The extension automatically uses the `standalone.html` file which references simplified Unity filenames that work reliably in WebViews.
-
-## Supported Games
-
-The script works with:
-- ✅ Unity WebGL games on itch.io
-- ✅ Free games with public download links
-- ✅ Games distributed as zip archives
-- ✅ Games with standard itch.io hosting
-
-**Note:** The game must be freely available for download. The script cannot bypass payment or access restrictions.
+The extension automatically uses the `launcher.html` file which provides optimal compatibility with WebViews and handles all necessary game loading.
 
 ## Troubleshooting
 
-### "Could not find download link"
-- Game might not be free
-- Game might require itch.io account login
-- Try downloading manually and extracting to `games/` directory
+### "Failed to download embedded game"
+- Script will automatically fall back to ZIP download
+- Check if the game requires login or payment
 
-### "No HTML file found"
-- Downloaded file might not be a Unity WebGL game
-- Check the game's description for supported platforms
+### "No download links found"
+- Game might not be freely available
+- Game might be browser-only with no downloadable version
 
 ### Game doesn't load properly
-- Check browser console for errors
-- Verify all Build files are present and properly named
+- Check browser console for errors in `standalone.html`
+- Verify all required assets were downloaded
 - Try the original `index.html` vs `standalone.html`
+
+### Progress shows >100%
+- This is normal for compressed files where Content-Length doesn't match actual file size
+- Download is still working correctly
+
+## Engine-Specific Notes
+
+### Unity WebGL
+- Automatically parses Unity configuration objects
+- Downloads all Build/ and TemplateData/ assets
+- Handles both compressed (.gz) and uncompressed assets
+
+### PICO-8
+- Downloads main JavaScript executable
+- Preserves original PICO-8 runtime
+- Supports both classic and modern PICO-8 exports
+
+### Generic HTML5
+- Downloads all linked resources (JS, CSS, images, audio)
+- Preserves original game structure
+- Compatible with most HTML5 game engines
 
 ## Legal Notes
 

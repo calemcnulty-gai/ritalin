@@ -35,7 +35,15 @@ export class GameManager {
             const gamesJsonPath = path.join(this._gamesStoragePath, 'games.json');
             if (fs.existsSync(gamesJsonPath)) {
                 const gamesData = JSON.parse(fs.readFileSync(gamesJsonPath, 'utf8'));
-                this._downloadedGames = new Map(Object.entries(gamesData));
+                
+                // Only include games that are marked as downloaded AND actually exist on filesystem
+                for (const [gameId, gameInfo] of Object.entries(gamesData)) {
+                    const game = gameInfo as GameInfo;
+                    if (game.isDownloaded && game.downloadPath && fs.existsSync(game.downloadPath)) {
+                        this._downloadedGames.set(gameId, game);
+                    }
+                }
+                
                 this._outputChannel.appendLine(`[GameManager] Loaded ${this._downloadedGames.size} downloaded games`);
             }
         } catch (error) {
@@ -46,8 +54,19 @@ export class GameManager {
     private _saveDownloadedGames(): void {
         try {
             const gamesJsonPath = path.join(this._gamesStoragePath, 'games.json');
-            const gamesData = Object.fromEntries(this._downloadedGames);
-            fs.writeFileSync(gamesJsonPath, JSON.stringify(gamesData, null, 2));
+            
+            // Read existing games data to preserve all entries
+            let allGamesData: { [key: string]: GameInfo } = {};
+            if (fs.existsSync(gamesJsonPath)) {
+                allGamesData = JSON.parse(fs.readFileSync(gamesJsonPath, 'utf8'));
+            }
+            
+            // Update downloaded games in the full data set
+            for (const [gameId, gameInfo] of this._downloadedGames) {
+                allGamesData[gameId] = gameInfo;
+            }
+            
+            fs.writeFileSync(gamesJsonPath, JSON.stringify(allGamesData, null, 2));
         } catch (error) {
             this._outputChannel.appendLine(`[GameManager] Failed to save downloaded games: ${error}`);
         }
@@ -83,10 +102,15 @@ export class GameManager {
         });
     }
 
-    private runDownloadScript(gameUrl: string, gameId: string): Promise<void> {
+    private runDownloadScript(gameUrl: string, gameId: string, engine?: string): Promise<void> {
         return new Promise((resolve, reject) => {
             const scriptPath = path.join(this._context.extensionPath, 'scripts', 'grab_itch_game.py');
-            const pythonProcess = spawn('python3', [scriptPath, gameUrl, gameId]);
+            const outputDir = path.join(this._gamesStoragePath, gameId);
+            const args = [scriptPath, gameUrl, gameId, outputDir];
+            if (engine) {
+                args.push(engine);
+            }
+            const pythonProcess = spawn('python3', args);
 
             let stdout = '';
             let stderr = '';
@@ -119,25 +143,28 @@ export class GameManager {
     }
 
     public async searchItchGames(query: string): Promise<GameInfo[]> {
-        const result = await this.runPythonScript('search_games.py', [query]);
-        return result.games.map((game: GameInfo) => ({
-            ...game,
-            isDownloaded: this._downloadedGames.has(game.id),
-        }));
+        // Search functionality disabled - only curated games are supported
+        this._outputChannel.appendLine('[GameManager] Search disabled - returning curated games only');
+        return this.getPopularGames();
     }
 
     public async getPopularGames(): Promise<GameInfo[]> {
         this._outputChannel.appendLine('[GameManager] getPopularGames() called');
         try {
-            this._outputChannel.appendLine('[GameManager] Running Python script search_games.py with no args...');
-            const result = await this.runPythonScript('search_games.py', []);
-            this._outputChannel.appendLine(`[GameManager] Python script returned: ${JSON.stringify(result, null, 2)}`);
-            this._outputChannel.appendLine(`[GameManager] Games found: ${result.games?.length || 0}`);
+            // Load curated games from local JSON file
+            const curatedGamesPath = path.join(this._context.extensionPath, 'scripts', 'curated_games.json');
+            this._outputChannel.appendLine(`[GameManager] Loading curated games from: ${curatedGamesPath}`);
             
-            const games = result.games.map((game: GameInfo) => ({
+            const curatedGamesData = JSON.parse(fs.readFileSync(curatedGamesPath, 'utf8'));
+            const curatedGames: GameInfo[] = curatedGamesData.games || [];
+            
+            this._outputChannel.appendLine(`[GameManager] Loaded ${curatedGames.length} curated games`);
+            
+            const games = curatedGames.map((game: GameInfo) => ({
                 ...game,
                 isDownloaded: this._downloadedGames.has(game.id),
             }));
+            
             this._outputChannel.appendLine(`[GameManager] Processed games: ${games.map((g: GameInfo) => g.title).join(', ')}`);
             return games;
         } catch (error) {
@@ -148,13 +175,59 @@ export class GameManager {
 
     public async downloadGame(gameInfo: GameInfo): Promise<GameInfo> {
         const gameId = gameInfo.id || this._generateGameId(gameInfo.url);
-        const gamePath = path.join(this._gamesStoragePath, gameId);
         
         try {
-            this._outputChannel.appendLine(`[GameManager] Downloading game: ${gameInfo.title} from ${gameInfo.url}`);
+            this._outputChannel.appendLine(`[GameManager] Processing game: ${gameInfo.title} from ${gameInfo.url}`);
+            this._outputChannel.appendLine(`[GameManager] Engine: ${gameInfo.engine || 'unknown'}`);
+            
+            // Check if this is a bundled game
+            if (gameInfo.engine === 'bundled' && gameInfo.url.startsWith('bundled://')) {
+                this._outputChannel.appendLine(`[GameManager] Bundled game detected: ${gameInfo.title}`);
+                
+                // For bundled games, construct the path to the bundled game
+                const bundledPath = path.join(this._context.extensionPath, gameInfo.bundled_path || `media/bundled-games/${gameId}/index.html`);
+                
+                const bundledGame: GameInfo = {
+                    ...gameInfo,
+                    id: gameId,
+                    isDownloaded: true,
+                    downloadPath: path.dirname(bundledPath),
+                    entryPoint: bundledPath
+                };
+                
+                this._downloadedGames.set(gameId, bundledGame);
+                this._saveDownloadedGames();
+                
+                this._outputChannel.appendLine(`[GameManager] Bundled game ready: ${gameInfo.title} at ${bundledPath}`);
+                return bundledGame;
+            }
+            
+            // Check if this is a PWA game that should be loaded directly via iframe
+            if (gameInfo.engine === 'pwa' && gameInfo.iframe_url) {
+                this._outputChannel.appendLine(`[GameManager] PWA game detected, using direct iframe URL: ${gameInfo.iframe_url}`);
+                
+                // For PWA games, we don't download anything, just mark it as "downloaded"
+                // and use the iframe_url as the entry point
+                const pwaGame: GameInfo = {
+                    ...gameInfo,
+                    id: gameId,
+                    isDownloaded: true,
+                    downloadPath: undefined, // No local files
+                    entryPoint: gameInfo.iframe_url // Use the iframe URL directly
+                };
+                
+                this._downloadedGames.set(gameId, pwaGame);
+                this._saveDownloadedGames();
+                
+                this._outputChannel.appendLine(`[GameManager] PWA game ready: ${gameInfo.title}`);
+                return pwaGame;
+            }
+            
+            // For non-PWA games, use the existing download logic
+            const gamePath = path.join(this._gamesStoragePath, gameId);
             
             // Use the Python script to download and extract the game
-            await this.runDownloadScript(gameInfo.url, gameId);
+            await this.runDownloadScript(gameInfo.url, gameId, gameInfo.engine);
             
             // Find the entry point (standalone.html or index.html)  
             const entryPoint = this._findGameEntryPoint(gamePath);
@@ -187,18 +260,25 @@ export class GameManager {
         const selectedGameId = config.get<string>('selectedGame');
         
         if (selectedGameId && this._downloadedGames.has(selectedGameId)) {
-            return this._downloadedGames.get(selectedGameId);
+            const game = this._downloadedGames.get(selectedGameId);
+            return game;
         }
         
         return undefined;
     }
 
     public async setSelectedGame(gameId: string | null): Promise<void> {
+        this._outputChannel.appendLine(`[GameManager] setSelectedGame() called with gameId: ${gameId}`);
+        
         if (gameId === null || this._downloadedGames.has(gameId)) {
             const config = vscode.workspace.getConfiguration('ritalin');
+            this._outputChannel.appendLine(`[GameManager] Setting selectedGame config to: ${gameId}`);
             await config.update('selectedGame', gameId, vscode.ConfigurationTarget.Global);
+            this._outputChannel.appendLine(`[GameManager] ✅ Configuration updated successfully`);
         } else {
-            throw new Error('Game not found in downloaded games');
+            const errorMsg = `Game not found in downloaded games. Available: ${Array.from(this._downloadedGames.keys()).join(', ')}`;
+            this._outputChannel.appendLine(`[GameManager] ❌ ${errorMsg}`);
+            throw new Error(errorMsg);
         }
     }
 
