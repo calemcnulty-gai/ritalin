@@ -164,6 +164,7 @@ Options to explore:
   - [x] **Update Documentation**: Revise scripts/README.md to reflect consolidated functionality
 
 #### Task 13: Extension Distribution
+**Status: In Progress** 🔄
 - [ ] Research Cursor extension distribution and marketplace options
   - [ ] **Investigation Complete**: Research shows Cursor uses VS Code marketplace but with restrictions
     - [ ] Cursor redirects to VS Code marketplace for most extensions
@@ -222,7 +223,11 @@ Options to explore:
 - **TERTIARY OBJECTIVE**: Begin Extension Distribution preparation (Task 13)
 
 ### Active Tasks
-(No active tasks at this time)
+#### Task 13: Extension Distribution
+**Branch**: feature/task-13-extension-distribution
+- Creating comprehensive distribution strategy for Ritalin extension
+- Setting up automated builds and release pipeline
+- Preparing documentation for end users
 
 ## Recent Completions
 - **✅ Task 15: Fix Chess Game Asset Downloading**: Enhanced downloader to handle ES6 modules and SVG assets

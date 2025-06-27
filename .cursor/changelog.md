@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### 2025-01-14 - Task 13: Extension Distribution Started
+- **Branch**: feature/task-13-extension-distribution
+- **Objective**: Create comprehensive distribution strategy for the Ritalin extension
+- **Focus Areas**:
+  - Research Cursor/VS Code marketplace requirements and limitations
+  - Set up automated build and release pipeline with GitHub Actions
+  - Create user-facing documentation and installation guides
+  - Plan beta testing and feedback collection strategy
+
 ### 2025-01-14 - Disable Developer Tools by Default
 - Disabled automatic opening of developer tools in Electron game window
 - Developer tools can still be toggled using Cmd+Shift+I (macOS) or Ctrl+Shift+I (Windows/Linux)
