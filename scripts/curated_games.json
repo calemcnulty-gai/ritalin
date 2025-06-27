@@ -1,29 +1,49 @@
 {
-  "default_game": "die-in-the-dungeon",
+  "default_game": "e4e5-chess",
   "games": [
+    {
+      "id": "e4e5-chess",
+      "title": "Chess vs AI",
+      "author": "zserge",
+      "url": "bundled://e4e5-chess",
+      "description": "A minimalist chess game with Stockfish AI. Play against different difficulty levels with a clean, modern interface. Features include move hints, undo, and the ability to play as black or white.",
+      "tags": [
+        "chess",
+        "puzzle",
+        "turn-based",
+        "board-game",
+        "ai"
+      ],
+      "cover_image": "game-images/ai-chess.png",
+      "rating": "excellent",
+      "isDefault": true,
+      "engine": "bundled",
+      "width": 640,
+      "height": 640,
+      "file_size": "bundled",
+      "game_type": "bundled",
+      "bundled_path": "media/bundled-games/e4e5-chess/index.html"
+    },
     {
       "id": "die-in-the-dungeon",
       "title": "Die in the Dungeon",
       "author": "Alarts",
       "url": "https://alarts.itch.io/die-in-the-dungeon",
-      "description": "A turn-based dungeon crawler with card mechanics",
-      "tags": ["turn-based", "dungeon-crawler", "cards", "strategy"],
+      "description": "Die in the Dungeon is a deck-building, turn-based roguelike where you dont use cards, but dice! Try to find the best combination to conquer the 2X-floor dungeon, but be careful, a frog like you can only get so far before encountering a prey too big to swallow...",
+      "tags": [
+        "turn-based",
+        "dungeon-crawler",
+        "cards",
+        "strategy"
+      ],
       "cover_image": "game-images/die-in-the-dungeon.png",
       "rating": "excellent",
-      "isDefault": true,
+      "isDefault": false,
       "engine": "unity",
       "width": 960,
-      "height": 540
-    },
-    {
-      "id": "dungeon-deck",
-      "title": "Dungeon Deck",
-      "author": "Incinious",
-      "url": "https://incinious.itch.io/dungeon-deck",
-      "cover_image": "game-images/dungeon-deck.png",
-      "engine": "unity",
-      "width": 960,
-      "height": 540
+      "height": 540,
+      "file_size": "41 MB",
+      "game_type": "downloadable"
     },
     {
       "id": "folder-dungeon",
@@ -33,7 +53,11 @@
       "cover_image": "game-images/folder-dungeon.png",
       "engine": "unity",
       "width": 800,
-      "height": 600
+      "height": 600,
+      "description": "Folder Dungeon is dungeon crawler roguelike inside computer folder! Make difficult decisions, fight enemies, collect powerful relics! Play in full screen or download the game for best experience!",
+      "file_size": "43 MB",
+      "game_type": "downloadable",
+      "tags": ["roguelike", "dungeon-crawler"]
     },
     {
       "id": "slipways",
@@ -43,7 +67,12 @@
       "cover_image": "game-images/slipways-classic.png",
       "engine": "pico8",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "description": "The PC version is now available! This is the original PICO-8 edition of a larger game. It's pay-what-you-want - all money earned here goes towards development of my other games.",
+      "file_size": "49 kB",
+      "game_type": "pico8",
+      "tags": ["strategy", "space"],
+      "iframe_url": "https://html-classic.itch.zone/html/3076366/index.html?v=1732313795"
     },
     {
       "id": "shogunshowdown",
@@ -53,38 +82,11 @@
       "cover_image": "game-images/shogun-showdown.png",
       "engine": "unity",
       "width": 960,
-      "height": 540
-    },
-    {
-      "id": "average-routine",
-      "title": "Average Routine",
-      "author": "ColorlessWing_Studio",
-      "url": "https://colorlesswing-studio.itch.io/average-routine",
-      "cover_image": "game-images/average-routine.png",
-      "engine": "unity",
-      "width": 800,
-      "height": 600
-    },
-
-    {
-      "id": "into-ruins",
-      "title": "Into Ruins",
-      "author": "SPARSE//GameDev",
-      "url": "https://sparsegamedev.itch.io/into-ruins",
-      "cover_image": "game-images/into-ruins.png",
-      "engine": "unity",
-      "width": 960,
-      "height": 540
-    },
-    {
-      "id": "persona-4-gb-demo",
-      "title": "Persona 4 GB [DEMO]",
-      "author": "SeanSS",
-      "url": "https://seanss.itch.io/persona-4-gb-demo",
-      "cover_image": "game-images/persona-4-gb.png",
-      "engine": "other",
-      "width": 640,
-      "height": 576
+      "height": 540,
+      "description": "Shogun Showdown is a turn-based combat game with rogue-like and deck-building elements. This is the Alpha-version of the game.",
+      "file_size": "34 MB",
+      "game_type": "downloadable",
+      "tags": ["turn-based", "roguelike", "deck-building"]
     },
     {
       "id": "backpack-hero",
@@ -94,7 +96,11 @@
       "cover_image": "game-images/backpack-hero.png",
       "engine": "unity",
       "width": 800,
-      "height": 600
+      "height": 600,
+      "description": "Backpack Hero is the inventory management roguelike! Collect rare items, organize your bag, and vanquish your foes! Delve into the dungeon with your magic backpack!",
+      "file_size": "188 MB",
+      "game_type": "downloadable",
+      "tags": ["roguelike", "inventory-management"]
     },
     {
       "id": "solitomb",
@@ -104,7 +110,12 @@
       "cover_image": "game-images/solitomb.png",
       "engine": "pico8",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "description": "You are an adventurer who entered into a pact with a demon. Use your solitaire skills to assemble powerful combos and defeat the dungeon's monsters.",
+      "file_size": "166 kB",
+      "game_type": "pico8",
+      "tags": ["solitaire", "dungeon-crawler"],
+      "iframe_url": "https://html-classic.itch.zone/html/12290587/index.html"
     },
     {
       "id": "porklike",
@@ -114,17 +125,11 @@
       "cover_image": "game-images/porklike.png",
       "engine": "pico8",
       "width": 512,
-      "height": 512
-    },
-    {
-      "id": "hungry-horrors",
-      "title": "Hungry Horrors (demo)",
-      "author": "Clumsy Bear Studio",
-      "url": "https://clumsy-bear-studio.itch.io/hungry-horrors",
-      "cover_image": "game-images/hungry-horrors.png",
-      "engine": "unity",
-      "width": 960,
-      "height": 540
+      "height": 512,
+      "description": "Wurst Comes to Worst - Porklike is a classic, turn-based Roguelike with minimalist lo-fi aesthetic. Enter the tower of Wurstlord. Can you make it to the top and steal his legendary Kielbasa?",
+      "game_type": "pico8",
+      "tags": ["roguelike", "turn-based"],
+      "iframe_url": "https://html-classic.itch.zone/html/2038683/index.html?v=1591302235"
     }
   ]
 } 

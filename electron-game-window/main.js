@@ -1,6 +1,67 @@
 const { app, BrowserWindow, ipcMain, screen, globalShortcut, session, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+
+// Built-in MIME type mapping (no external dependencies)
+const mimeTypes = {
+  '.html': 'text/html',
+  '.htm': 'text/html',
+  '.js': 'application/javascript',
+  '.mjs': 'application/javascript',
+  '.json': 'application/json',
+  '.css': 'text/css',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.eot': 'application/vnd.ms-fontobject',
+  '.otf': 'font/otf',
+  '.wasm': 'application/wasm',
+  '.data': 'application/octet-stream',
+  '.unity3d': 'application/octet-stream',
+  '.framework': 'application/octet-stream',
+  '.loader': 'application/octet-stream',
+  '.mem': 'application/octet-stream',
+  '.txt': 'text/plain',
+  '.xml': 'application/xml',
+  '.pdf': 'application/pdf',
+  '.zip': 'application/zip',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.ogg': 'audio/ogg',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm'
+};
+
+function getMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  
+  // Special handling for compressed files
+  if (ext === '.gz') {
+    // Check the file extension before .gz
+    const baseName = path.basename(filePath, '.gz');
+    const baseExt = path.extname(baseName).toLowerCase();
+    
+    // For .wasm.gz files, return application/wasm with gzip encoding
+    if (baseExt === '.wasm') {
+      return 'application/wasm';
+    }
+    // For .js.gz files, return application/javascript
+    if (baseExt === '.js') {
+      return 'application/javascript';
+    }
+    // For other .gz files, return gzip
+    return 'application/gzip';
+  }
+  
+  return mimeTypes[ext] || 'application/octet-stream';
+}
 
 // Global exception handlers to prevent hanging on EPIPE errors
 process.on('uncaughtException', (error) => {
@@ -161,6 +222,9 @@ app.on('before-quit', () => {
 });
 
 let mainWindow;
+let gameServer = null;
+let gameServerPort = 0;
+let currentGamePath = null;
 let windowPreferences = {
   enabled: false,
   position: 'bottom-left',
@@ -312,6 +376,12 @@ async function restoreGameState() {
       
       await mainWindow.webContents.executeJavaScript(`
         (function() {
+          // Only restore state in the main window, not in iframes
+          if (window.parent !== window) {
+            console.log('Skipping game state restoration in iframe');
+            return;
+          }
+          
           const data = ${JSON.stringify(storageData)};
           
           // Restore localStorage
@@ -369,6 +439,174 @@ app.on('web-contents-created', (event, contents) => {
     callback(false);
   });
 });
+
+// HTTP Server for serving game files
+function createGameServer() {
+  if (gameServer) {
+    return Promise.resolve(gameServerPort);
+  }
+
+  return new Promise((resolve, reject) => {
+    gameServer = http.createServer((req, res) => {
+      if (!currentGamePath) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('No game loaded');
+        return;
+      }
+
+      let requestPath = req.url;
+      if (requestPath === '/') {
+        requestPath = '/index.html';
+      }
+
+      // Remove query parameters and decode URL
+      const cleanPath = decodeURIComponent(requestPath.split('?')[0]);
+      const filePath = path.join(currentGamePath, cleanPath);
+
+      // Security check - ensure file is within game directory
+      const resolvedPath = path.resolve(filePath);
+      const resolvedGamePath = path.resolve(currentGamePath);
+      if (!resolvedPath.startsWith(resolvedGamePath)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Access denied');
+        return;
+      }
+
+      // Check if file exists
+      if (!fs.existsSync(resolvedPath)) {
+        // For GameMaker games, serve placeholder files for missing assets
+        const ext = path.extname(cleanPath).toLowerCase();
+        
+        if (ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.gif') {
+          // Serve a 1x1 transparent PNG for missing images
+          const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+          res.writeHead(200, { 
+            'Content-Type': 'image/png',
+            'Content-Length': transparentPng.length 
+          });
+          res.end(transparentPng);
+          safeLog(`Served placeholder image for: ${requestPath}`);
+          return;
+        } else if (ext === '.ogg' || ext === '.mp3' || ext === '.wav') {
+          // Serve empty audio file for missing sounds
+          res.writeHead(200, { 
+            'Content-Type': 'audio/ogg',
+            'Content-Length': 0 
+          });
+          res.end();
+          safeLog(`Served empty audio for: ${requestPath}`);
+          return;
+        } else if (ext === '.js') {
+          // Serve empty JavaScript for missing scripts
+          res.writeHead(200, { 
+            'Content-Type': 'application/javascript',
+            'Content-Length': 0 
+          });
+          res.end();
+          safeLog(`Served empty script for: ${requestPath}`);
+          return;
+        }
+        
+        // For other files, return 404
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('File not found');
+        return;
+      }
+
+      // Get file stats
+      const stats = fs.statSync(resolvedPath);
+      if (stats.isDirectory()) {
+        // Try to serve index.html from directory
+        const indexPath = path.join(resolvedPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.writeHead(301, { 'Location': requestPath + (requestPath.endsWith('/') ? '' : '/') + 'index.html' });
+          res.end();
+          return;
+        } else {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Directory listing not allowed');
+          return;
+        }
+      }
+
+      // Determine MIME type using built-in mapping
+      const contentType = getMimeType(resolvedPath);
+
+      // Set CORS headers for local development
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'cross-origin');
+      res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+
+      // Read and serve file
+      try {
+        const fileContent = fs.readFileSync(resolvedPath);
+        const headers = { 
+          'Content-Type': contentType,
+          'Content-Length': fileContent.length 
+        };
+        
+        // Unity WebGL expects to decompress .gz files itself, so we should NOT add Content-Encoding
+        // The browser would try to decompress if we add Content-Encoding: gzip
+        // Just serve the compressed file as-is with the appropriate MIME type
+        
+        res.writeHead(200, headers);
+        res.end(fileContent);
+        safeLog(`Served: ${requestPath} (${contentType})`);
+      } catch (error) {
+        safeError('Error reading file:', error);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal server error');
+      }
+    });
+
+    // Find available port starting from 17000 to avoid common dev ports
+    // Common dev ports to avoid: 3000-3999, 4000-4999, 5000-5999, 8000-8999, 9000-9999
+    let port = 17000;
+    const tryPort = () => {
+      gameServer.listen(port, 'localhost', () => {
+        gameServerPort = port;
+        safeLog(`Game server started on http://localhost:${port}`);
+        resolve(port);
+      });
+
+      gameServer.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          port++;
+          if (port > 17100) {
+            reject(new Error('Could not find available port'));
+            return;
+          }
+          gameServer.close();
+          gameServer = http.createServer(gameServer.listeners('request')[0]);
+          tryPort();
+        } else {
+          reject(err);
+        }
+      });
+    };
+
+    tryPort();
+  });
+}
+
+function stopGameServer() {
+  if (gameServer) {
+    gameServer.close();
+    gameServer = null;
+    gameServerPort = 0;
+    currentGamePath = null;
+    safeLog('Game server stopped');
+  }
+}
 
 function createWindow() {
   // Get all displays
@@ -432,6 +670,9 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
   
+  // Developer tools can be opened with Cmd/Ctrl+Shift+I if needed
+  // mainWindow.webContents.openDevTools();
+  
   // Set proper MIME types for Unity WebGL files
   mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
     // Add headers to ensure proper MIME type handling
@@ -482,6 +723,49 @@ function createWindow() {
     // Mute audio by default since window starts hidden
     mainWindow.webContents.setAudioMuted(true);
     safeLog('Game audio muted (window starts hidden)');
+    
+    // Disable debugger statements in all contexts
+    mainWindow.webContents.executeJavaScript(`
+      // Disable debugger in main window
+      const disableDebugger = function() {
+        const noop = function() {};
+        try {
+          Object.defineProperty(window, 'debugger', {
+            get: function() { return noop; },
+            set: function() {}
+          });
+        } catch(e) {}
+        
+        // Also try to patch eval to remove debugger statements
+        const originalEval = window.eval;
+        window.eval = function(code) {
+          if (typeof code === 'string') {
+            code = code.replace(/\\bdebugger\\b/g, '');
+          }
+          return originalEval.call(this, code);
+        };
+      };
+      
+      disableDebugger();
+      
+      // Also disable in any iframes
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.tagName === 'IFRAME') {
+              node.addEventListener('load', function() {
+                try {
+                  node.contentWindow.eval(disableDebugger.toString() + '; disableDebugger();');
+                } catch(e) {}
+              });
+            }
+          });
+        });
+      });
+      
+      observer.observe(document.body, { childList: true, subtree: true });
+      console.log('Debugger statements disabled');
+    `);
   });
   
   // Save game state periodically (every 30 seconds)
@@ -660,7 +944,39 @@ function handleExtensionMessage(message) {
       
     case 'loadGame':
       safeLog('Loading game from path:', message.gamePath);
+      
+      // Check if it's an HTTP/HTTPS URL that should be loaded directly
+      if (message.gamePath.startsWith('http://') || message.gamePath.startsWith('https://')) {
+        safeLog('Loading external URL directly:', message.gamePath);
+        mainWindow.webContents.send('load-game', message.gamePath);
+        break;
+      }
+      
+      // Extract the file path from file:// URL if present
+      let gamePath = message.gamePath;
+      if (gamePath.startsWith('file://')) {
+        gamePath = gamePath.replace('file://', '');
+        // Handle Windows paths
+        if (process.platform === 'win32' && gamePath.startsWith('/')) {
+          gamePath = gamePath.substring(1);
+        }
+      }
+      
+      // Set the game path for the server
+      currentGamePath = path.dirname(gamePath);
+      
+      // Start the HTTP server
+      createGameServer().then((port) => {
+        // Load the game via HTTP instead of file://
+        const gameFileName = path.basename(gamePath);
+        const httpUrl = `http://localhost:${port}/${gameFileName}`;
+        safeLog('Loading game via HTTP:', httpUrl);
+        mainWindow.webContents.send('load-game', httpUrl);
+      }).catch((error) => {
+        safeError('Failed to start game server:', error);
+        // Fallback to file:// loading if server fails
       mainWindow.webContents.send('load-game', message.gamePath);
+      });
       break;
       
     case 'setPosition':
@@ -785,6 +1101,15 @@ app.whenReady().then(() => {
     }
   });
   
+  // Register developer tools shortcut (Cmd/Ctrl+Shift+I)
+  const devToolsShortcut = process.platform === 'darwin' ? 'Cmd+Shift+I' : 'Ctrl+Shift+I';
+  globalShortcut.register(devToolsShortcut, () => {
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.toggleDevTools();
+      safeLog('Developer tools toggled');
+    }
+  });
+  
   safeStdout(JSON.stringify({ type: 'ready' }) + '\n');
   
   // Also send via IPC if available
@@ -815,6 +1140,8 @@ process.on('SIGINT', () => {
 });
 
 app.on('will-quit', () => {
+  // Stop the game server
+  stopGameServer();
   // Unregister all shortcuts
   globalShortcut.unregisterAll();
 }); 

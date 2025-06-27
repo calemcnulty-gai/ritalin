@@ -630,10 +630,16 @@ export class GameWindowManager {
         // Apply the determined dimensions
         this.setSize(finalWidth, finalHeight);
         
-        // Convert absolute path to file:// URL
+        // Check if it's already a URL (HTTP/HTTPS) or needs file:// conversion
         let gameUrl = gamePath;
-        if (gamePath && !gamePath.startsWith('file://')) {
-            gameUrl = 'file://' + gamePath;
+        if (gamePath) {
+            if (gamePath.startsWith('http://') || gamePath.startsWith('https://')) {
+                // Already a URL, use as-is
+                gameUrl = gamePath;
+            } else if (!gamePath.startsWith('file://')) {
+                // Convert absolute path to file:// URL
+                gameUrl = 'file://' + gamePath;
+            }
         }
         
         this.outputChannel.appendLine(`[GameWindowManager] Game URL: ${gameUrl}`);

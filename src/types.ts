@@ -16,4 +16,6 @@ export interface GameInfo {
     engine?: string; // unity, pico8, other
     width?: number; // game iframe width
     height?: number; // game iframe height
+    iframe_url?: string; // direct iframe URL for browser games and PWAs
+    bundled_path?: string; // path to bundled game files
 } 

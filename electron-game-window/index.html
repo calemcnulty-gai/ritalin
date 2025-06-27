@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: file:; media-src 'self' data: blob: file:; script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: file:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file:; connect-src 'self' data: blob: file:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: file: http://localhost:* https:; media-src 'self' data: blob: file: http://localhost:* https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: file: http://localhost:* https:; style-src 'self' 'unsafe-inline' http://localhost:* https:; img-src 'self' data: blob: file: http://localhost:* https:; connect-src 'self' data: blob: file: http://localhost:* https:; frame-src 'self' http://localhost:* https:;">
     <title>Cursor</title>
     <style>
         * {

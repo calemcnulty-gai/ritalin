@@ -175,11 +175,56 @@ export class GameManager {
 
     public async downloadGame(gameInfo: GameInfo): Promise<GameInfo> {
         const gameId = gameInfo.id || this._generateGameId(gameInfo.url);
-        const gamePath = path.join(this._gamesStoragePath, gameId);
         
         try {
-            this._outputChannel.appendLine(`[GameManager] Downloading game: ${gameInfo.title} from ${gameInfo.url}`);
+            this._outputChannel.appendLine(`[GameManager] Processing game: ${gameInfo.title} from ${gameInfo.url}`);
             this._outputChannel.appendLine(`[GameManager] Engine: ${gameInfo.engine || 'unknown'}`);
+            
+            // Check if this is a bundled game
+            if (gameInfo.engine === 'bundled' && gameInfo.url.startsWith('bundled://')) {
+                this._outputChannel.appendLine(`[GameManager] Bundled game detected: ${gameInfo.title}`);
+                
+                // For bundled games, construct the path to the bundled game
+                const bundledPath = path.join(this._context.extensionPath, gameInfo.bundled_path || `media/bundled-games/${gameId}/index.html`);
+                
+                const bundledGame: GameInfo = {
+                    ...gameInfo,
+                    id: gameId,
+                    isDownloaded: true,
+                    downloadPath: path.dirname(bundledPath),
+                    entryPoint: bundledPath
+                };
+                
+                this._downloadedGames.set(gameId, bundledGame);
+                this._saveDownloadedGames();
+                
+                this._outputChannel.appendLine(`[GameManager] Bundled game ready: ${gameInfo.title} at ${bundledPath}`);
+                return bundledGame;
+            }
+            
+            // Check if this is a PWA game that should be loaded directly via iframe
+            if (gameInfo.engine === 'pwa' && gameInfo.iframe_url) {
+                this._outputChannel.appendLine(`[GameManager] PWA game detected, using direct iframe URL: ${gameInfo.iframe_url}`);
+                
+                // For PWA games, we don't download anything, just mark it as "downloaded"
+                // and use the iframe_url as the entry point
+                const pwaGame: GameInfo = {
+                    ...gameInfo,
+                    id: gameId,
+                    isDownloaded: true,
+                    downloadPath: undefined, // No local files
+                    entryPoint: gameInfo.iframe_url // Use the iframe URL directly
+                };
+                
+                this._downloadedGames.set(gameId, pwaGame);
+                this._saveDownloadedGames();
+                
+                this._outputChannel.appendLine(`[GameManager] PWA game ready: ${gameInfo.title}`);
+                return pwaGame;
+            }
+            
+            // For non-PWA games, use the existing download logic
+            const gamePath = path.join(this._gamesStoragePath, gameId);
             
             // Use the Python script to download and extract the game
             await this.runDownloadScript(gameInfo.url, gameId, gameInfo.engine);

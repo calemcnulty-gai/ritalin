@@ -149,6 +149,20 @@ Options to explore:
   - [x] Add proper configuration registration for selectedGame setting
   - [x] Implement game selection functionality with UI feedback
 
+#### Task 12.5: Game Download System Consolidation
+**Status: DONE** ✅
+- **Objective**: Consolidate duplicate game download functionality and fix download failures
+- **Action Items**:
+  - [x] **Consolidate JSON Files**: Merge curated_games_enhanced.json, curated_games_updated.json into single curated_games.json
+  - [x] **Consolidate Python Scripts**: Merge enhanced_game_fetcher.py and update_curated_games.py functionality into grab_itch_game.py
+  - [x] **Fix Download Issues**: Rewrite grab_itch_game.py to handle both embedded games and downloadable ZIP files
+  - [x] **Add Multi-Engine Support**: Enhance script to properly detect and download Unity WebGL, PICO-8, and other game engines
+  - [x] **Improve Asset Discovery**: Better parsing of Unity config objects and game asset detection
+  - [x] **Add Progress Tracking**: Implement download progress indicators for large files
+  - [x] **Add Metadata Integration**: Use curated_games.json metadata for enhanced download processing
+  - [x] **Test Download Fixes**: Verify that previously failing games (Die in the Dungeon, Average Routine, etc.) now download successfully
+  - [x] **Update Documentation**: Revise scripts/README.md to reflect consolidated functionality
+
 #### Task 13: Extension Distribution
 - [ ] Research Cursor extension distribution and marketplace options
   - [ ] **Investigation Complete**: Research shows Cursor uses VS Code marketplace but with restrictions
@@ -202,12 +216,30 @@ Options to explore:
   - [x] **Update .vscodeignore**: Ensure all unnecessary files are excluded from the extension package.
 
 ## Current Sprint Focus
-**Sprint 4**: Production Testing & Performance Optimization (Task 10 → Task 11 transition)
-- **PRIMARY OBJECTIVE**: Test complete AI detection system with auto-game triggering
-- **SECONDARY OBJECTIVE**: Validate AI self-reporting system across different project types
-- **TERTIARY OBJECTIVE**: Begin Performance Optimization (Task 11) if testing successful
+**Sprint 5**: Production Testing & Final Polish (Task 12.5 → Task 13 transition)
+- **PRIMARY OBJECTIVE**: Test consolidated game download system with real games
+- **SECONDARY OBJECTIVE**: Validate all game engines download and load correctly
+- **TERTIARY OBJECTIVE**: Begin Extension Distribution preparation (Task 13)
+
+### Active Tasks
+(No active tasks at this time)
 
 ## Recent Completions
+- **✅ Task 15: Fix Chess Game Asset Downloading**: Enhanced downloader to handle ES6 modules and SVG assets
+  - Fixed ES6 module imports (chess.js, htm.js) not being downloaded
+  - Added pattern matching for dynamically-loaded SVG chess piece files
+  - Implemented multiple naming convention support for chess pieces
+  - Added AI Chess to curated games list and verified functionality
+  - Disabled automatic dev tools opening in Electron window for better UX
+- **✅ Game Download Consolidation (Task 12.5)**: Complete rewrite and consolidation of game download system
+  - **Consolidated JSON Files**: Merged 3 duplicate JSON files into single enhanced curated_games.json
+  - **Consolidated Python Scripts**: Merged enhanced_game_fetcher.py and update_curated_games.py into grab_itch_game.py
+  - **Fixed Download Failures**: Previously failing games (Die in the Dungeon, Average Routine, etc.) now download successfully
+  - **Multi-Engine Support**: Enhanced support for Unity WebGL, PICO-8, and generic HTML5 games
+  - **Better Asset Discovery**: Improved Unity config parsing and asset detection
+  - **Progress Tracking**: Added download progress indicators for large files
+  - **Metadata Integration**: Script now uses curated_games.json for enhanced processing
+  - **Tested & Verified**: Both Unity and PICO-8 games download and extract correctly
 - **✅ Auto-file Creation**: Extension now creates .cursor/rules/ai-activity-reporting.mdc and .cursor/is_working in new projects
 - **✅ Filename Fix**: Corrected all references from .cursor/.is_working → .cursor/is_working (removed dot prefix)
 - **✅ Workspace Detection**: Added workspace change listener to re-initialize files when switching projects
@@ -221,4 +253,5 @@ Options to explore:
 ## Notes
 - Priority is on MVP functionality before adding advanced features
 - Must test thoroughly with actual Cursor usage patterns
+- Game download system is now robust and handles multiple game engines
 - Consider beta testing with small group before public release 

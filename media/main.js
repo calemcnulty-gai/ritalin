@@ -116,6 +116,10 @@
         document.querySelectorAll('.download-btn').forEach(button => {
             const gameData = JSON.parse(button.dataset.game);
             if (gameData.id === game.id) {
+                // Update the game data to mark it as downloaded
+                const updatedGameData = { ...gameData, isDownloaded: true };
+                button.dataset.game = JSON.stringify(updatedGameData).replace(/'/g, "&apos;");
+                
                 button.textContent = 'Select';
                 button.disabled = false;
                 button.dataset.action = 'select';
@@ -140,8 +144,8 @@
                 button.textContent = '✓ Selected';
                 button.disabled = true;
                 button.dataset.action = '';
-            } else if (button.dataset.action === 'select' || button.textContent === '✓ Selected') {
-                // This game was previously selected or is selectable, update to Select
+            } else if (gameData.isDownloaded) {
+                // This game is downloaded but not selected, so it should be selectable
                 button.textContent = 'Select';
                 button.disabled = false;
                 button.dataset.action = 'select';
@@ -155,6 +159,7 @@
                     vscode.postMessage({ command: 'selectGame', gameId: gameData.id });
                 });
             }
+            // If not selected and not downloaded, leave the button as is (Download)
         });
     }
 
@@ -292,6 +297,10 @@
             if (button.dataset.game) {
                 const gameData = JSON.parse(button.dataset.game);
                 if (gameData.id === game.id) {
+                    // Update the game data to mark it as downloaded
+                    const updatedGameData = { ...gameData, isDownloaded: true };
+                    button.dataset.game = JSON.stringify(updatedGameData).replace(/'/g, "&apos;");
+                    
                     button.textContent = 'Select';
                     button.disabled = false;
                     button.dataset.action = 'select';
@@ -381,6 +390,10 @@
         buttons.forEach(button => {
             const gameData = JSON.parse(button.dataset.game);
             if (gameData.id === game.id) {
+                // Update the game data to mark it as downloaded
+                const updatedGameData = { ...gameData, isDownloaded: true };
+                button.dataset.game = JSON.stringify(updatedGameData).replace(/'/g, "&apos;");
+                
                 button.textContent = 'Select';
                 button.disabled = false;
                 button.dataset.action = 'select';
