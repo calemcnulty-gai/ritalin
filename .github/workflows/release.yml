@@ -1,0 +1,64 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'v*-alpha*'
+      - 'v*-beta*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Compile TypeScript
+        run: npm run compile
+        
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+        
+      - name: Package Extension
+        run: vsce package
+        
+      - name: Get version from package.json
+        id: version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release v${{ steps.version.outputs.VERSION }}
+          files: '*.vsix'
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          generate_release_notes: true
+          body: |
+            ## Ritalin for Cursor - v${{ steps.version.outputs.VERSION }}
+            
+            ### Installation Instructions
+            
+            1. Download the `.vsix` file from the assets below
+            2. Open Cursor
+            3. Go to the Extensions view (Cmd+Shift+X on macOS, Ctrl+Shift+X on Windows/Linux)
+            4. Click the "..." menu at the top of the Extensions view
+            5. Select "Install from VSIX..."
+            6. Choose the downloaded `.vsix` file
+            
+            ### What's New
+            
+            This is an **alpha release** - expect bugs and incomplete features!
+            
+            Please report any issues on our [GitHub Issues](https://github.com/ritalin-dev/ritalin/issues) page.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

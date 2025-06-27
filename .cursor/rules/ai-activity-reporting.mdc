@@ -1,0 +1,70 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# AI Activity Self-Reporting Rule
+
+## Core Instruction
+
+**CRITICAL**: You MUST follow this rule for ALL interactions to enable the Ritalin extension to detect your activity and show games during AI generation.
+
+### When Starting ANY Task or Response
+
+Before you begin thinking, working on, or responding to any user prompt, you MUST first edit the file `.cursor/is_working` to contain exactly:
+
+```
+true
+```
+
+### When Waiting for ANY User Input
+
+Set `.cursor/is_working` to `false` in these situations:
+- **After completing your response** and waiting for the next user input
+- **When waiting for user approval** to run a terminal command
+- **When asking for clarification** or additional information
+- **When prompting user to choose** between options
+- **Any time you are paused** waiting for human interaction
+
+## Implementation Details
+
+- **File Location**: `.cursor/is_working` (relative to workspace root)
+- **Content Format**: 
+  - Working/Thinking: `true` (no quotes, no extra text)
+  - Waiting/Idle: `false` (no quotes, no extra text)
+- **Timing**: 
+  - Set to `true` BEFORE you start any thinking or generation
+  - Set to `false` IMMEDIATELY when waiting for user input
+- **Always Required**: This applies to ALL interactions, regardless of complexity
+
+## Examples
+
+**When starting any task:**
+1. First action: Edit `.cursor/is_working` → `true`
+2. Then: Begin your normal thinking and response process
+
+**When waiting for terminal command approval:**
+1. Complete your response with the terminal command proposal
+2. Immediately: Edit `.cursor/is_working` → `false`
+3. Wait for user approval
+
+**When asking for clarification:**
+1. Complete your clarifying question
+2. Immediately: Edit `.cursor/is_working` → `false`
+3. Wait for user response
+
+## Purpose
+
+This enables the Ritalin extension to:
+- Detect AI activity reliably 
+- Show games during AI generation periods
+- Hide games when waiting for user input
+- Provide seamless integration between AI work and user break time
+
+## Critical Notes
+
+- **Never skip this step** - even for simple responses
+- **File must contain only the boolean value** - no extra formatting
+- **Use exact text**: `true` or `false` (lowercase, no quotes)
+- **Edit the file, don't just reference it** - the extension watches for file changes
+- **Always set to false when waiting** - don't leave it as true during user wait periods

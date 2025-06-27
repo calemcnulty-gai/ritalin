@@ -1,6 +1,8 @@
-# 🎮 Ritalin for Cursor
+# 🎮 Ritalin for Cursor (Alpha)
 
 > Keep your focus sharp while AI generates code by playing mini-games instead of context-switching
+
+⚠️ **Alpha Release**: This extension is in early development. Expect bugs and incomplete features!
 
 ## Overview
 

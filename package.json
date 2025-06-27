@@ -2,11 +2,11 @@
   "name": "ritalin",
   "displayName": "Ritalin for Cursor",
   "description": "Mini-games during AI generation for focus",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "publisher": "ritalin-dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-repo/ritalin.git"
+    "url": "https://github.com/ritalin-dev/ritalin.git"
   },
   "engines": {
     "vscode": "^1.75.0"

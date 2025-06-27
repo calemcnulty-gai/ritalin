@@ -50,7 +50,7 @@ env/
 # IDE
 .vscode-test/
 .cursor/is_working
-.cursor/rules/
+.cursor/rules/ai_activity_reporting.mdc
 *.swp
 *.swo
 *~

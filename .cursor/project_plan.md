@@ -165,23 +165,23 @@ Options to explore:
 
 #### Task 13: Extension Distribution
 **Status: In Progress** 🔄
-- [ ] Research Cursor extension distribution and marketplace options
-  - [ ] **Investigation Complete**: Research shows Cursor uses VS Code marketplace but with restrictions
-    - [ ] Cursor redirects to VS Code marketplace for most extensions
-    - [ ] Microsoft is enforcing stricter licensing on their extensions (Pylance, C/C++, etc.)
-    - [ ] Extensions can be installed via .vsix files by dragging to Extensions tab
-    - [ ] No dedicated Cursor marketplace exists as of 2024
-    - [ ] Extensions can access Cursor-specific features through VS Code API compatibility
-  - [ ] **Distribution Strategy**: 
-    - [ ] **Primary**: Direct .vsix distribution via GitHub releases
-    - [ ] **Secondary**: VS Code marketplace (if extension passes review)
-    - [ ] **Tertiary**: Manual installation instructions for developers
-  - [ ] **Publishing Requirements**:
-    - [ ] Package extension as .vsix using `vsce package`
-    - [ ] Create GitHub release with .vsix attachment
-    - [ ] Provide clear installation instructions (drag-and-drop method)
-    - [ ] Consider VS Code marketplace submission (may require Cursor compatibility disclaimers)
-    - [ ] Document any Cursor-specific features that may not work in regular VS Code
+- [x] Research Cursor extension distribution and marketplace options
+  - [x] **Investigation Complete**: Created comprehensive `docs/extension_distribution.md` with findings:
+    - [x] Cursor uses VS Code marketplace but Microsoft enforcing stricter ToS
+    - [x] Open VSX Registry available as alternative marketplace
+    - [x] Direct .vsix distribution essential for beta testing
+    - [x] Multi-channel distribution strategy recommended
+    - [x] Cursor 1.0 released June 2025, growing user base
+  - [x] **Distribution Strategy Defined**: 
+    - [x] **Primary**: VS Code Marketplace (while available)
+    - [x] **Secondary**: Open VSX Registry (backup channel)
+    - [x] **Essential**: GitHub Releases with .vsix files
+    - [x] **Beta**: Direct distribution via GitHub pre-releases
+  - [x] **Publishing Requirements Documented**:
+    - [x] GitHub Actions workflow for automated packaging
+    - [x] Multi-platform release automation
+    - [x] Beta vs stable release separation
+    - [x] Update notification system for direct installs
 - [ ] Create installation and setup documentation
   - [ ] Write step-by-step installation guide
   - [ ] Document system requirements (Python, Electron dependencies)

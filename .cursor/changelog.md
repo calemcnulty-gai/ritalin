@@ -11,6 +11,21 @@
   - Create user-facing documentation and installation guides
   - Plan beta testing and feedback collection strategy
 
+### 2025-01-14 - Extension Distribution Research Completed
+- **Completed**: Comprehensive research on Cursor extension distribution
+- **Key Findings**:
+  - Microsoft enforcing stricter VS Code marketplace ToS, affecting Cursor
+  - Open VSX Registry available as alternative marketplace
+  - Multi-channel distribution strategy essential
+  - Direct .vsix distribution critical for beta testing
+- **Deliverable**: Created `docs/extension_distribution.md` with:
+  - Distribution channel analysis (VS Code Marketplace, Open VSX, GitHub Releases)
+  - Cursor-specific considerations and user behavior
+  - Beta testing strategy with version management
+  - Automated build pipeline with GitHub Actions
+  - Marketing and discovery recommendations
+  - Risk mitigation strategies
+
 ### 2025-01-14 - Disable Developer Tools by Default
 - Disabled automatic opening of developer tools in Electron game window
 - Developer tools can still be toggled using Cmd+Shift+I (macOS) or Ctrl+Shift+I (Windows/Linux)
