@@ -14,6 +14,7 @@ export class CursorDetector {
 
     private disposables: vscode.Disposable[] = [];
     private _isGenerating = false;
+    private _isPaused = false;
     private outputChannel: vscode.OutputChannel;
     private fileWatcher: vscode.FileSystemWatcher | null = null;
     private selfReportTimeout: NodeJS.Timeout | null = null;
@@ -80,6 +81,12 @@ export class CursorDetector {
             const content = await vscode.workspace.fs.readFile(uri);
             const isWorking = content.toString().trim() === 'true';
 
+            // Don't trigger generation events if paused
+            if (this._isPaused) {
+                this.outputChannel.appendLine('[CursorDetector] Extension is paused, ignoring AI status change');
+                return;
+            }
+
             if (isWorking && !this._isGenerating) {
                 this.outputChannel.appendLine('[CursorDetector] AI Status: ⚡ Working');
                 this.startGeneration();
@@ -121,6 +128,30 @@ export class CursorDetector {
             clearTimeout(this.selfReportTimeout);
             this.selfReportTimeout = null;
         }
+    }
+
+    public pause(): void {
+        this._isPaused = true;
+        if (this._isGenerating) {
+            this.endGeneration();
+        }
+        this.outputChannel.appendLine('[CursorDetector] Paused - AI detection disabled');
+    }
+
+    public unpause(): void {
+        this._isPaused = false;
+        this.outputChannel.appendLine('[CursorDetector] Unpaused - AI detection enabled');
+        // Re-read the current state
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (workspaceFolder) {
+            const isWorkingPath = path.join(workspaceFolder.uri.fsPath, '.cursor', 'is_working');
+            const isWorkingUri = vscode.Uri.file(isWorkingPath);
+            this.readIsWorkingFile(isWorkingUri);
+        }
+    }
+
+    public get isPaused(): boolean {
+        return this._isPaused;
     }
 
     public dispose(): void {

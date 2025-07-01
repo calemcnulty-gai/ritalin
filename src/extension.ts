@@ -10,10 +10,18 @@ let gameManager: GameManager;
 let gameWindowManager: GameWindowManager;
 let cursorDetector: CursorDetector;
 let outputChannel: vscode.OutputChannel;
+let statusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('Ritalin');
     outputChannel.appendLine('[Ritalin] Extension activating...');
+
+    // Create status bar item
+    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    statusBarItem.command = 'ritalin.togglePause';
+    updateStatusBarItem(false); // Start unpaused
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
 
     // Create required Cursor files for AI detection (await properly)
     // Add a small delay to ensure workspace is fully loaded
@@ -103,6 +111,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('ritalin.showConfig', () => {
             outputChannel.appendLine('[Ritalin] showConfig command called');
             ConfigPanel.createOrShow(context.extensionUri, gameManager, outputChannel);
+        }),
+        vscode.commands.registerCommand('ritalin.togglePause', async () => {
+            await togglePauseExtension();
         })
     );
     
@@ -255,6 +266,7 @@ export function deactivate() {
     outputChannel.appendLine('[Ritalin] Deactivating extension...');
     cursorDetector?.dispose();
     gameWindowManager?.dispose();
+    statusBarItem?.dispose();
     outputChannel?.dispose();
 }
 
@@ -382,5 +394,83 @@ async function createCursorFiles(): Promise<void> {
     } catch (error) {
         outputChannel.appendLine(`[Ritalin] ❌ Error during cursor files creation: ${error}`);
         throw error;
+    }
+}
+
+async function togglePauseExtension(): Promise<void> {
+    const isPaused = cursorDetector.isPaused;
+    
+    if (isPaused) {
+        // Unpause
+        cursorDetector.unpause();
+        await updateAiActivityRuleAlwaysApply(true);
+        updateStatusBarItem(false);
+        vscode.window.showInformationMessage('Ritalin: Extension unpaused - AI detection enabled');
+        outputChannel.appendLine('[Ritalin] Extension unpaused');
+    } else {
+        // Pause
+        cursorDetector.pause();
+        await setIsWorkingFile(false);
+        await updateAiActivityRuleAlwaysApply(false);
+        updateStatusBarItem(true);
+        vscode.window.showInformationMessage('Ritalin: Extension paused - AI detection disabled');
+        outputChannel.appendLine('[Ritalin] Extension paused');
+    }
+}
+
+function updateStatusBarItem(isPaused: boolean): void {
+    if (isPaused) {
+        statusBarItem.text = '$(debug-pause) Ritalin: Paused';
+        statusBarItem.tooltip = 'Click to unpause Ritalin AI detection';
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    } else {
+        statusBarItem.text = '$(game) Ritalin: Active';
+        statusBarItem.tooltip = 'Click to pause Ritalin AI detection';
+        statusBarItem.backgroundColor = undefined;
+    }
+}
+
+async function setIsWorkingFile(value: boolean): Promise<void> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        outputChannel.appendLine('[Ritalin] No workspace folder found for updating is_working file');
+        return;
+    }
+
+    const isWorkingFile = vscode.Uri.joinPath(workspaceFolder.uri, '.cursor', 'is_working');
+    
+    try {
+        await vscode.workspace.fs.writeFile(isWorkingFile, Buffer.from(value ? 'true' : 'false', 'utf8'));
+        outputChannel.appendLine(`[Ritalin] Set .cursor/is_working to ${value}`);
+    } catch (error) {
+        outputChannel.appendLine(`[Ritalin] Failed to update is_working file: ${error}`);
+    }
+}
+
+async function updateAiActivityRuleAlwaysApply(alwaysApply: boolean): Promise<void> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        outputChannel.appendLine('[Ritalin] No workspace folder found for updating rule file');
+        return;
+    }
+
+    const ruleFile = vscode.Uri.joinPath(workspaceFolder.uri, '.cursor', 'rules', 'ai-activity-reporting.mdc');
+    
+    try {
+        // Read the current content
+        const content = await vscode.workspace.fs.readFile(ruleFile);
+        const contentStr = content.toString();
+        
+        // Update the alwaysApply field in the YAML frontmatter
+        const updatedContent = contentStr.replace(
+            /^(---[\s\S]*?)alwaysApply:\s*(true|false)([\s\S]*?---)/m,
+            `$1alwaysApply: ${alwaysApply}$3`
+        );
+        
+        // Write back the updated content
+        await vscode.workspace.fs.writeFile(ruleFile, Buffer.from(updatedContent, 'utf8'));
+        outputChannel.appendLine(`[Ritalin] Updated ai-activity-reporting.mdc alwaysApply to ${alwaysApply}`);
+    } catch (error) {
+        outputChannel.appendLine(`[Ritalin] Failed to update rule file: ${error}`);
     }
 }

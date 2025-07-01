@@ -7,7 +7,9 @@ All notable changes to the "Ritalin for Cursor" extension will be documented in 
 ## [0.1.2] - 2025-06-27
 
 ### Added
-- 
+- Pause/Unpause command to temporarily disable AI detection
+- Status bar indicator showing extension state (Active/Paused)
+- Automatic update of ai-activity-reporting.mdc alwaysApply field when pausing
 
 ### Changed
 - 

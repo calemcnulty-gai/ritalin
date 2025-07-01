@@ -302,6 +302,14 @@ Instead of building complex multi-method detection systems, focus on making the 
 ##### **Extension API Reality Check**
 VS Code's security model is intentionally restrictive. Extensions operate in isolated contexts that prevent most advanced monitoring approaches we initially planned.
 
+##### **Pause/Unpause Feature Design**
+The extension pause feature demonstrates clean state management across multiple systems:
+- CursorDetector maintains internal pause state
+- is_working file set to false when paused for consistency
+- ai-activity-reporting.mdc alwaysApply field toggled to disable AI rule
+- Status bar provides visual feedback with clickable toggle
+- All state changes are synchronized to prevent conflicts
+
 ##### **Detection Confidence Tuning**
 Our detection system now has multiple viable methods feeding into a confidence score:
 - Document changes (working since day 1)

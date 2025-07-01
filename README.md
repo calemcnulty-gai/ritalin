@@ -54,9 +54,9 @@ cursor .
 
 ### Commands
 
-- `Ritalin: Toggle Game Window` - Manually show/hide the game
-- `Ritalin: Settings` - Configure extension preferences
-- `Ritalin: View Statistics` - See your focus metrics
+- `Ritalin: Pause/Unpause Extension` - Temporarily disable AI detection without uninstalling
+- `Ritalin: Show Configuration Page` - Access game selection and settings
+- `Ritalin: Manage Downloaded Games` - Select or delete downloaded games
 
 ### Configuration
 
