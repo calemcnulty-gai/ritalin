@@ -2,7 +2,7 @@
   "name": "ritalin",
   "displayName": "Ritalin for Cursor",
   "description": "Mini-games during AI generation for focus",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "publisher": "CaleMcNulty",
   "repository": {
     "type": "git",
@@ -162,7 +162,7 @@
     "lodash": "^4.17.21"
   },
   "buildMetadata": {
-    "buildNumber": 8,
-    "timestamp": "2025-07-01T17:07:43.718Z"
+    "buildNumber": 9,
+    "timestamp": "2025-07-01T17:29:28.653Z"
   }
 }

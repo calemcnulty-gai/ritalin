@@ -4,6 +4,24 @@ All notable changes to the "Ritalin for Cursor" extension will be documented in 
 
 
 
+
+## [0.2.0] - 2025-01-15
+
+### Added
+- Pause/unpause functionality with status bar indicator
+  - New clickable status bar item showing extension state
+  - Visual feedback with icon and color changes
+  - Command "Ritalin: Pause/Unpause Extension" in command palette
+  - Automatic synchronization with AI detection system
+
+### Changed
+- AI detection can now be temporarily disabled without uninstalling
+- Status bar provides constant visibility of extension state
+
+### Fixed
+- AI detection state properly preserved across pause/unpause cycles
+- AI activity rule properly disabled when extension is paused
+
 ## [0.1.2] - 2025-06-27
 
 ### Added
