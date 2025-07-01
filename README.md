@@ -1,169 +1,223 @@
-# 🎮 Ritalin for Cursor (Alpha)
+# 🎮 Ritalin for Cursor
 
-> Keep your focus sharp while AI generates code by playing mini-games instead of context-switching
+> Turn AI generation wait time into game time. Stay focused, not distracted.
 
-⚠️ **Alpha Release**: This extension is in early development. Expect bugs and incomplete features!
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/ritalin-dev/ritalin/releases)
+[![Alpha](https://img.shields.io/badge/status-alpha-yellow)](https://github.com/ritalin-dev/ritalin/releases)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## Overview
+## What is Ritalin?
 
-Ritalin for Cursor is a Cursor extension designed to solve a common problem: the 15-60 second wait times during AI code generation that lead developers to check social media, breaking their flow state. Instead of losing focus, play a quick round of "Die in the Dungeon" right in your editor!
+When Cursor AI generates code, you wait 15-60 seconds. Most developers switch to Reddit or Twitter, losing focus and taking 5-10 minutes to recover. 
 
-**Note**: This extension is specifically designed for Cursor and targets Cursor's AI generation features. While it uses the VS Code extension API (since Cursor is a VS Code fork), it will only work properly in Cursor.
+**Ritalin keeps you in the zone** by automatically showing mini-games during AI generation. When the AI finishes, the game disappears and you're right back to coding - no context switch, no lost time.
 
-## Features
+## ✨ Key Features
 
-- 🤖 **Automatic Detection** - Knows when Cursor AI is generating code
-- 🎮 **Instant Gaming** - Mini-game appears within 500ms of generation start
-- 💾 **State Persistence** - Pick up where you left off between coding sessions
-- 🎯 **Focus Metrics** - Track your "productive waiting time"
-- ⚙️ **Fully Configurable** - Adjust timing, position, and game preferences
+### 🤖 Automatic AI Detection
+Knows exactly when Cursor is generating code - no manual triggers needed.
 
-## Installation
+### 🎮 Instant Gaming
+Games appear within milliseconds of AI starting, hide instantly when done.
 
-> ⚠️ **Note**: This extension is currently in development and not yet available on any marketplace.
+### 💾 Persistent Progress
+Your game saves automatically. Pick up exactly where you left off.
 
-### Development Setup
+### 🎯 Curated Game Selection
+8 hand-picked games perfect for quick breaks - from chess to roguelikes.
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/ritalin-for-cursor.git
-cd ritalin-for-cursor
-```
+### ⏸️ Smart Controls
+Pause anytime via the status bar. Full control when you need deep focus.
 
-2. Install dependencies:
-```bash
-npm install
-```
+### 🖥️ Multi-Monitor Ready
+Games position intelligently on any screen setup.
 
-3. Open in Cursor:
-```bash
-cursor .
-```
+## 🚀 Getting Started
 
-4. Run the extension:
-- Press `F5` to open a new Cursor window with the extension loaded
-- Or run `npm run watch` for development mode
+### 1. Install Ritalin
 
-## Usage
+Download the latest version:
+- **[⬇️ Download v0.2.0](https://github.com/ritalin-dev/ritalin/releases/download/v0.2.0/ritalin-0.2.0.vsix)**
 
-1. **Install the extension** in your Cursor editor
-2. **Start coding** with Cursor AI as normal
-3. **When AI generates**, a game window automatically appears
-4. **Play the game** while waiting for generation to complete
-5. **Game auto-hides** when AI is done, returning focus to your code
+Install in Cursor:
+1. Open Command Palette (`Cmd+Shift+P` on Mac, `Ctrl+Shift+P` on Windows/Linux)
+2. Type "Install from VSIX"
+3. Select the downloaded file
+4. Reload when prompted
 
-### Commands
+### 2. Choose Your Game
 
-- `Ritalin: Pause/Unpause Extension` - Temporarily disable AI detection without uninstalling
-- `Ritalin: Show Configuration Page` - Access game selection and settings
-- `Ritalin: Manage Downloaded Games` - Select or delete downloaded games
+After installation, a configuration page opens automatically. Pick from:
 
-### Configuration
+#### 🏆 Featured Games
 
-Access settings through Cursor settings or the command palette:
+**♟️ Chess vs AI** (Bundled)
+- Battle Stockfish AI at multiple difficulty levels
+- Clean, minimalist interface
+- No download required
+
+**🎲 Die in the Dungeon**
+- Dice-based roguelike with deep strategy
+- Perfect for 30-second rounds
+- Most popular choice
+
+**📁 Folder Dungeon**
+- Explore dungeons inside computer folders
+- Unique premise with solid gameplay
+
+#### 🕹️ More Games
+
+- **Slipways Classic** - Minimalist space strategy
+- **Shogun Showdown** - Turn-based tactical combat
+- **Backpack Hero** - Inventory management roguelike
+- **Solitomb** - Solitaire meets dungeon crawler
+- **Porklike** - Classic roguelike experience
+
+### 3. Start Coding
+
+That's it! Use Cursor AI normally. Games appear automatically during generation.
+
+## ⚙️ Customization
+
+### Window Position
+
+Set your preferred game location:
 
 ```json
 {
-  "ritalin.enabled": true,
-  "ritalin.gameDelay": 1000,        // ms before game appears
-  "ritalin.windowPosition": "bottomRight",
-  "ritalin.windowSize": {
-    "width": 400,
-    "height": 600
-  },
-  "ritalin.opacity": 0.9,
-  "ritalin.soundEnabled": false
+  "ritalin.externalWindow.position": "bottom-right"
 }
 ```
 
-## Development
+Options: `bottom-left`, `bottom-right`, `top-left`, `top-right`, `center`, `overlay`
 
-### Project Structure
+### Window Size
 
-```
-ritalin-for-cursor/
-├── src/
-│   ├── extension.ts          # Main extension entry
-│   ├── detectors/           # AI generation detection
-│   ├── views/              # Game window management
-│   ├── state/              # Game state persistence
-│   └── config/             # User settings
-├── resources/              # Static assets
-├── .cursor/               # Project management
-└── tests/                 # Test suites
+Adjust to your screen:
+
+```json
+{
+  "ritalin.externalWindow.width": 800,
+  "ritalin.externalWindow.height": 600
+}
 ```
 
-### Building
+### Advanced Settings
 
-```bash
-# Development build with watch
-npm run watch
+- `alwaysOnTop`: Keep game window above other windows
+- `monitor`: Choose `primary`, `secondary`, or `auto`
+- `hideOnBlur`: Auto-hide when game loses focus
 
-# Production build
-npm run build
+## 💡 Tips & Tricks
 
-# Run tests
-npm test
+### Quick Commands
+- **Show Config**: `Cmd+Shift+P` → "Ritalin: Show Configuration Page"
+- **Manage Games**: `Cmd+Shift+P` → "Ritalin: Manage Downloaded Games"
+- **Toggle On/Off**: Click the status bar icon
 
-# Package extension
-npm run package
-```
+### Status Bar
+- **🎮 Ritalin: Active** - AI detection is on
+- **⏸️ Ritalin: Paused** - AI detection is off
 
-### Testing
+### Pro Tips
+- Games save state automatically - don't worry about losing progress
+- Try different games to find your perfect focus companion
+- Adjust window opacity in game settings for overlay mode
+- Use pause during important debugging sessions
 
-1. Unit tests: `npm run test:unit`
-2. Integration tests: `npm run test:integration`
-3. Manual testing: Use F5 in VS Code to test in Extension Development Host
+## 🔧 Troubleshooting
 
-## Contributing
+<details>
+<summary><strong>Game window doesn't appear</strong></summary>
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+1. Check status bar shows "Ritalin: Active" (not paused)
+2. Ensure a game is selected: `Cmd+Shift+P` → "Show Configuration"
+3. Check Output panel → "Ritalin" for errors
+4. Try reloading: `Cmd+R` (Mac) or `Ctrl+R` (Windows/Linux)
 
-### Development Workflow
+</details>
 
-1. Check the [Project Plan](.cursor/project_plan.md) for current tasks
-2. Create a feature branch
-3. Make your changes
-4. Update tests and documentation
-5. Submit a pull request
+<details>
+<summary><strong>Game won't download</strong></summary>
 
-## Troubleshooting
+1. Verify Python 3 is installed: `python3 --version`
+2. Check your internet connection
+3. Note: Some games are 30-180MB and take time
+4. Try downloading a different game first
 
-### Game doesn't appear
-- Check that Cursor AI is actually generating (not just thinking)
-- Verify extension is enabled in settings
-- Check console for error messages (Help > Toggle Developer Tools)
+</details>
 
-### Game won't load
-- Ensure internet connection is active
-- Check if itch.io is accessible
-- Try increasing the game delay in settings
+<details>
+<summary><strong>First-time setup issues</strong></summary>
 
-### Performance issues
-- Reduce window size in settings
-- Increase opacity for better GPU performance
-- Disable animations in settings
+1. Electron may need to install on first run (one-time, automatic)
+2. The extension creates files in `.cursor/` - ensure folder isn't read-only
+3. If configuration page doesn't open, use Command Palette
 
-## Roadmap
+</details>
 
-- [x] Initial concept and PRD
-- [ ] MVP with basic game integration
-- [ ] State persistence
-- [ ] Statistics dashboard
-- [ ] Multiple game support
-- [ ] Achievement system
-- [ ] Marketplace release
+<details>
+<summary><strong>Performance concerns</strong></summary>
 
-## License
+- Games run in isolated process - no impact on Cursor
+- Typical memory usage: 50-150MB
+- CPU usage: <5% when idle, 10-20% during gameplay
+- Games auto-pause when hidden
 
-MIT License - see [LICENSE](LICENSE) file for details
+</details>
 
-## Acknowledgments
+## 🎯 Why Ritalin?
 
-- "Die in the Dungeon" by [Alarts](https://alarts.itch.io/) - An excellent roguelike dice game
-- Cursor team for the amazing AI coding experience
-- VS Code extension API documentation
+### The Problem
+- Average developer checks social media 50+ times per day
+- Each context switch costs 23 minutes of productivity
+- AI generation creates dozens of micro-breaks daily
+- Traditional solutions (blocking sites) don't address the root cause
+
+### Our Solution
+- **Structured distraction** that maintains cognitive engagement
+- **Zero-friction** activation - no decisions needed
+- **Time-boxed** entertainment that ends with AI generation
+- **Flow-state preservation** through consistent context
+
+## 📊 What's New in v0.2.0
+
+- ⏸️ **Pause/Unpause** - Status bar control for AI detection
+- 🐛 **Better State Management** - Improved reliability
+- 📝 **Enhanced Logging** - Easier troubleshooting
+- 🎮 **Bundled Chess** - Instant game, no download needed
+
+## 🗺️ Roadmap
+
+### Coming Soon
+- 📈 Productivity analytics
+- 🎮 More game variety
+- 🏆 Achievement system
+- 🌐 Custom game URLs
+
+### Under Consideration
+- 👥 Multiplayer modes
+- 🎨 Theme customization
+- 📱 Mobile companion
+- 🔌 API for game developers
+
+## 💬 Community & Support
+
+- **Issues & Bugs**: [GitHub Issues](https://github.com/ritalin-dev/ritalin/issues)
+- **Feature Requests**: [Open a discussion](https://github.com/ritalin-dev/ritalin/issues/new)
+- **Security**: See [SECURITY.md](SECURITY.md)
+
+## 🛠️ For Developers
+
+Want to contribute or customize Ritalin? Check out our [Contributing Guide](CONTRIBUTING.md) for development setup, architecture overview, and guidelines.
+
+## 📜 License
+
+MIT License - see [LICENSE](LICENSE)
 
 ---
 
-**Note**: This extension is not affiliated with Cursor or Anysphere, Inc. 
+<p align="center">
+  <strong>Stop context switching. Start Ritalin.</strong><br>
+  Made with ❤️ for developers who value their focus
+</p> 

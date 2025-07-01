@@ -129,4 +129,38 @@ input[type="text"] {
 .search-result-item .author {
     font-size: 0.9em;
     opacity: 0.8;
+}
+
+.status-message {
+    background-color: var(--vscode-editor-info-background, var(--vscode-editor-widget-background));
+    border: 1px solid var(--vscode-editor-info-border, var(--vscode-editor-widget-border));
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.status-message p {
+    margin: 0;
+}
+
+.help-section {
+    background-color: var(--vscode-side-bar-background);
+    border: 1px solid var(--vscode-side-bar-border);
+    border-radius: 5px;
+    padding: 20px;
+    margin-top: 30px;
+}
+
+.help-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.help-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.help-section li {
+    margin-bottom: 8px;
 } 

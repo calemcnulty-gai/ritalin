@@ -1,8 +1,8 @@
 {
   "name": "ritalin",
   "displayName": "Ritalin for Cursor",
-  "description": "Mini-games during AI generation for focus",
-  "version": "0.2.0",
+  "description": "Play mini-games during AI code generation to stay focused instead of context-switching to social media",
+  "version": "0.2.1",
   "publisher": "CaleMcNulty",
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
   ],
   "badges": [
     {
-      "url": "https://img.shields.io/badge/Alpha-v0.2.0-yellow",
+      "url": "https://img.shields.io/badge/Alpha-v0.2.1-yellow",
       "href": "https://github.com/ritalin-dev/ritalin/releases",
       "description": "Alpha Release"
     }
@@ -162,7 +162,7 @@
     "lodash": "^4.17.21"
   },
   "buildMetadata": {
-    "buildNumber": 9,
-    "timestamp": "2025-07-01T17:29:28.653Z"
+    "buildNumber": 15,
+    "timestamp": "2025-07-01T22:23:59.490Z"
   }
 }

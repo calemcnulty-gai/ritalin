@@ -1,22 +1,16 @@
-# Release Notes - v0.2.0
+# Release Notes - v0.1.4
 
 ## What's New
 
-- **Pause/Unpause Functionality**: Added the ability to temporarily disable AI detection
-  - New status bar item showing "Ritalin: Active" or "Ritalin: Paused"
-  - Click the status bar or use command "Ritalin: Pause/Unpause Extension"
-  - Visual feedback with warning background when paused
-  - Automatically sets AI working status to false when paused
-  - Updates AI activity rule to disable when paused
+- 
 
 ## Bug Fixes
 
-- Improved AI detection state management across pause/unpause cycles
-- Better synchronization between extension state and AI rule configuration
+- 
 
 ## Known Issues
 
-- None reported in this release
+- 
 
 ## Installation
 

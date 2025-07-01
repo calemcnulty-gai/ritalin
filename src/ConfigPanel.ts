@@ -156,13 +156,29 @@ export class ConfigPanel {
                 <title>Ritalin Configuration</title>
             </head>
             <body>
-                <h1>Welcome to Ritalin!</h1>
-                <p>Your companion for staying focused during AI generation. Let's get you set up.</p>
+                <h1>🎮 Welcome to Ritalin!</h1>
+                <p>Stay focused during AI code generation with mini-games instead of social media.</p>
                 
-                <h2>Popular Turn-Based Games</h2>
-                <p>Here are some popular games from <a href="https://itch.io/games/platform-web/tag-turn-based">itch.io's turn-based category</a>. Data is scraped live.</p>
+                <div class="status-message">
+                    <p><strong>v0.2.0</strong> - Now with pause/unpause functionality! Check your status bar.</p>
+                </div>
+                
+                <h2>Choose Your Game</h2>
+                <p>We've curated 8 excellent turn-based games perfect for those 15-60 second AI generation breaks. 
+                   Select one below to download and set as your default game.</p>
+                
                 <div id="popular-games-list" class="game-grid">
-                    <!-- Popular games will be injected here by the script -->
+                    <!-- Games will be loaded here -->
+                </div>
+                
+                <div class="help-section">
+                    <h3>Quick Tips</h3>
+                    <ul>
+                        <li>Games appear automatically when Cursor AI generates code</li>
+                        <li>Click the status bar to pause/unpause AI detection</li>
+                        <li>Games save their state between sessions</li>
+                        <li>Window position and size are configurable in settings</li>
+                    </ul>
                 </div>
 
                 <script nonce="${nonce}" src="${scriptUri}"></script>

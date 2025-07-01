@@ -5,6 +5,18 @@ All notable changes to the "Ritalin for Cursor" extension will be documented in 
 
 
 
+
+## [0.1.4] - 2025-07-01
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
 ## [0.2.0] - 2025-01-15
 
 ### Added

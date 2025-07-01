@@ -351,3 +351,109 @@ Each platform might have unique AI activity signatures in these directories.
 ##### Communities  
 - **VS Code Extension Development Discord/Reddit**: For advanced API questions
 - **Cursor Community Forums**: For Cursor-specific extension behavior patterns
+
+### Documentation Updates
+
+#### **v0.2.0 Documentation Refresh** 📝 **COMPLETED**
+**Date**: 2025-01-15
+**Updates Made**:
+- **README.md**: Complete rewrite reflecting current v0.2.0 features
+  - Added badges for version, status, and license
+  - Updated feature list with all 8 games
+  - Added comprehensive troubleshooting section
+  - Included roadmap showing completed and future features
+  - Better installation instructions with latest .vsix file
+- **EXTENSION_README.md**: Transformed from developer docs to user-facing extension description
+  - Clear feature list with emojis
+  - Quick start guide
+  - All 8 games listed with descriptions
+  - Configuration examples
+  - Privacy statement
+- **Configuration Page**: Enhanced welcome experience
+  - Added v0.2.0 announcement banner
+  - Better game selection messaging
+  - Quick tips section for new users
+  - Improved visual hierarchy with CSS updates
+
+**Impact**: Documentation now accurately reflects the production-ready state of the extension with working AI detection, 8 curated games, and pause/unpause functionality.
+
+#### **User-Focused Documentation Refactor** 🎯 **COMPLETED**
+**Date**: 2025-01-15
+**Refactoring Completed**:
+- **README.md**: Completely refactored to be user/product focused
+  - Removed all development content (moved to CONTRIBUTING.md)
+  - Added compelling product messaging and value proposition
+  - Restructured with user journey in mind (Install → Choose Game → Start)
+  - Added collapsible troubleshooting sections
+  - Created "Why Ritalin?" section with problem/solution framing
+  - Better visual hierarchy with featured games
+- **CONTRIBUTING.md**: New file with all developer content
+  - Development setup and prerequisites
+  - Architecture overview
+  - Testing guidelines
+  - Debugging tips
+  - PR process and workflow
+- **SECURITY.md**: New security policy file
+  - Vulnerability reporting process
+  - Clear security boundaries
+  - Supported versions table
+
+**Impact**: Clear separation between user documentation (README) and developer documentation (CONTRIBUTING), making the project more approachable for users while maintaining comprehensive developer resources.
+
+#### Insights
+
+##### **"One Working Method" Philosophy**
+Instead of building complex multi-method detection systems, focus on making the working Document Change Analysis incredibly robust and accurate.
+
+##### **Extension API Reality Check**
+VS Code's security model is intentionally restrictive. Extensions operate in isolated contexts that prevent most advanced monitoring approaches we initially planned.
+
+##### **Pause/Unpause Feature Design**
+The extension pause feature demonstrates clean state management across multiple systems:
+- CursorDetector maintains internal pause state
+- is_working file set to false when paused for consistency
+- ai-activity-reporting.mdc alwaysApply field toggled to disable AI rule
+- Status bar provides visual feedback with clickable toggle
+- All state changes are synchronized to prevent conflicts
+
+##### **Detection Confidence Tuning**
+Our detection system now has multiple viable methods feeding into a confidence score:
+- Document changes (working since day 1)
+- Selection patterns (new - detects AI-characteristic large/rapid selections)
+- Language server events (new - correlates with AI completion requests)
+- File system changes (new - monitors Cursor data directories)
+
+##### **Development Velocity vs. Research Quality**
+Deep research into VS Code API limitations saved weeks of implementation effort on impossible approaches. Time spent on research docs paid off.
+
+#### Spiky POVs
+
+##### **Security Restrictions Are Actually Good**
+VS Code's extension isolation isn't a limitation - it's a feature. It prevents malicious extensions from accessing sensitive data. Our detection system works within these constraints elegantly.
+
+##### **Multi-Method Redundancy Strategy**
+Even though Document Change Analysis works well, having 3+ detection methods provides:
+- Backup if Cursor updates break one method
+- Cross-validation of AI activity
+- Different confidence levels for different AI operation types
+- Reduced false positives through pattern correlation
+
+##### **Platform-Specific Detection Opportunities**
+File system monitoring opens platform-specific detection paths:
+- macOS: `~/Library/Application Support/Cursor`
+- Windows: `%APPDATA%/Cursor`
+- Linux: `~/.config/Cursor`
+
+Each platform might have unique AI activity signatures in these directories.
+
+#### Experts
+
+##### Resources
+- **VS Code Extension API Documentation**: https://code.visualstudio.com/api
+  - Critical for understanding security restrictions and available APIs
+- **GitHub Issues for Command Interception**: Referenced issue #44771 marked "out-of-scope"
+  - Confirms that command wrapping/interception is intentionally not supported
+
+##### Communities  
+- **VS Code Extension Development Discord/Reddit**: For advanced API questions
+- **Cursor Community Forums**: For Cursor-specific extension behavior patterns
